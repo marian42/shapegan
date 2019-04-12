@@ -50,6 +50,7 @@ class Generator(nn.Module):
         x = distribution.sample().to(device)
         return self.forward(x)
 
+
 generator = Generator()
 generator.cuda()
 
