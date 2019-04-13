@@ -1,13 +1,16 @@
 from itertools import count
 
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
+import numpy as np
+
 # https://github.com/dimatura/binvox-rw-py/blob/public/binvox_rw.py
 from binvox_rw import read_as_3d_array
+
+from voxelviewer import VoxelViewer
 
 FILENAME = '/home/marian/shapenet/ShapeNetCore.v2/02747177/2f00a785c9ac57c07f48cf22f91f1702/models/model_normalized.solid.binvox'
 
@@ -57,6 +60,7 @@ generator.cuda()
 criterion = nn.MSELoss()
 optimizer = optim.SGD(generator.parameters(), lr=0.01, momentum=0.9)
 
+viewer = VoxelViewer()
 
 for epoch in count():
     # zero the parameter gradients
@@ -67,5 +71,8 @@ for epoch in count():
     loss = criterion(outputs, voxels)
     loss.backward()
     optimizer.step()
+
+    sample = generator.generate().squeeze()
+    viewer.set_voxels(sample.detach().cpu().numpy())
 
     print(str(epoch) + ": " + str(loss.item()))

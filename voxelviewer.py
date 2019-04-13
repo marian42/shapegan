@@ -25,6 +25,8 @@ class VoxelViewer():
         self.voxel_shape = [1, 1, 1]
         self.voxel_size = 1
 
+        self.request_render = False
+
         thread = Thread(target = self._run)
         thread.start()
 
@@ -38,6 +40,7 @@ class VoxelViewer():
         self.voxel_size = max(self.voxel_shape)
 
         self.vertex_buffer_size = vertices.shape[0]
+        self.request_render = True
 
     def _poll_mouse(self):
         _, _, pressed = pygame.mouse.get_pressed()
@@ -50,6 +53,7 @@ class VoxelViewer():
         return pressed == 1
 
     def _render(self):
+        self.request_render = False
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         gluPerspective(45.0, float(self.size[0]) / float(self.size[1]), 0.1, self.voxel_size * 4)
@@ -101,9 +105,8 @@ class VoxelViewer():
                     pygame.quit()
                     return
 
-            if self._poll_mouse():
+            if self._poll_mouse() or self.request_render:
                 self._render()
-                pass
             pygame.display.flip()
             
             pygame.time.wait(10)
