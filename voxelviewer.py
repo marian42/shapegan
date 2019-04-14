@@ -85,6 +85,7 @@ class VoxelViewer():
     def _initialize_opengl(self):
         pygame.init()
         pygame.display.set_mode(self.size, DOUBLEBUF | OPENGL)
+        pygame.display.set_caption('Voxel Viewer')
 
         glEnable(GL_CULL_FACE)
         glClearColor(0.0, 0.0, 0.0, 0.0)
@@ -112,13 +113,11 @@ class VoxelViewer():
             pygame.time.wait(10)
 
 
-if __name__ == "__main__":
-    FILENAME = '/home/marian/shapenet/ShapeNetCore.v2/02747177/2f00a785c9ac57c07f48cf22f91f1702/models/model_normalized.solid.binvox'
-
-    from binvox_rw import read_as_3d_array
-
-    voxels = read_as_3d_array(open(FILENAME, 'rb'))
-    voxels = voxels.data[::2, ::2, ::2].astype(np.float32) # 128^3 to 64^3, bool to float
+if __name__ == "__main__":    
+    from voxels import load_voxels
+    
+    FILENAME = '/home/marian/shapenet/ShapeNetCore.v2/02691156/1bea1445065705eb37abdc1aa610476c/models/model_normalized.solid.binvox'
+    voxels = load_voxels(FILENAME, 48)
 
     viewer = VoxelViewer()
     viewer.set_voxels(voxels)

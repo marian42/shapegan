@@ -1,12 +1,10 @@
 import numpy as np
 
-def create_vertices(voxels_array):
-    THRESHOLD = 0.5
-
+def create_vertices(voxels_array, threshold = 0.5):
     voxels = np.zeros([voxels_array.shape[0] + 2, voxels_array.shape[2] + 2, voxels_array.shape[2] + 2])
     voxels[1:-1, 1:-1, 1:-1] = voxels_array
 
-    mask = voxels > THRESHOLD
+    mask = voxels > threshold
 
     # X
     x, y, z = np.where(mask[:-1,:,:] & ~mask[1:,:,:])
