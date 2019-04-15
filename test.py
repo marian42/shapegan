@@ -5,19 +5,17 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
+import random
+
 import numpy as np
 
 from voxelviewer import VoxelViewer
 from voxels import load_voxels
 
-FILENAME = '/home/marian/shapenet/ShapeNetCore.v2/02691156/1bea1445065705eb37abdc1aa610476c/models/model_normalized.solid.binvox'
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-device_name = "cuda" if torch.cuda.is_available() else "cpu"
-device = torch.device(device_name)
-
-voxels = load_voxels(FILENAME, 46)
-voxels = torch.tensor(voxels, device = device, dtype = torch.float)
-voxels = torch.unsqueeze(voxels, dim = 0) # add channel dimension, final layer has one channel
+dataset = torch.load("airplanes.to").to(device)
+dataset_size = dataset.shape[0]
 
 
 # Based on http://3dgan.csail.mit.edu/papers/3dgan_nips.pdf
@@ -45,29 +43,84 @@ class Generator(nn.Module):
         shape = [batch_size, 200, 1, 1, 1]
         distribution = torch.distributions.Normal(torch.zeros(shape), torch.ones(shape))
         x = distribution.sample().to(device)
-        x = torch.zeros(shape).to(device)
         return self.forward(x)
 
+class Discriminator(nn.Module):
+    def __init__(self):
+        super(Discriminator, self).__init__()
+
+        self.conv1 = nn.Conv3d(in_channels = 1, out_channels = 64, kernel_size = 4, stride = 2)
+        self.bn1 = nn.BatchNorm3d(64)
+        self.conv2 = nn.Conv3d(in_channels = 64, out_channels = 128, kernel_size = 4, stride = 2)
+        self.bn2 = nn.BatchNorm3d(128)
+        self.conv3 = nn.Conv3d(in_channels = 128, out_channels = 256, kernel_size = 4, stride = 2)
+        self.bn3 = nn.BatchNorm3d(256)
+        self.conv4 = nn.Conv3d(in_channels = 256, out_channels = 1, kernel_size = 4, stride = 1)
+        self.sigmoid = nn.Sigmoid()
+
+
+    def forward(self, x):
+        if (len(x.shape) < 5):
+            x = x.unsqueeze(dim = 1) # add dimension for channels
+        x = self.bn1(F.leaky_relu(self.conv1(x), 0.2))
+        x = self.bn2(F.leaky_relu(self.conv2(x), 0.2))
+        x = self.bn3(F.leaky_relu(self.conv3(x), 0.2))
+        x = self.sigmoid(self.conv4(x))
+        x = x.squeeze()
+        return x
+    
 
 generator = Generator()
 generator.cuda()
 
-criterion = nn.MSELoss()
-optimizer = optim.SGD(generator.parameters(), lr=0.05, momentum=0.9)
+discriminator = Discriminator()
+discriminator.cuda()
+
+generator_criterion = nn.MSELoss()
+generator_optimizer = optim.SGD(generator.parameters(), lr=0.05, momentum=0.9)
+
+discriminator_criterion = nn.MSELoss()
+discriminator_optimizer = optim.SGD(discriminator.parameters(), lr=0.05, momentum=0.9)
 
 viewer = VoxelViewer()
 
+BATCH_SIZE = 10
+
+generator_quality = 0.5
+valid_sample_prediction = 0.5
+
 for epoch in count():
-    # zero the parameter gradients
-    optimizer.zero_grad()
+    generator_optimizer.zero_grad()
 
-    # forward + backward + optimize
-    outputs = generator.generate(batch_size=1)
-    loss = criterion(outputs, voxels)
-    loss.backward()
-    optimizer.step()
+    # generate samples
+    fake_sample = generator.generate(batch_size = BATCH_SIZE)
+    viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
 
-    sample = generator.generate().squeeze()
-    viewer.set_voxels(sample.detach().cpu().numpy())
+    if generator_quality < 0.9 and False:
+        # train generator
+        fake_discriminator_output = discriminator.forward(fake_sample)
+        generator_quality = np.average(fake_discriminator_output.detach().cpu().numpy())      
+        fake_loss = generator_criterion(fake_discriminator_output, torch.ones(BATCH_SIZE, device = device))
+        fake_loss.backward()
+        generator_optimizer.step()
+    
+    if generator_quality > 0.1:
+        # train discriminator on fake samples
+        discriminator_optimizer.zero_grad()
+        fake_discriminator_output = discriminator.forward(fake_sample.detach())
+        loss = discriminator_criterion(fake_discriminator_output, torch.zeros(BATCH_SIZE, device = device))
+        loss.backward()
+        discriminator_optimizer.step()
+        generator_quality = np.average(fake_discriminator_output.detach().cpu().numpy())
+    
+        # train discriminator on real samples
+        discriminator_optimizer.zero_grad()
+        indices = torch.tensor(random.sample(range(dataset_size), BATCH_SIZE), device = device)
+        valid_sample = dataset[indices, :, :, :]
+        valid_discriminator_output = discriminator.forward(valid_sample)
+        loss = discriminator_criterion(valid_discriminator_output, torch.ones(BATCH_SIZE, device = device))
+        loss.backward()
+        discriminator_optimizer.step()
+        valid_sample_prediction = np.average(valid_discriminator_output.detach().cpu().numpy())
 
-    print(str(epoch) + ": " + str(loss.item()))
+    print("epoch " + str(epoch) + ": prediction on fake samples: " + str(generator_quality) + ", prediction on valid samples: " + str(valid_sample_prediction))
