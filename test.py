@@ -77,10 +77,10 @@ discriminator = Discriminator()
 discriminator.cuda()
 
 generator_criterion = nn.MSELoss()
-generator_optimizer = optim.SGD(generator.parameters(), lr=0.05, momentum=0.9)
+generator_optimizer = optim.SGD(generator.parameters(), lr=0.02, momentum=0.9)
 
 discriminator_criterion = nn.MSELoss()
-discriminator_optimizer = optim.SGD(discriminator.parameters(), lr=0.05, momentum=0.9)
+discriminator_optimizer = optim.SGD(discriminator.parameters(), lr=0.02, momentum=0.9)
 
 viewer = VoxelViewer()
 
@@ -97,7 +97,7 @@ for epoch in count():
         fake_sample = generator.generate(batch_size = BATCH_SIZE)
         viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
 
-        if generator_quality < 0.9:
+        if generator_quality < 0.99 or True:
             # train generator
             fake_discriminator_output = discriminator.forward(fake_sample)
             generator_quality = np.average(fake_discriminator_output.detach().cpu().numpy())      
@@ -105,7 +105,7 @@ for epoch in count():
             fake_loss.backward()
             generator_optimizer.step()
         
-        if generator_quality > 0.1:
+        if generator_quality > 0.01 or True:
             # train discriminator on fake samples
             discriminator_optimizer.zero_grad()
             fake_discriminator_output = discriminator.forward(fake_sample.detach())
@@ -124,7 +124,7 @@ for epoch in count():
             discriminator_optimizer.step()
             valid_sample_prediction = np.average(valid_discriminator_output.detach().cpu().numpy())
 
-        print("epoch " + str(epoch) + ": prediction on fake samples: " + str(generator_quality) + ", prediction on valid samples: " + str(valid_sample_prediction))
+        print("epoch " + str(epoch) + ": prediction on fake samples: " + '{0:.4f}'.format(generator_quality) + ", prediction on valid samples: " + '{0:.4f}'.format(valid_sample_prediction))
     except KeyboardInterrupt:
         viewer.stop()
         break
