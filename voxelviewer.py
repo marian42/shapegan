@@ -17,7 +17,7 @@ class VoxelViewer():
         self.size = size
         
         self.mouse = None
-        self.rotation = (0, 0)
+        self.rotation = (45, 45)
 
         self.vertex_buffer = None
         self.normal_buffer = None
