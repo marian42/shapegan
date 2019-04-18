@@ -12,9 +12,14 @@ import numpy as np
 from voxelviewer import VoxelViewer
 from voxels import load_voxels
 
+import os
+
+GENERATOR_FILENAME = "generator.to"
+DISCRIMINATOR_FILENAME = "discriminator.to"
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-dataset = torch.load("airplanes.to").to(device)
+dataset = torch.load("airplanes-46.to").to(device)
 dataset_size = dataset.shape[0]
 
 
@@ -76,6 +81,13 @@ generator.cuda()
 discriminator = Discriminator()
 discriminator.cuda()
 
+if os.path.isfile(GENERATOR_FILENAME):
+    generator.load_state_dict(torch.load(GENERATOR_FILENAME))
+
+if os.path.isfile(DISCRIMINATOR_FILENAME) and False:
+    discriminator.load_state_dict(torch.load(DISCRIMINATOR_FILENAME))
+
+
 generator_criterion = nn.MSELoss()
 generator_optimizer = optim.SGD(generator.parameters(), lr=0.02, momentum=0.9)
 
@@ -123,6 +135,11 @@ for epoch in count():
             loss.backward()
             discriminator_optimizer.step()
             valid_sample_prediction = np.average(valid_discriminator_output.detach().cpu().numpy())
+
+        if epoch % 50 == 0:
+            torch.save(generator.state_dict(), GENERATOR_FILENAME)
+            torch.save(discriminator.state_dict(), DISCRIMINATOR_FILENAME)
+            print("Model parameters saved.")
 
         print("epoch " + str(epoch) + ": prediction on fake samples: " + '{0:.4f}'.format(generator_quality) + ", prediction on valid samples: " + '{0:.4f}'.format(valid_sample_prediction))
     except KeyboardInterrupt:
