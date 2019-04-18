@@ -27,6 +27,8 @@ class VoxelViewer():
 
         self.request_render = False
 
+        self.running = True
+
         thread = Thread(target = self._run)
         thread.start()
 
@@ -100,7 +102,7 @@ class VoxelViewer():
         self._initialize_opengl()
         self._render()
 
-        while True:
+        while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -111,6 +113,9 @@ class VoxelViewer():
             pygame.display.flip()
             
             pygame.time.wait(10)
+
+    def stop(self):
+        self.running = False
 
 
 if __name__ == "__main__":    
