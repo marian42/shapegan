@@ -34,11 +34,18 @@ class VoxelViewer():
 
     def set_voxels(self, voxels):
         vertices, normals = create_vertices(voxels)
+        
+        if self.vertex_buffer is None:
+            self.vertex_buffer = vbo.VBO(vertices)
+        else:
+            self.vertex_buffer.set_array(vertices)
 
-        self.vertex_buffer = vbo.VBO(vertices)
-        self.normal_buffer = vbo.VBO(normals)
+        if self.normal_buffer is None:
+            self.normal_buffer = vbo.VBO(normals)
+        else:
+            self.normal_buffer.set_array(normals)
 
-        self.voxel_shape = [voxels.shape[0] + 2, voxels.shape[2] + 2, voxels.shape[2] + 2]
+        self.voxel_shape = [voxels.shape[0] + 2, voxels.shape[1] + 2, voxels.shape[2] + 2]
         self.voxel_size = max(self.voxel_shape)
 
         self.vertex_buffer_size = vertices.shape[0]
