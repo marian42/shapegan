@@ -22,8 +22,7 @@ generator_optimizer = optim.SGD(generator.parameters(), lr=0.05, momentum=0.9)
 
 viewer = VoxelViewer()
 
-dataset = torch.load("data/airplanes-32.to").to(device)
-sample_plane = torch.unsqueeze(dataset[0, :, :, :], dim = 1)
+sample_plane = torch.load("data/airplane-32.to").to(device)
 zeros = torch.zeros([1, 200, 1, 1, 1], device = device)
 view_plane = sample_plane.squeeze().cpu().numpy()
 
@@ -35,10 +34,7 @@ for epoch in count():
         loss.backward()
         generator_optimizer.step()        
 
-        if epoch % 2 == 0 or True:
-            viewer.set_voxels(output.squeeze().detach().cpu().numpy())
-        else:
-            viewer.set_voxels(view_plane)
+        viewer.set_voxels(output.squeeze().detach().cpu().numpy())
         error = loss.item()
 
         if epoch % 50 == 0:
