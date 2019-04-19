@@ -13,7 +13,7 @@ from model import Generator, Discriminator
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 dataset = torch.load("data/airplanes-32.to").to(device)
-dataset_size = dataset.shape[0]    
+dataset_size = dataset.shape[0]
 
 generator = Generator()
 generator.load()
