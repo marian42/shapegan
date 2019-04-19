@@ -17,8 +17,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 generator = Generator()
 generator.load()
 
-generator_criterion = nn.MSELoss()
-generator_optimizer = optim.SGD(generator.parameters(), lr=0.05, momentum=0.9)
+generator_criterion = torch.nn.functional.binary_cross_entropy
+generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025, betas = (0.5, 0.5))
 
 viewer = VoxelViewer()
 
@@ -30,7 +30,7 @@ for epoch in count():
     try:
         generator_optimizer.zero_grad()
         output = generator.forward(zeros)
-        loss = generator_criterion(output, sample_plane)
+        loss = generator_criterion(output.unsqueeze(dim = 0), sample_plane)
         loss.backward()
         generator_optimizer.step()        
 

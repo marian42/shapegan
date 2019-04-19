@@ -21,18 +21,23 @@ generator.load()
 discriminator = Discriminator()
 generator.load()
 
-generator_criterion = nn.MSELoss()
-generator_optimizer = optim.SGD(generator.parameters(), lr=0.05, momentum=0.9)
+generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025, betas = (0.5, 0.5))
 
-discriminator_criterion = nn.MSELoss()
-discriminator_optimizer = optim.SGD(discriminator.parameters(), lr=0.02, momentum=0.9)
+discriminator_criterion = torch.nn.functional.binary_cross_entropy
+discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00001, betas = (0.5, 0.5))
 
 viewer = VoxelViewer()
 
-BATCH_SIZE = 10
+BATCH_SIZE = 100
 
 generator_quality = 0.5
 valid_sample_prediction = 0.5
+
+def create_valid_sample(size = BATCH_SIZE):
+    indices = torch.tensor(random.sample(range(dataset_size), BATCH_SIZE), device = device)
+    valid_sample = dataset[indices, :, :, :]
+    return valid_sample
+            
 
 for epoch in count():
     try:
@@ -42,11 +47,14 @@ for epoch in count():
         fake_sample = generator.generate(device, batch_size = BATCH_SIZE)
         viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
 
-        if generator_quality < 0.99 or True:
+        if generator_quality < 0.8:
             # train generator
+            valid_sample = create_valid_sample()
+            valid_discriminator_output = discriminator.forward(valid_sample)
+            
             fake_discriminator_output = discriminator.forward(fake_sample)
             generator_quality = np.average(fake_discriminator_output.detach().cpu().numpy())      
-            fake_loss = generator_criterion(fake_discriminator_output, torch.ones(BATCH_SIZE, device = device))
+            fake_loss = torch.mean(torch.log(valid_discriminator_output) + torch.log(1 - fake_discriminator_output))
             fake_loss.backward()
             generator_optimizer.step()
         
@@ -61,8 +69,7 @@ for epoch in count():
         
             # train discriminator on real samples
             discriminator_optimizer.zero_grad()
-            indices = torch.tensor(random.sample(range(dataset_size), BATCH_SIZE), device = device)
-            valid_sample = dataset[indices, :, :, :]
+            valid_sample = create_valid_sample()
             valid_discriminator_output = discriminator.forward(valid_sample)
             loss = discriminator_criterion(valid_discriminator_output, torch.ones(BATCH_SIZE, device = device))
             loss.backward()
