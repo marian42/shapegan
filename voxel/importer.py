@@ -4,7 +4,7 @@ from tqdm import tqdm
 import torch
 
 # https://github.com/dimatura/binvox-rw-py/blob/public/binvox_rw.py
-from binvox_rw import read_as_3d_array
+from voxel.binvox_rw import read_as_3d_array
 from scipy.ndimage import zoom
 
 
