@@ -7,8 +7,8 @@ from OpenGL.GLU import *
 
 import numpy as np
 
-from voxels_to_mesh import create_vertices
-from shader import Shader
+from voxel.viewer.voxels_to_mesh import create_vertices
+from voxel.viewer.shader import Shader
 
 from threading import Thread
 
@@ -103,7 +103,7 @@ class VoxelViewer():
         glEnable(GL_DEPTH_TEST)
 
         self.shader = Shader()
-        self.shader.initShader(open('vertex.glsl').read(), open('fragment.glsl').read())
+        self.shader.initShader(open('voxel/viewer/vertex.glsl').read(), open('voxel/viewer/fragment.glsl').read())
 
     def _run(self):
         self._initialize_opengl()

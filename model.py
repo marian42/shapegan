@@ -4,8 +4,8 @@ import torch.optim as optim
 
 import torch.nn.functional as F
 
-GENERATOR_FILENAME = "generator.to"
-DISCRIMINATOR_FILENAME = "discriminator.to"
+GENERATOR_FILENAME = "data/generator.to"
+DISCRIMINATOR_FILENAME = "data/discriminator.to"
 
 import os
 

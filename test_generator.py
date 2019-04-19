@@ -8,8 +8,7 @@ import random
 
 import numpy as np
 
-from voxelviewer import VoxelViewer
-from voxels import load_voxels
+from voxel.viewer import VoxelViewer
 
 from model import Generator, Discriminator
 
@@ -23,7 +22,7 @@ generator_optimizer = optim.SGD(generator.parameters(), lr=0.05, momentum=0.9)
 
 viewer = VoxelViewer()
 
-dataset = torch.load("airplanes-32.to").to(device)
+dataset = torch.load("data/airplanes-32.to").to(device)
 sample_plane = torch.unsqueeze(dataset[0, :, :, :], dim = 1)
 zeros = torch.zeros([1, 200, 1, 1, 1], device = device)
 view_plane = sample_plane.squeeze().cpu().numpy()
