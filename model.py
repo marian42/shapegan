@@ -103,19 +103,34 @@ class Autoencoder(nn.Module):
 
         self.cuda()
 
-
-    def forward(self, x):
-        if (len(x.shape) < 5):
-            x = x.unsqueeze(dim = 1) # add dimension for channels
+    def encode(self, x):
+        if len(x.shape) == 3:
+            x = x.unsqueeze(dim = 0)  # add dimension for batch
+        if len(x.shape) == 4:
+            x = x.unsqueeze(dim = 1)  # add dimension for channels
         x = self.bn1(F.leaky_relu(self.conv1(x), 0.2))
         x = self.bn2(F.leaky_relu(self.conv2(x), 0.2))
         x = self.bn3(F.leaky_relu(self.conv3(x), 0.2))
         x = F.leaky_relu(self.conv4(x), 0.2)
+        x = x.squeeze()
+        return x
+
+    def decode(self, x):
+        if len(x.shape) == 1:
+            x = x.unsqueeze(dim = 0)  # add dimension for channels
+        while len(x.shape) < 5: 
+            x = x.unsqueeze(dim = len(x.shape)) # add 3 voxel dimensions
+        
         x = self.bn5(F.relu(self.convT5(x)))
         x = self.bn6(F.relu(self.convT6(x)))
         x = self.bn7(F.relu(self.convT7(x)))
         x = self.sigmoid(F.relu(self.convT8(x)))
         x = x.squeeze()
+        return x
+
+    def forward(self, x):
+        x = self.encode(x)
+        x = self.decode(x)
         return x
     
     def load(self):
