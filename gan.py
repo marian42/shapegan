@@ -8,18 +8,26 @@ import random
 import numpy as np
 
 from voxel.viewer import VoxelViewer
-from model import Generator, Discriminator
+from model import Generator, Discriminator, Autoencoder
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-dataset = torch.load("data/airplanes-32.to").to(device)
+dataset = torch.load("data/chairs-32.to").to(device)
 dataset_size = dataset.shape[0]
 
 generator = Generator()
 generator.load()
 
 discriminator = Discriminator()
+
+def load_from_autoencoder():
+    autoencoder = Autoencoder()
+    autoencoder.load()
+    generator.copy_autoencoder_weights(autoencoder)
+
+
 generator.load()
+#load_from_autoencoder()
 
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025, betas = (0.5, 0.5))
 

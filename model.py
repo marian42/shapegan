@@ -46,6 +46,12 @@ class Generator(nn.Module):
     def save(self):
         torch.save(self.state_dict(), GENERATOR_FILENAME)
 
+    def copy_autoencoder_weights(self, autoencoder):
+        self.convT1.weight = autoencoder.convT5.weight
+        self.convT2.weight = autoencoder.convT6.weight
+        self.convT3.weight = autoencoder.convT7.weight
+        self.convT4.weight = autoencoder.convT8.weight
+
 
 class Discriminator(nn.Module):
     def __init__(self):
