@@ -6,6 +6,7 @@ import torch.nn.functional as F
 
 GENERATOR_FILENAME = "data/generator.to"
 DISCRIMINATOR_FILENAME = "data/discriminator.to"
+AUTOENCODER_FILENAME = "data/autoencoder.to"
 
 import os
 
@@ -78,3 +79,48 @@ class Discriminator(nn.Module):
     
     def save(self):
         torch.save(self.state_dict(), DISCRIMINATOR_FILENAME)
+
+class Autoencoder(nn.Module):
+    def __init__(self):
+        super(Autoencoder, self).__init__()
+
+        self.conv1 = nn.Conv3d(in_channels = 1, out_channels = 64, kernel_size = 4, stride = 2, padding = 1)
+        self.bn1 = nn.BatchNorm3d(64)
+        self.conv2 = nn.Conv3d(in_channels = 64, out_channels = 128, kernel_size = 4, stride = 2, padding = 1)
+        self.bn2 = nn.BatchNorm3d(128)
+        self.conv3 = nn.Conv3d(in_channels = 128, out_channels = 256, kernel_size = 4, stride = 2, padding = 1)
+        self.bn3 = nn.BatchNorm3d(256)
+        self.conv4 = nn.Conv3d(in_channels = 256, out_channels = 200, kernel_size = 4, stride = 1)
+
+        self.convT5 = nn.ConvTranspose3d(in_channels = 200, out_channels = 256, kernel_size = 4, stride = 1)
+        self.bn5 = nn.BatchNorm3d(256)
+        self.convT6 = nn.ConvTranspose3d(in_channels = 256, out_channels = 128, kernel_size = 4, stride = 2, padding = 1)
+        self.bn6 = nn.BatchNorm3d(128)
+        self.convT7 = nn.ConvTranspose3d(in_channels = 128, out_channels = 64, kernel_size = 4, stride = 2, padding = 1)
+        self.bn7 = nn.BatchNorm3d(64)
+        self.convT8 = nn.ConvTranspose3d(in_channels = 64, out_channels = 1, kernel_size = 4, stride = 2, padding = 1)
+        self.sigmoid = nn.Sigmoid()
+
+        self.cuda()
+
+
+    def forward(self, x):
+        if (len(x.shape) < 5):
+            x = x.unsqueeze(dim = 1) # add dimension for channels
+        x = self.bn1(F.leaky_relu(self.conv1(x), 0.2))
+        x = self.bn2(F.leaky_relu(self.conv2(x), 0.2))
+        x = self.bn3(F.leaky_relu(self.conv3(x), 0.2))
+        x = F.leaky_relu(self.conv4(x), 0.2)
+        x = self.bn5(F.relu(self.convT5(x)))
+        x = self.bn6(F.relu(self.convT6(x)))
+        x = self.bn7(F.relu(self.convT7(x)))
+        x = self.sigmoid(F.relu(self.convT8(x)))
+        x = x.squeeze()
+        return x
+    
+    def load(self):
+        if os.path.isfile(AUTOENCODER_FILENAME):
+            self.load_state_dict(torch.load(AUTOENCODER_FILENAME))
+    
+    def save(self):
+        torch.save(self.state_dict(), AUTOENCODER_FILENAME)
