@@ -4,3 +4,5 @@
 \.mypy_cache/**
 .vscode/**
 *.to
+
+*.gz
