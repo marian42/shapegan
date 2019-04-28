@@ -86,6 +86,8 @@ class Discriminator(nn.Module):
     def save(self):
         torch.save(self.state_dict(), DISCRIMINATOR_FILENAME)
 
+AUTOENCODER_BOTTLENECK = 200
+
 class Autoencoder(nn.Module):
     def __init__(self):
         super(Autoencoder, self).__init__()
@@ -96,9 +98,9 @@ class Autoencoder(nn.Module):
         self.bn2 = nn.BatchNorm3d(128)
         self.conv3 = nn.Conv3d(in_channels = 128, out_channels = 256, kernel_size = 4, stride = 2, padding = 1)
         self.bn3 = nn.BatchNorm3d(256)
-        self.conv4 = nn.Conv3d(in_channels = 256, out_channels = 200, kernel_size = 4, stride = 1)
+        self.conv4 = nn.Conv3d(in_channels = 256, out_channels = AUTOENCODER_BOTTLENECK, kernel_size = 4, stride = 1)
 
-        self.convT5 = nn.ConvTranspose3d(in_channels = 200, out_channels = 256, kernel_size = 4, stride = 1)
+        self.convT5 = nn.ConvTranspose3d(in_channels = AUTOENCODER_BOTTLENECK, out_channels = 256, kernel_size = 4, stride = 1)
         self.bn5 = nn.BatchNorm3d(256)
         self.convT6 = nn.ConvTranspose3d(in_channels = 256, out_channels = 128, kernel_size = 4, stride = 2, padding = 1)
         self.bn6 = nn.BatchNorm3d(128)
