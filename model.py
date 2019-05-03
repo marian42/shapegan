@@ -72,9 +72,9 @@ class Discriminator(nn.Module):
     def forward(self, x):
         if (len(x.shape) < 5):
             x = x.unsqueeze(dim = 1) # add dimension for channels
-        x = self.bn1(F.leaky_relu(self.conv1(x), 0.2))
-        x = self.bn2(F.leaky_relu(self.conv2(x), 0.2))
-        x = self.bn3(F.leaky_relu(self.conv3(x), 0.2))
+        x = F.leaky_relu(self.conv1(x), 0.2)
+        x = F.leaky_relu(self.conv2(x), 0.2)
+        x = F.leaky_relu(self.conv3(x), 0.2)
         x = self.sigmoid(self.conv4(x))
         x = x.squeeze()
         return x

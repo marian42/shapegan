@@ -19,6 +19,7 @@ generator = Generator()
 generator.load()
 
 discriminator = Discriminator()
+discriminator.load()
 
 def load_from_autoencoder():
     autoencoder = Autoencoder()
@@ -26,17 +27,16 @@ def load_from_autoencoder():
     generator.copy_autoencoder_weights(autoencoder)
 
 
-generator.load()
 #load_from_autoencoder()
 
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025, betas = (0.5, 0.5))
 
 discriminator_criterion = torch.nn.functional.binary_cross_entropy
-discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00001, betas = (0.5, 0.5))
+discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00005, betas = (0.5, 0.5))
 
 viewer = VoxelViewer()
 
-BATCH_SIZE = 100
+BATCH_SIZE = 20
 
 generator_quality = 0.5
 valid_sample_prediction = 0.5
@@ -52,39 +52,42 @@ for epoch in count():
         generator_optimizer.zero_grad()
 
         # generate samples
-        fake_sample = generator.generate(device, batch_size = BATCH_SIZE)
+        fake_sample = generator.generate(device, batch_size = 2)
         viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
 
         if generator_quality < 0.8:
             # train generator
+            generator_optimizer.zero_grad()
+             
             valid_sample = create_valid_sample()
             valid_discriminator_output = discriminator.forward(valid_sample)
             
+            fake_sample = generator.generate(device, batch_size = BATCH_SIZE)
             fake_discriminator_output = discriminator.forward(fake_sample)
-            generator_quality = np.average(fake_discriminator_output.detach().cpu().numpy())      
             fake_loss = torch.mean(torch.log(valid_discriminator_output) + torch.log(1 - fake_discriminator_output))
             fake_loss.backward()
             generator_optimizer.step()
-        
-        if generator_quality > 0.01 or True:
-            # train discriminator on fake samples
-            discriminator_optimizer.zero_grad()
-            fake_discriminator_output = discriminator.forward(fake_sample.detach())
-            loss = discriminator_criterion(fake_discriminator_output, torch.zeros(BATCH_SIZE, device = device))
-            loss.backward()
-            discriminator_optimizer.step()
             generator_quality = np.average(fake_discriminator_output.detach().cpu().numpy())
+            
         
-            # train discriminator on real samples
+        if generator_quality > 0.2:
+            # train discriminator
+            
             discriminator_optimizer.zero_grad()
-            valid_sample = create_valid_sample()
-            valid_discriminator_output = discriminator.forward(valid_sample)
-            loss = discriminator_criterion(valid_discriminator_output, torch.ones(BATCH_SIZE, device = device))
+            fake_sample = generator.generate(device, batch_size = BATCH_SIZE).detach()
+            valid_sample = create_valid_sample().unsqueeze(dim=1)
+            combined_sample = torch.cat((fake_sample, valid_sample), dim = 0)
+            discriminator_output = discriminator.forward(combined_sample)
+            
+            desired_output = torch.cat((torch.zeros(BATCH_SIZE), torch.ones(BATCH_SIZE))).to(device)
+            loss = discriminator_criterion(discriminator_output, desired_output)
             loss.backward()
             discriminator_optimizer.step()
-            valid_sample_prediction = np.average(valid_discriminator_output.detach().cpu().numpy())
 
-        if epoch % 50 == 0:
+            generator_quality = np.average(discriminator_output[:BATCH_SIZE].detach().cpu().numpy())
+            valid_sample_prediction = np.average(discriminator_output[BATCH_SIZE:].detach().cpu().numpy())
+            
+        if epoch % 100 == 0:
             generator.save()
             discriminator.save()
             print("Model parameters saved.")
