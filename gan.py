@@ -45,7 +45,9 @@ def create_valid_sample(size = BATCH_SIZE):
     indices = torch.tensor(random.sample(range(dataset_size), BATCH_SIZE), device = device)
     valid_sample = dataset[indices, :, :, :]
     return valid_sample
-            
+
+def contains_nan(tensor):
+    return torch.sum(torch.isnan(tensor)).item() > 0
 
 for epoch in count():
     try:
@@ -63,6 +65,10 @@ for epoch in count():
             valid_discriminator_output = discriminator.forward(valid_sample)
             
             fake_sample = generator.generate(device, batch_size = BATCH_SIZE)
+            if contains_nan(fake_sample):
+                print("fake_sample contains NaN values. Skipping...")
+                break
+            
             fake_discriminator_output = discriminator.forward(fake_sample)
             fake_loss = torch.mean(torch.log(valid_discriminator_output) + torch.log(1 - fake_discriminator_output))
             fake_loss.backward()
