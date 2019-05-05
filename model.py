@@ -132,7 +132,7 @@ class Autoencoder(nn.Module):
         x = self.bn5(F.relu(self.convT5(x)))
         x = self.bn6(F.relu(self.convT6(x)))
         x = self.bn7(F.relu(self.convT7(x)))
-        x = self.sigmoid(F.relu(self.convT8(x)))
+        x = self.sigmoid(self.convT8(x))
         x = x.squeeze()
         return x
 
