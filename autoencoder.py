@@ -17,7 +17,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dataset = torch.load("data/chairs-32.to").to(device)
 dataset_size = dataset.shape[0]
 
-BATCH_SIZE = 200
+BATCH_SIZE = 100
 
 
 autoencoder = Autoencoder()
@@ -28,25 +28,38 @@ optimizer = optim.Adam(autoencoder.parameters(), lr=0.001, betas = (0.5, 0.5))
 
 viewer = VoxelViewer()
 
-for epoch in count():
-    try:
-        indices = torch.tensor(random.sample(range(dataset_size), BATCH_SIZE), device = device)
-        sample = dataset[indices, :, :, :]
+def create_batches(sample_count, batch_size):
+    batch_count = int(sample_count / batch_size)
+    indices = list(range(sample_count))
+    random.shuffle(list(range(sample_count)))
+    for i in range(batch_count - 1):
+        yield indices[i * batch_size:(i+1)*batch_size]
+    yield indices[(batch_count - 1) * batch_size:]
 
-        autoencoder.zero_grad()
-        output = autoencoder.forward(sample)
-        loss = criterion(output, sample)
-        loss.backward()
-        optimizer.step()        
 
-        viewer.set_voxels(output[0, :, :, :].squeeze().detach().cpu().numpy())
-        error = loss.item()
+def train():
+    for epoch in count():
+        batch_index = 0
+        for batch in create_batches(dataset_size, BATCH_SIZE):
+            try:
+                indices = torch.tensor(batch, device = device)
+                sample = dataset[indices, :, :, :]
 
-        if epoch % 50 == 0:
-            autoencoder.save()
-            print("Model parameters saved.")
-        
-        print("epoch " + str(epoch) + ": error: " + '{0:.8f}'.format(error))
-    except KeyboardInterrupt:
-        viewer.stop()
-        break
+                autoencoder.zero_grad()
+                output = autoencoder.forward(sample)
+                loss = criterion(output, sample)
+                loss.backward()
+                optimizer.step()        
+
+                viewer.set_voxels(output[0, :, :, :].squeeze().detach().cpu().numpy())
+                error = loss.item()
+
+                print("epoch " + str(epoch) + ", batch " + str(batch_index) + " error: " + '{0:.8f}'.format(error))                
+                batch_index += 1
+            except KeyboardInterrupt:
+                viewer.stop()
+                return
+        autoencoder.save()
+        print("Model parameters saved.")
+
+train()
