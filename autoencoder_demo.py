@@ -21,6 +21,7 @@ dataset_size = dataset.shape[0]
 
 autoencoder = Autoencoder()
 autoencoder.load()
+autoencoder.eval()
 
 viewer = VoxelViewer()
 
@@ -30,8 +31,8 @@ STEPS = 40
 
 SHAPE = (200, )
 
-TRANSITION_TIME = 1
-WAIT_TIME = 0.5
+TRANSITION_TIME = 0.8
+WAIT_TIME = 0.8
 
 def get_random_():
     return distribution.sample(sample_shape=SHAPE).to(device)
