@@ -35,7 +35,7 @@ class Generator(nn.Module):
 
     def generate(self, device, batch_size = 1):
         shape = [batch_size, 200, 1, 1, 1]
-        distribution = torch.distributions.uniform.Uniform(0, 1)
+        distribution = torch.distributions.normal.Normal(0, 0.33)
         x = distribution.sample(torch.Size(shape)).to(device)
         return self.forward(x)
 
