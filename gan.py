@@ -13,6 +13,7 @@ from model import Generator, Discriminator, Autoencoder
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 dataset = torch.load("data/chairs-32.to").to(device)
+dataset = dataset * 2 - 1
 dataset_size = dataset.shape[0]
 
 generator = Generator()
@@ -31,8 +32,8 @@ def load_from_autoencoder():
 
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025, betas = (0.5, 0.5))
 
-discriminator_criterion = torch.nn.functional.binary_cross_entropy
-discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00005, betas = (0.5, 0.5))
+discriminator_criterion = torch.nn.functional.mse_loss
+discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00001, betas = (0.5, 0.5))
 
 viewer = VoxelViewer()
 

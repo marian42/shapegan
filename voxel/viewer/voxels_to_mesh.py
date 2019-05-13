@@ -1,6 +1,6 @@
 import numpy as np
 
-def create_vertices(voxels_array, threshold = 0.5):
+def create_vertices(voxels_array, threshold = 0.0):
     voxels = np.pad(voxels_array, 1, mode = 'constant')
     mask = voxels > threshold
 

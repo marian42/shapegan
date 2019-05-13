@@ -22,7 +22,7 @@ class Generator(nn.Module):
         self.convT3 = nn.ConvTranspose3d(in_channels = 128, out_channels = 64, kernel_size = 4, stride = 2, padding = 1)
         self.bn3 = nn.BatchNorm3d(64)
         self.convT4 = nn.ConvTranspose3d(in_channels = 64, out_channels = 1, kernel_size = 4, stride = 2, padding = 1)
-        self.sigmoid = nn.Sigmoid()
+        self.tanh = nn.Tanh()
 
         self.cuda()
 
@@ -30,7 +30,7 @@ class Generator(nn.Module):
         x = self.bn1(F.relu(self.convT1(x)))
         x = self.bn2(F.relu(self.convT2(x)))
         x = self.bn3(F.relu(self.convT3(x)))
-        x = self.sigmoid(self.convT4(x))
+        x = self.tanh(self.convT4(x))
         return x
 
     def generate(self, device, batch_size = 1):
