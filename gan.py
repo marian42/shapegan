@@ -30,14 +30,14 @@ def load_from_autoencoder():
 
 #load_from_autoencoder()
 
-generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025, betas = (0.5, 0.5))
+generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025)
 
 discriminator_criterion = torch.nn.functional.mse_loss
-discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00001, betas = (0.5, 0.5))
+discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.0001)
 
 viewer = VoxelViewer()
 
-BATCH_SIZE = 20
+BATCH_SIZE = 64
 
 generator_quality = 0.5
 valid_sample_prediction = 0.5
@@ -94,7 +94,7 @@ for epoch in count():
             generator_quality = np.average(discriminator_output[:BATCH_SIZE].detach().cpu().numpy())
             valid_sample_prediction = np.average(discriminator_output[BATCH_SIZE:].detach().cpu().numpy())
             
-        if epoch % 100 == 0:
+        if epoch % 100 == 0 and epoch > 1:
             generator.save()
             discriminator.save()
             print("Model parameters saved.")

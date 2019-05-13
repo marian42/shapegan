@@ -27,9 +27,9 @@ class Generator(nn.Module):
         self.cuda()
 
     def forward(self, x):
-        x = self.bn1(F.relu(self.convT1(x)))
-        x = self.bn2(F.relu(self.convT2(x)))
-        x = self.bn3(F.relu(self.convT3(x)))
+        x = self.bn1(F.leaky_relu(self.convT1(x), 0.2))
+        x = self.bn2(F.leaky_relu(self.convT2(x), 0.2))
+        x = self.bn3(F.leaky_relu(self.convT3(x), 0.2))
         x = self.tanh(self.convT4(x))
         return x
 
