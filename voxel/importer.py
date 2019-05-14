@@ -15,7 +15,7 @@ def load_voxels(filename, size):
     return voxels
 
 
-def prepare_dataset(directory, size, out_file_name = "dataset.to"):
+def prepare_dataset(directory, size = 32, out_file_name = "dataset.to"):
     filenames = []
     print("Scanning directory " + directory + "...")
     for subdirectory in os.listdir(directory):
@@ -27,6 +27,6 @@ def prepare_dataset(directory, size, out_file_name = "dataset.to"):
     for filename in tqdm(filenames):
         models.append(load_voxels(filename, size))
     batch = np.stack(models).astype(np.float32)
-    tensor = torch.tensor(batch)
+    tensor = torch.tensor(batch) * 2 - 1
 
     torch.save(tensor, out_file_name)

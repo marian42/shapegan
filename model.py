@@ -99,7 +99,7 @@ class Autoencoder(nn.Module):
         self.conv3 = nn.Conv3d(in_channels = 128, out_channels = 256, kernel_size = 4, stride = 2, padding = 1)
         self.bn3 = nn.BatchNorm3d(256)
         self.conv4 = nn.Conv3d(in_channels = 256, out_channels = AUTOENCODER_BOTTLENECK, kernel_size = 4, stride = 1)
-
+        
         self.convT5 = nn.ConvTranspose3d(in_channels = AUTOENCODER_BOTTLENECK, out_channels = 256, kernel_size = 4, stride = 1)
         self.bn5 = nn.BatchNorm3d(256)
         self.convT6 = nn.ConvTranspose3d(in_channels = 256, out_channels = 128, kernel_size = 4, stride = 2, padding = 1)
@@ -107,7 +107,7 @@ class Autoencoder(nn.Module):
         self.convT7 = nn.ConvTranspose3d(in_channels = 128, out_channels = 64, kernel_size = 4, stride = 2, padding = 1)
         self.bn7 = nn.BatchNorm3d(64)
         self.convT8 = nn.ConvTranspose3d(in_channels = 64, out_channels = 1, kernel_size = 4, stride = 2, padding = 1)
-        self.sigmoid = nn.Sigmoid()
+        self.tanh = nn.Tanh()
 
         self.cuda()
 
@@ -132,7 +132,7 @@ class Autoencoder(nn.Module):
         x = self.bn5(F.relu(self.convT5(x)))
         x = self.bn6(F.relu(self.convT6(x)))
         x = self.bn7(F.relu(self.convT7(x)))
-        x = self.sigmoid(self.convT8(x))
+        x = self.tanh(self.convT8(x))
         x = x.squeeze()
         return x
 

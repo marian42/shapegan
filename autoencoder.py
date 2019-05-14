@@ -23,7 +23,7 @@ BATCH_SIZE = 100
 autoencoder = Autoencoder()
 autoencoder.load()
 
-criterion = torch.nn.functional.binary_cross_entropy
+cross_entropy = torch.nn.functional.binary_cross_entropy
 optimizer = optim.Adam(autoencoder.parameters(), lr=0.001, betas = (0.5, 0.5))
 
 viewer = VoxelViewer()
@@ -47,7 +47,7 @@ def train():
 
                 autoencoder.zero_grad()
                 output = autoencoder.forward(sample)
-                loss = criterion(output, sample)
+                loss = cross_entropy(output / 2 + 0.5, sample / 2 + 0.5)
                 loss.backward()
                 optimizer.step()        
 

@@ -4,7 +4,7 @@ import time
 
 from voxel.viewer import VoxelViewer
 
-dataset = torch.load("data/airplanes-64.to")
+dataset = torch.load("data/chairs-32.to")
 dataset_size = dataset.shape[0]
 
 viewer = VoxelViewer()

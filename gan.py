@@ -13,7 +13,7 @@ from model import Generator, Discriminator, Autoencoder
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 dataset = torch.load("data/chairs-32.to").to(device)
-dataset = dataset * 2 - 1
+dataset = dataset
 dataset_size = dataset.shape[0]
 
 generator = Generator()
