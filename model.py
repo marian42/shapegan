@@ -10,12 +10,16 @@ AUTOENCODER_FILENAME = "data/autoencoder.to"
 
 import os
 
+LATENT_CODE_SIZE = 200
+
+standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
+
 # Based on http://3dgan.csail.mit.edu/papers/3dgan_nips.pdf
 class Generator(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
 
-        self.convT1 = nn.ConvTranspose3d(in_channels = 200, out_channels = 256, kernel_size = 4, stride = 1)
+        self.convT1 = nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 256, kernel_size = 4, stride = 1)
         self.bn1 = nn.BatchNorm3d(256)
         self.convT2 = nn.ConvTranspose3d(in_channels = 256, out_channels = 128, kernel_size = 4, stride = 2, padding = 1)
         self.bn2 = nn.BatchNorm3d(128)
@@ -34,9 +38,8 @@ class Generator(nn.Module):
         return x
 
     def generate(self, device, batch_size = 1):
-        shape = [batch_size, 200, 1, 1, 1]
-        distribution = torch.distributions.normal.Normal(0, 0.33)
-        x = distribution.sample(torch.Size(shape)).to(device)
+        shape = [batch_size, LATENT_CODE_SIZE, 1, 1, 1]
+        x = standard_normal_distribution.sample(torch.Size(shape)).to(device)
         return self.forward(x)
 
     def load(self):
@@ -86,7 +89,6 @@ class Discriminator(nn.Module):
     def save(self):
         torch.save(self.state_dict(), DISCRIMINATOR_FILENAME)
 
-AUTOENCODER_BOTTLENECK = 200
 
 class Autoencoder(nn.Module):
     def __init__(self):
@@ -98,9 +100,10 @@ class Autoencoder(nn.Module):
         self.bn2 = nn.BatchNorm3d(128)
         self.conv3 = nn.Conv3d(in_channels = 128, out_channels = 256, kernel_size = 4, stride = 2, padding = 1)
         self.bn3 = nn.BatchNorm3d(256)
-        self.conv4 = nn.Conv3d(in_channels = 256, out_channels = AUTOENCODER_BOTTLENECK, kernel_size = 4, stride = 1)
+        self.conv4_mean = nn.Conv3d(in_channels = 256, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
+        self.conv4_log_variance = nn.Conv3d(in_channels = 256, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
         
-        self.convT5 = nn.ConvTranspose3d(in_channels = AUTOENCODER_BOTTLENECK, out_channels = 256, kernel_size = 4, stride = 1)
+        self.convT5 = nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 256, kernel_size = 4, stride = 1)
         self.bn5 = nn.BatchNorm3d(256)
         self.convT6 = nn.ConvTranspose3d(in_channels = 256, out_channels = 128, kernel_size = 4, stride = 2, padding = 1)
         self.bn6 = nn.BatchNorm3d(128)
@@ -119,9 +122,14 @@ class Autoencoder(nn.Module):
         x = self.bn1(F.leaky_relu(self.conv1(x), 0.2))
         x = self.bn2(F.leaky_relu(self.conv2(x), 0.2))
         x = self.bn3(F.leaky_relu(self.conv3(x), 0.2))
-        x = F.leaky_relu(self.conv4(x), 0.2)
-        x = x.squeeze()
-        return x
+        mean = self.conv4_mean(x).squeeze()
+        log_variance = self.conv4_log_variance(x).squeeze()
+        return mean, log_variance
+
+    def create_latent_code(self, mean, log_variance, device):
+        standard_deviation = torch.exp(log_variance * 0.5)
+        eps = standard_normal_distribution.sample(mean.shape).to(device)
+        return mean + standard_deviation * eps
 
     def decode(self, x):
         if len(x.shape) == 1:
@@ -136,10 +144,11 @@ class Autoencoder(nn.Module):
         x = x.squeeze()
         return x
 
-    def forward(self, x):
-        x = self.encode(x)
-        x = self.decode(x)
-        return x
+    def forward(self, x, device):
+        mean, log_variance = self.encode(x)
+        z = self.create_latent_code(mean, log_variance, device)
+        x = self.decode(z)
+        return x, mean, log_variance
     
     def load(self):
         if os.path.isfile(AUTOENCODER_FILENAME):
