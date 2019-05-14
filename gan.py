@@ -33,73 +33,80 @@ def load_from_autoencoder():
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025)
 
 discriminator_criterion = torch.nn.functional.mse_loss
-discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.0001)
+discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00001)
 
 viewer = VoxelViewer()
 
 BATCH_SIZE = 64
 
-generator_quality = 0.5
-valid_sample_prediction = 0.5
-
-def create_valid_sample(size = BATCH_SIZE):
-    indices = torch.tensor(random.sample(range(dataset_size), BATCH_SIZE), device = device)
-    valid_sample = dataset[indices, :, :, :]
-    return valid_sample
-
 def contains_nan(tensor):
     return torch.sum(torch.isnan(tensor)).item() > 0
 
-for epoch in count():
-    try:
-        generator_optimizer.zero_grad()
+valid_target_default = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
+fake_target_default = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
 
-        # generate samples
-        fake_sample = generator.generate(device, batch_size = 2)
-        viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
+def create_batches(sample_count, batch_size):
+    batch_count = int(sample_count / batch_size)
+    indices = list(range(sample_count))
+    random.shuffle(list(range(sample_count)))
+    for i in range(batch_count - 1):
+        yield indices[i * batch_size:(i+1)*batch_size]
+    yield indices[(batch_count - 1) * batch_size:]
 
-        if generator_quality < 0.8:
-            # train generator
-            generator_optimizer.zero_grad()
-             
-            valid_sample = create_valid_sample()
-            valid_discriminator_output = discriminator.forward(valid_sample)
-            
-            fake_sample = generator.generate(device, batch_size = BATCH_SIZE)
-            if contains_nan(fake_sample):
-                print("fake_sample contains NaN values. Skipping...")
-                break
-            
-            fake_discriminator_output = discriminator.forward(fake_sample)
-            fake_loss = torch.mean(torch.log(valid_discriminator_output) + torch.log(1 - fake_discriminator_output))
-            fake_loss.backward()
-            generator_optimizer.step()
-            generator_quality = np.average(fake_discriminator_output.detach().cpu().numpy())
-            
+def train():
+    fake_sample_prediction = 0.5
+    valid_sample_prediction = 0.5
+
+    for epoch in count():
+        batch_index = 0
+        for batch in create_batches(dataset_size, BATCH_SIZE):
+            try:
+                # train generator
+                generator_optimizer.zero_grad()
+                    
+                fake_sample = generator.generate(device, batch_size = BATCH_SIZE)
+                viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
+                if contains_nan(fake_sample):
+                    print("fake_sample contains NaN values. Skipping...")
+                    break
+                
+                fake_discriminator_output = discriminator.forward(fake_sample)
+                fake_loss = torch.mean(-torch.log(fake_discriminator_output))
+                fake_loss.backward()
+                generator_optimizer.step()
+                    
+                
+                # train discriminator
+                indices = torch.tensor(batch, device = device)
+                current_batch_size = indices.shape[0] # equals BATCH_SIZE for all batches except the last one
+                fake_target = fake_target_default if current_batch_size == BATCH_SIZE else torch.zeros(current_batch_size, requires_grad=False).to(device)
+                valid_target = valid_target_default if current_batch_size == BATCH_SIZE else torch.ones(current_batch_size, requires_grad=False).to(device)
+
+                discriminator_optimizer.zero_grad()
+                fake_sample = generator.generate(device, batch_size = current_batch_size).detach()
+                discriminator_output_fake = discriminator.forward(fake_sample)
+                fake_loss = discriminator_criterion(discriminator_output_fake, fake_target)
+                fake_loss.backward()
+                discriminator_optimizer.step()
+
+                discriminator_optimizer.zero_grad()
+                valid_sample = dataset[indices, :, :, :]
+                discriminator_output_valid = discriminator.forward(valid_sample)
+                valid_loss = discriminator_criterion(discriminator_output_valid, valid_target)
+                valid_loss.backward()
+                discriminator_optimizer.step()
+                
+                fake_sample_prediction = torch.mean(discriminator_output_fake).item()
+                valid_sample_prediction = torch.mean(discriminator_output_valid).item()
+                batch_index += 1
+                print("epoch " + str(epoch) + ", batch " + str(batch_index) + ": prediction on fake samples: " + '{0:.4f}'.format(fake_sample_prediction) + ", prediction on valid samples: " + '{0:.4f}'.format(valid_sample_prediction))
+            except KeyboardInterrupt:
+                viewer.stop()
+                return
         
-        if generator_quality > 0.2:
-            # train discriminator
-            
-            discriminator_optimizer.zero_grad()
-            fake_sample = generator.generate(device, batch_size = BATCH_SIZE).detach()
-            valid_sample = create_valid_sample().unsqueeze(dim=1)
-            combined_sample = torch.cat((fake_sample, valid_sample), dim = 0)
-            discriminator_output = discriminator.forward(combined_sample)
-            
-            desired_output = torch.cat((torch.zeros(BATCH_SIZE), torch.ones(BATCH_SIZE))).to(device)
-            loss = discriminator_criterion(discriminator_output, desired_output)
-            loss.backward()
-            discriminator_optimizer.step()
+        generator.save()
+        discriminator.save()
+        print("Model parameters saved.")
 
-            generator_quality = np.average(discriminator_output[:BATCH_SIZE].detach().cpu().numpy())
-            valid_sample_prediction = np.average(discriminator_output[BATCH_SIZE:].detach().cpu().numpy())
-            
-        if epoch % 100 == 0 and epoch > 1:
-            generator.save()
-            discriminator.save()
-            print("Model parameters saved.")
 
-        print("epoch " + str(epoch) + ": prediction on fake samples: " + '{0:.4f}'.format(generator_quality) + ", prediction on valid samples: " + '{0:.4f}'.format(valid_sample_prediction))
-    except KeyboardInterrupt:
-        viewer.stop()
-        break
+train()                
