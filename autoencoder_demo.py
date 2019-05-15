@@ -12,7 +12,7 @@ import numpy as np
 
 from voxel.viewer import VoxelViewer
 
-from model import Autoencoder
+from model import Autoencoder, LATENT_CODE_SIZE, standard_normal_distribution
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -25,21 +25,21 @@ autoencoder.eval()
 
 viewer = VoxelViewer()
 
-distribution = torch.distributions.uniform.Uniform(0, 100)
-
 STEPS = 40
 
-SHAPE = (200, )
+SHAPE = (LATENT_CODE_SIZE, )
 
 TRANSITION_TIME = 0.8
 WAIT_TIME = 0.8
 
 def get_random_():
-    return distribution.sample(sample_shape=SHAPE).to(device)
+    return standard_normal_distribution.sample(sample_shape=SHAPE).to(device)
+
 
 def get_random():
     index = random.randint(0, dataset_size -1)
-    return autoencoder.encode(dataset[index, :, :, :])
+    return autoencoder.create_latent_code(*autoencoder.encode(dataset[index, :, :, :]), device)
+
 
 previous_model = None
 next_model = get_random()

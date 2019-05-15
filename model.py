@@ -38,8 +38,8 @@ class Generator(nn.Module):
         return x
 
     def generate(self, device, batch_size = 1):
-        shape = [batch_size, LATENT_CODE_SIZE, 1, 1, 1]
-        x = standard_normal_distribution.sample(torch.Size(shape)).to(device)
+        shape = torch.Size([batch_size, LATENT_CODE_SIZE, 1, 1, 1])
+        x = standard_normal_distribution.sample(shape).to(device)
         return self.forward(x)
 
     def load(self):
@@ -50,10 +50,17 @@ class Generator(nn.Module):
         torch.save(self.state_dict(), GENERATOR_FILENAME)
 
     def copy_autoencoder_weights(self, autoencoder):
-        self.convT1.weight = autoencoder.convT5.weight
-        self.convT2.weight = autoencoder.convT6.weight
-        self.convT3.weight = autoencoder.convT7.weight
-        self.convT4.weight = autoencoder.convT8.weight
+        def copy(source, destination):
+            destination.load_state_dict(source.state_dict())
+
+        copy(autoencoder.convT5, self.convT1)
+        copy(autoencoder.convT6, self.convT2)
+        copy(autoencoder.convT7, self.convT3)
+        copy(autoencoder.convT8, self.convT4)
+        copy(autoencoder.bn5, self.bn1)
+        copy(autoencoder.bn6, self.bn2)
+        copy(autoencoder.bn7, self.bn3)
+        
 
 
 class Discriminator(nn.Module):
@@ -119,9 +126,9 @@ class Autoencoder(nn.Module):
             x = x.unsqueeze(dim = 0)  # add dimension for batch
         if len(x.shape) == 4:
             x = x.unsqueeze(dim = 1)  # add dimension for channels
-        x = self.bn1(F.leaky_relu(self.conv1(x), 0.2))
-        x = self.bn2(F.leaky_relu(self.conv2(x), 0.2))
-        x = self.bn3(F.leaky_relu(self.conv3(x), 0.2))
+        x = F.leaky_relu(self.bn1(self.conv1(x)), 0.2)
+        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2)
+        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2)
         mean = self.conv4_mean(x).squeeze()
         log_variance = self.conv4_log_variance(x).squeeze()
         return mean, log_variance
@@ -137,9 +144,9 @@ class Autoencoder(nn.Module):
         while len(x.shape) < 5: 
             x = x.unsqueeze(dim = len(x.shape)) # add 3 voxel dimensions
         
-        x = self.bn5(F.relu(self.convT5(x)))
-        x = self.bn6(F.relu(self.convT6(x)))
-        x = self.bn7(F.relu(self.convT7(x)))
+        x = F.leaky_relu(self.bn5(self.convT5(x)), 0.2)
+        x = F.leaky_relu(self.bn6(self.convT6(x)), 0.2)
+        x = F.leaky_relu(self.bn7(self.convT7(x)), 0.2)
         x = self.tanh(self.convT8(x))
         x = x.squeeze()
         return x

@@ -26,7 +26,7 @@ autoencoder = Autoencoder()
 autoencoder.load()
 
 cross_entropy = torch.nn.functional.binary_cross_entropy
-optimizer = optim.Adam(autoencoder.parameters(), lr=0.001, betas = (0.5, 0.5))
+optimizer = optim.Adam(autoencoder.parameters(), lr=0.0001, betas = (0.5, 0.5))
 
 viewer = VoxelViewer()
 
