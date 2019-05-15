@@ -39,8 +39,6 @@ viewer = VoxelViewer()
 
 BATCH_SIZE = 64
 
-def contains_nan(tensor):
-    return torch.sum(torch.isnan(tensor)).item() > 0
 
 valid_target_default = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
 fake_target_default = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
@@ -66,9 +64,6 @@ def train():
                     
                 fake_sample = generator.generate(device, batch_size = BATCH_SIZE)
                 viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
-                if contains_nan(fake_sample):
-                    print("fake_sample contains NaN values. Skipping...")
-                    break
                 
                 fake_discriminator_output = discriminator.forward(fake_sample)
                 fake_loss = torch.mean(-torch.log(fake_discriminator_output))
