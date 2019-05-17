@@ -21,9 +21,11 @@ dataset_size = dataset.shape[0]
 viewer = VoxelViewer()
 
 generator = Generator()
+generator.filename = "wgan-generator.to"
 generator.load()
 
 critic = Discriminator()
+critic.filename = "wgan-critic.to"
 critic.use_sigmoid = False
 critic.load()
 

@@ -4,9 +4,7 @@ import torch.optim as optim
 
 import torch.nn.functional as F
 
-GENERATOR_FILENAME = "data/generator.to"
-DISCRIMINATOR_FILENAME = "data/discriminator.to"
-AUTOENCODER_FILENAME = "data/autoencoder.to"
+DATA_PATH = "data"
 
 import os
 
@@ -28,6 +26,8 @@ class Generator(nn.Module):
         self.convT4 = nn.ConvTranspose3d(in_channels = 64, out_channels = 1, kernel_size = 4, stride = 2, padding = 1)
         self.tanh = nn.Tanh()
 
+        self.filename = "generator.to"
+
         self.cuda()
 
     def forward(self, x):
@@ -42,12 +42,15 @@ class Generator(nn.Module):
         x = standard_normal_distribution.sample(shape).to(device)
         return self.forward(x)
 
+    def get_filename(self):
+        return os.path.join(DATA_PATH, self.filename)
+
     def load(self):
-        if os.path.isfile(GENERATOR_FILENAME):
-            self.load_state_dict(torch.load(GENERATOR_FILENAME))
+        if os.path.isfile(self.get_filename()):
+            self.load_state_dict(torch.load(self.get_filename()))
     
     def save(self):
-        torch.save(self.state_dict(), GENERATOR_FILENAME)
+        torch.save(self.state_dict(), self.get_filename())
 
     def copy_autoencoder_weights(self, autoencoder):
         def copy(source, destination):
@@ -74,6 +77,7 @@ class Discriminator(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
         self.use_sigmoid = True
+        self.filename = "discriminator.to"
 
         self.cuda()
 
@@ -90,12 +94,15 @@ class Discriminator(nn.Module):
         x = x.squeeze()
         return x
     
+    def get_filename(self):
+        return os.path.join(DATA_PATH, self.filename)
+
     def load(self):
-        if os.path.isfile(DISCRIMINATOR_FILENAME):
-            self.load_state_dict(torch.load(DISCRIMINATOR_FILENAME))
+        if os.path.isfile(self.get_filename()):
+            self.load_state_dict(torch.load(self.get_filename()))
     
     def save(self):
-        torch.save(self.state_dict(), DISCRIMINATOR_FILENAME)
+        torch.save(self.state_dict(), self.get_filename())
 
     def clip_weights(self, value):
         for parameter in self.parameters():
@@ -123,6 +130,8 @@ class Autoencoder(nn.Module):
         self.bn7 = nn.BatchNorm3d(64)
         self.convT8 = nn.ConvTranspose3d(in_channels = 64, out_channels = 1, kernel_size = 4, stride = 2, padding = 1)
         self.tanh = nn.Tanh()
+
+        self.filename = "autoencoder.to"
 
         self.cuda()
 
@@ -162,9 +171,12 @@ class Autoencoder(nn.Module):
         x = self.decode(z)
         return x, mean, log_variance
     
+    def get_filename(self):
+        return os.path.join(DATA_PATH, self.filename)
+
     def load(self):
-        if os.path.isfile(AUTOENCODER_FILENAME):
-            self.load_state_dict(torch.load(AUTOENCODER_FILENAME))
+        if os.path.isfile(self.get_filename()):
+            self.load_state_dict(torch.load(self.get_filename()))
     
     def save(self):
-        torch.save(self.state_dict(), AUTOENCODER_FILENAME)
+        torch.save(self.state_dict(), self.get_filename())
