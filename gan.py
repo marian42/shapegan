@@ -5,11 +5,9 @@ import torch.nn as nn
 import torch.optim as optim
 
 import random
-import numpy as np
-
 import time
+import sys
 
-from voxel.viewer import VoxelViewer
 from model import Generator, Discriminator, Autoencoder
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -37,7 +35,11 @@ generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025)
 discriminator_criterion = torch.nn.functional.mse_loss
 discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00001)
 
-viewer = VoxelViewer()
+show_viewer = "nogui" not in sys.argv
+
+if show_viewer:
+    from voxel.viewer import VoxelViewer
+    viewer = VoxelViewer()
 
 BATCH_SIZE = 64
 
@@ -66,7 +68,8 @@ def train():
                 generator_optimizer.zero_grad()
                     
                 fake_sample = generator.generate(device, batch_size = BATCH_SIZE)
-                viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
+                if show_viewer:
+                    viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                 
                 fake_discriminator_output = discriminator.forward(fake_sample)
                 fake_loss = torch.mean(-torch.log(fake_discriminator_output))
@@ -99,7 +102,8 @@ def train():
                 batch_index += 1
                 print("epoch " + str(epoch) + ", batch " + str(batch_index) + ": prediction on fake samples: " + '{0:.4f}'.format(fake_sample_prediction) + ", prediction on valid samples: " + '{0:.4f}'.format(valid_sample_prediction))
             except KeyboardInterrupt:
-                viewer.stop()
+                if show_viewer:
+                    viewer.stop()
                 return
         
         generator.save()

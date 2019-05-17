@@ -5,11 +5,9 @@ import torch.nn as nn
 import torch.optim as optim
 
 import random
-import numpy as np
-
 import time
+import sys
 
-from voxel.viewer import VoxelViewer
 from model import Generator, Discriminator, Autoencoder
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -18,7 +16,11 @@ dataset = torch.load("data/chairs-32.to").to(device)
 dataset = dataset
 dataset_size = dataset.shape[0]
 
-viewer = VoxelViewer()
+show_viewer = "nogui" not in sys.argv
+
+if show_viewer:
+    from voxel.viewer import VoxelViewer
+    viewer = VoxelViewer()
 
 generator = Generator()
 generator.filename = "wgan-generator.to"
@@ -83,7 +85,8 @@ def train():
                     critic.zero_grad()
                        
                     fake_sample = generator.generate(device, batch_size = BATCH_SIZE)
-                    viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())                    
+                    if show_viewer:
+                        viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                     fake_critic_output = critic.forward(fake_sample)
                     generator_loss = -torch.mean(fake_critic_output)                
                     generator_loss.backward()
@@ -97,7 +100,8 @@ def train():
                         + ", valid value: " + '{0:.1f}'.format(valid_sample_prediction))
                 batch_index += 1                
             except KeyboardInterrupt:
-                viewer.stop()
+                if show_viewer:
+                    viewer.stop()
                 return
         
         generator.save()
