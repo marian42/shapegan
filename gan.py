@@ -7,6 +7,8 @@ import torch.optim as optim
 import random
 import numpy as np
 
+import time
+
 from voxel.viewer import VoxelViewer
 from model import Generator, Discriminator, Autoencoder
 
@@ -57,6 +59,7 @@ def train():
 
     for epoch in count():
         batch_index = 0
+        epoch_start_time = time.time()
         for batch in create_batches(dataset_size, BATCH_SIZE):
             try:
                 # train generator
@@ -101,7 +104,7 @@ def train():
         
         generator.save()
         discriminator.save()
-        print("Model parameters saved.")
+        print("Model parameters saved. Epoch took " + '{0:.1f}'.format(time.time() - epoch_start_time) + "s.")
 
 
 train()                
