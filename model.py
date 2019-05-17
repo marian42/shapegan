@@ -68,13 +68,12 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
 
         self.conv1 = nn.Conv3d(in_channels = 1, out_channels = 64, kernel_size = 4, stride = 2, padding = 1)
-        self.bn1 = nn.BatchNorm3d(64)
         self.conv2 = nn.Conv3d(in_channels = 64, out_channels = 128, kernel_size = 4, stride = 2, padding = 1)
-        self.bn2 = nn.BatchNorm3d(128)
         self.conv3 = nn.Conv3d(in_channels = 128, out_channels = 256, kernel_size = 4, stride = 2, padding = 1)
-        self.bn3 = nn.BatchNorm3d(256)
         self.conv4 = nn.Conv3d(in_channels = 256, out_channels = 1, kernel_size = 4, stride = 1)
         self.sigmoid = nn.Sigmoid()
+
+        self.use_sigmoid = True
 
         self.cuda()
 
@@ -85,7 +84,9 @@ class Discriminator(nn.Module):
         x = F.leaky_relu(self.conv1(x), 0.2)
         x = F.leaky_relu(self.conv2(x), 0.2)
         x = F.leaky_relu(self.conv3(x), 0.2)
-        x = self.sigmoid(self.conv4(x))
+        x = self.conv4(x)
+        if self.use_sigmoid:
+            x = self.sigmoid(x)
         x = x.squeeze()
         return x
     
@@ -95,6 +96,10 @@ class Discriminator(nn.Module):
     
     def save(self):
         torch.save(self.state_dict(), DISCRIMINATOR_FILENAME)
+
+    def clip_weights(self, value):
+        for parameter in self.parameters():
+            parameter.data.clamp_(-value, value)
 
 
 class Autoencoder(nn.Module):
