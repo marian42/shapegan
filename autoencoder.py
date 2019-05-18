@@ -8,7 +8,7 @@ import random
 
 import numpy as np
 
-from voxel.viewer import VoxelViewer
+import sys
 
 from model import Autoencoder
 
@@ -28,7 +28,11 @@ autoencoder.load()
 cross_entropy = torch.nn.functional.binary_cross_entropy
 optimizer = optim.Adam(autoencoder.parameters(), lr=0.0001, betas = (0.5, 0.5))
 
-viewer = VoxelViewer()
+show_viewer = "nogui" not in sys.argv
+
+if show_viewer:
+    from voxel.viewer import VoxelViewer
+    viewer = VoxelViewer()
 
 error_history = deque(maxlen = 50)
 
@@ -59,7 +63,8 @@ def train():
                 loss.backward()
                 optimizer.step()        
 
-                viewer.set_voxels(output[0, :, :, :].squeeze().detach().cpu().numpy())
+                if show_viewer:
+                    viewer.set_voxels(output[0, :, :, :].squeeze().detach().cpu().numpy())
                 error = loss.item()
 
                 print("epoch " + str(epoch) + ", batch " + str(batch_index) \
@@ -68,7 +73,8 @@ def train():
                     + 'KLD loss: {0:.8f}'.format(kld_loss.item()))     
                 batch_index += 1
             except KeyboardInterrupt:
-                viewer.stop()
+                if show_viewer:
+                    viewer.stop()
                 return
         autoencoder.save()
         print("Model parameters saved.")
