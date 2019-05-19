@@ -17,7 +17,7 @@ class VoxelViewer():
         self.size = size
         
         self.mouse = None
-        self.rotation = (45, 45)
+        self.rotation = (147, 30)
 
         self.vertex_buffer = None
         self.normal_buffer = None
@@ -52,14 +52,14 @@ class VoxelViewer():
         self.request_render = True
 
     def _poll_mouse(self):
-        _, _, pressed = pygame.mouse.get_pressed()
+        left_mouse, _, right_mouse = pygame.mouse.get_pressed()
+        pressed = left_mouse == 1 or right_mouse == 1
         current_mouse = pygame.mouse.get_pos()
-        if self.mouse is not None:
+        if self.mouse is not None and pressed:
             movement = (current_mouse[0] - self.mouse[0], current_mouse[1] - self.mouse[1])
-            if pressed == 1:
-                self.rotation = (self.rotation[0] + movement[0], max(-90, min(90, self.rotation[1] + movement[1])))
+            self.rotation = (self.rotation[0] + movement[0], max(-90, min(90, self.rotation[1] + movement[1])))
         self.mouse = current_mouse
-        return pressed == 1
+        return pressed
 
     def _render(self):
         self.request_render = False
