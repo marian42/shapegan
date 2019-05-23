@@ -19,14 +19,15 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dataset = torch.load("data/chairs-32.to").to(device)
 dataset_size = dataset.shape[0]
 
-BATCH_SIZE = 100
+BATCH_SIZE = 64
 
+KLD_LOSS_WEIGHT = 0.03
 
 autoencoder = Autoencoder()
 autoencoder.load()
 
 cross_entropy = torch.nn.functional.binary_cross_entropy
-optimizer = optim.Adam(autoencoder.parameters(), lr=0.0001, betas = (0.5, 0.5))
+optimizer = optim.Adam(autoencoder.parameters(), lr=0.00005)
 
 show_viewer = "nogui" not in sys.argv
 
@@ -34,7 +35,7 @@ if show_viewer:
     from voxel.viewer import VoxelViewer
     viewer = VoxelViewer()
 
-error_history = deque(maxlen = 50)
+error_history = deque(maxlen = BATCH_SIZE)
 
 def create_batches(sample_count, batch_size):
     batch_count = int(sample_count / batch_size)
@@ -58,7 +59,7 @@ def train():
                 reconstruction_loss = cross_entropy(output / 2 + 0.5, sample / 2 + 0.5)
                 error_history.append(reconstruction_loss.item())
                 kld_loss = torch.mean(((mean.pow(2) + torch.exp(log_variance)) * -1 + 1 + log_variance) * -0.5)
-                loss = reconstruction_loss + kld_loss
+                loss = reconstruction_loss + kld_loss * KLD_LOSS_WEIGHT
                 
                 loss.backward()
                 optimizer.step()        
