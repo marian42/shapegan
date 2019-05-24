@@ -30,9 +30,6 @@ test_indices = all_indices[:int(dataset_size * TEST_SPLIT)]
 training_indices = list(all_indices[int(dataset_size * TEST_SPLIT):])
 test_data = dataset[test_indices]
 
-print(len(test_indices))
-print(len(training_indices))
-
 autoencoder = Autoencoder()
 autoencoder.load()
 

@@ -50,7 +50,7 @@ fake_target_default = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
 def create_batches(sample_count, batch_size):
     batch_count = int(sample_count / batch_size)
     indices = list(range(sample_count))
-    random.shuffle(list(range(sample_count)))
+    random.shuffle(indices)
     for i in range(batch_count - 1):
         yield indices[i * batch_size:(i+1)*batch_size]
     yield indices[(batch_count - 1) * batch_size:]
