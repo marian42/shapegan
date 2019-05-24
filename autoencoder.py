@@ -21,8 +21,17 @@ dataset = torch.load("data/chairs-32.to").to(device)
 dataset_size = dataset.shape[0]
 
 BATCH_SIZE = 64
-
 KLD_LOSS_WEIGHT = 0.03
+TEST_SPLIT = 0.1
+
+all_indices = list(range(dataset_size))
+random.shuffle(all_indices)
+test_indices = all_indices[:int(dataset_size * TEST_SPLIT)]
+training_indices = list(all_indices[int(dataset_size * TEST_SPLIT):])
+test_data = dataset[test_indices]
+
+print(len(test_indices))
+print(len(training_indices))
 
 autoencoder = Autoencoder()
 autoencoder.load()
@@ -38,20 +47,25 @@ if show_viewer:
 
 error_history = deque(maxlen = BATCH_SIZE)
 
-def create_batches(sample_count, batch_size):
-    batch_count = int(sample_count / batch_size)
-    indices = list(range(sample_count))
-    random.shuffle(list(range(sample_count)))
+def create_batches():
+    batch_count = int(len(training_indices) / BATCH_SIZE)
+    random.shuffle(training_indices)
     for i in range(batch_count - 1):
-        yield indices[i * batch_size:(i+1)*batch_size]
-    yield indices[(batch_count - 1) * batch_size:]
+        yield training_indices[i * BATCH_SIZE:(i+1)*BATCH_SIZE]
+    yield training_indices[(batch_count - 1) * BATCH_SIZE:]
+
+def test():
+    with torch.no_grad():
+        output, _, _ = autoencoder.forward(test_data, device)
+        reconstruction_loss = cross_entropy(output / 2 + 0.5, test_data / 2 + 0.5)
+        print("Reconstruction loss on test data: " + str(reconstruction_loss.item()))
 
 
 def train():
     for epoch in count():
         batch_index = 0
         epoch_start_time = time.time()
-        for batch in create_batches(dataset_size, BATCH_SIZE):
+        for batch in create_batches():
             try:
                 indices = torch.tensor(batch, device = device)
                 sample = dataset[indices, :, :, :]
@@ -71,7 +85,7 @@ def train():
                 error = loss.item()
 
                 print("epoch " + str(epoch) + ", batch " + str(batch_index) \
-                    + ', reconstruction error: {0:.8f}'.format(reconstruction_loss.item()) \
+                    + ', reconstruction loss: {0:.8f}'.format(reconstruction_loss.item()) \
                     + ' (average: {0:.8f}), '.format(sum(error_history) / len(error_history)) \
                     + 'KLD loss: {0:.8f}'.format(kld_loss.item()))     
                 batch_index += 1
@@ -81,5 +95,6 @@ def train():
                 return
         autoencoder.save()
         print("Model parameters saved. Epoch took " + '{0:.1f}'.format(time.time() - epoch_start_time) + "s.")
+        test()
 
 train()
