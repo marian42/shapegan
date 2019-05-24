@@ -9,6 +9,7 @@ import random
 import numpy as np
 
 import sys
+import time
 
 from model import Autoencoder
 
@@ -49,6 +50,7 @@ def create_batches(sample_count, batch_size):
 def train():
     for epoch in count():
         batch_index = 0
+        epoch_start_time = time.time()
         for batch in create_batches(dataset_size, BATCH_SIZE):
             try:
                 indices = torch.tensor(batch, device = device)
@@ -78,6 +80,6 @@ def train():
                     viewer.stop()
                 return
         autoencoder.save()
-        print("Model parameters saved.")
+        print("Model parameters saved. Epoch took " + '{0:.1f}'.format(time.time() - epoch_start_time) + "s.")
 
 train()
