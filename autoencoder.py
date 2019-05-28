@@ -5,6 +5,8 @@ import torch.nn as nn
 import torch.optim as optim
 
 import random
+random.seed(0)
+torch.manual_seed(0)
 
 import numpy as np
 
@@ -12,6 +14,8 @@ import sys
 import time
 
 from model import Autoencoder
+
+from loss import bce_loss, voxel_difference, kld_loss
 
 from collections import deque
 
@@ -21,8 +25,7 @@ dataset = torch.load("data/chairs-32.to").to(device)
 dataset_size = dataset.shape[0]
 
 BATCH_SIZE = 64
-KLD_LOSS_WEIGHT = 0.03
-TEST_SPLIT = 0.1
+TEST_SPLIT = 0.05
 
 all_indices = list(range(dataset_size))
 random.shuffle(all_indices)
@@ -31,9 +34,9 @@ training_indices = list(all_indices[int(dataset_size * TEST_SPLIT):])
 test_data = dataset[test_indices]
 
 autoencoder = Autoencoder()
-autoencoder.load()
+if "continue" in sys.argv:
+    autoencoder.load()
 
-cross_entropy = torch.nn.functional.binary_cross_entropy
 optimizer = optim.Adam(autoencoder.parameters(), lr=0.00005)
 
 show_viewer = "nogui" not in sys.argv
@@ -51,14 +54,20 @@ def create_batches():
         yield training_indices[i * BATCH_SIZE:(i+1)*BATCH_SIZE]
     yield training_indices[(batch_count - 1) * BATCH_SIZE:]
 
-def test():
+def test(epoch_index, epoch_time):
     with torch.no_grad():
-        output, _, _ = autoencoder.forward(test_data, device)
-        reconstruction_loss = cross_entropy(output / 2 + 0.5, test_data / 2 + 0.5)
-        print("Reconstruction loss on test data: " + str(reconstruction_loss.item()))
+        output, mean, log_variance = autoencoder.forward(test_data, device)
+        reconstruction_loss = bce_loss(output, test_data).item()
+        kld = kld_loss(mean, log_variance)
+        scale_factor = 1.0 / np.prod(test_data.shape)
+        print("Epoch {:d} ({:.1f}s): ".format(epoch_index, epoch_time) +
+            "BCE loss: {:.4f}, ".format(reconstruction_loss * scale_factor) +
+            "Voxel diff: {:.4f}, ".format(voxel_difference(output, test_data)) + 
+            "KLD loss: {:4f}, ".format(kld * scale_factor) + 
+            "training loss: {:4f}".format(sum(error_history) / len(error_history)))
 
 
-def train():
+def train():    
     for epoch in count():
         batch_index = 0
         epoch_start_time = time.time()
@@ -66,13 +75,15 @@ def train():
             try:
                 indices = torch.tensor(batch, device = device)
                 sample = dataset[indices, :, :, :]
+                scale_factor = 1.0 / np.prod(sample.shape)    
 
                 autoencoder.zero_grad()
                 output, mean, log_variance = autoencoder.forward(sample, device)
-                reconstruction_loss = cross_entropy(output / 2 + 0.5, sample / 2 + 0.5)
-                error_history.append(reconstruction_loss.item())
-                kld_loss = torch.mean(((mean.pow(2) + torch.exp(log_variance)) * -1 + 1 + log_variance) * -0.5)
-                loss = reconstruction_loss + kld_loss * KLD_LOSS_WEIGHT
+                reconstruction_loss = bce_loss(output, sample)
+                error_history.append(reconstruction_loss.item() * scale_factor)
+                kld = kld_loss(mean, log_variance)
+
+                loss = reconstruction_loss + kld
                 
                 loss.backward()
                 optimizer.step()        
@@ -81,17 +92,18 @@ def train():
                     viewer.set_voxels(output[0, :, :, :].squeeze().detach().cpu().numpy())
                 error = loss.item()
 
-                print("epoch " + str(epoch) + ", batch " + str(batch_index) \
-                    + ', reconstruction loss: {0:.8f}'.format(reconstruction_loss.item()) \
-                    + ' (average: {0:.8f}), '.format(sum(error_history) / len(error_history)) \
-                    + 'KLD loss: {0:.8f}'.format(kld_loss.item()))     
+                if show_viewer:
+                    print("epoch " + str(epoch) + ", batch " + str(batch_index) \
+                        + ', reconstruction loss: {0:.4f}'.format(reconstruction_loss.item() * scale_factor) \
+                        + ' (average: {0:.4f}), '.format(sum(error_history) / len(error_history)) \
+                        + 'KLD loss: {0:.4f}'.format(kld * scale_factor))
                 batch_index += 1
             except KeyboardInterrupt:
                 if show_viewer:
                     viewer.stop()
                 return
         autoencoder.save()
-        print("Model parameters saved. Epoch took " + '{0:.1f}'.format(time.time() - epoch_start_time) + "s.")
-        test()
+        test(epoch, time.time() - epoch_start_time)
 
 train()
+exit()
