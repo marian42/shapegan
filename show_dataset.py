@@ -3,15 +3,13 @@ import torch
 import time
 
 from voxel.viewer import VoxelViewer
-
-dataset = torch.load("data/chairs-32.to")
-dataset_size = dataset.shape[0]
+from dataset import dataset as dataset
 
 viewer = VoxelViewer()
 
 while True:
     try:
-        viewer.set_voxels(dataset[random.randint(0, dataset_size - 1), :, :, :].squeeze().detach().numpy())
+        viewer.set_voxels(dataset.voxels[random.randint(0, dataset.size - 1), :, :, :].squeeze().detach().cpu().numpy())
         time.sleep(0.4)
     except KeyboardInterrupt:
         viewer.stop()
