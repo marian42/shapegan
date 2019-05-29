@@ -19,19 +19,19 @@ from loss import bce_loss, voxel_difference, kld_loss
 
 from collections import deque
 
+from dataset import dataset as dataset
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-dataset = torch.load("data/chairs-32.to").to(device)
-dataset_size = dataset.shape[0]
 
 BATCH_SIZE = 64
 TEST_SPLIT = 0.05
 
-all_indices = list(range(dataset_size))
+all_indices = list(range(dataset.size))
 random.shuffle(all_indices)
-test_indices = all_indices[:int(dataset_size * TEST_SPLIT)]
-training_indices = list(all_indices[int(dataset_size * TEST_SPLIT):])
-test_data = dataset[test_indices]
+test_indices = all_indices[:int(dataset.size * TEST_SPLIT)]
+training_indices = list(all_indices[int(dataset.size * TEST_SPLIT):])
+test_data = dataset.voxels[test_indices]
 
 autoencoder = Autoencoder()
 if "continue" in sys.argv:
@@ -74,7 +74,7 @@ def train():
         for batch in create_batches():
             try:
                 indices = torch.tensor(batch, device = device)
-                sample = dataset[indices, :, :, :]
+                sample = dataset.voxels[indices, :, :, :]
                 scale_factor = 1.0 / np.prod(sample.shape)    
 
                 autoencoder.zero_grad()

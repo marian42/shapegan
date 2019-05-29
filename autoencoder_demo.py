@@ -16,8 +16,7 @@ from model import Autoencoder, LATENT_CODE_SIZE, standard_normal_distribution
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-dataset = torch.load("data/chairs-32.to").to(device)
-dataset_size = dataset.shape[0]
+from dataset import dataset as dataset
 
 autoencoder = Autoencoder()
 autoencoder.load()
@@ -37,8 +36,8 @@ def get_random_():
 
 
 def get_random():
-    index = random.randint(0, dataset_size -1)
-    return autoencoder.create_latent_code(*autoencoder.encode(dataset[index, :, :, :]), device)
+    index = random.randint(0, dataset.size -1)
+    return autoencoder.create_latent_code(*autoencoder.encode(dataset.voxels[index, :, :, :]), device)
 
 
 previous_model = None
