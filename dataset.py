@@ -3,6 +3,7 @@ import json
 import numpy as np
 from tqdm import tqdm
 import torch
+import random
 
 from voxel.binvox_rw import read_as_3d_array
 from scipy.ndimage import zoom
@@ -10,8 +11,9 @@ from scipy.ndimage import zoom
 DATASET_DIRECTORY = "/home/marian/shapenet/ShapeNetCore.v2/"
 MIN_SAMPLES_PER_CLASS = 500
 VOXEL_SIZE = 32
-MODELS_FILENAME = "data/dataset.to"
-LABELS_FILENAME = "data/labels.to"
+LIMIT_SIZE = 15000
+MODELS_FILENAME = "data/dataset-{:d}-{:d}-{:d}.to".format(VOXEL_SIZE, LIMIT_SIZE, MIN_SAMPLES_PER_CLASS)
+LABELS_FILENAME = "data/labels-{:d}-{:d}-{:d}.to".format(VOXEL_SIZE, LIMIT_SIZE, MIN_SAMPLES_PER_CLASS)
 
 class DataClass():
     def __init__(self, name, id, count):
@@ -69,7 +71,12 @@ class Dataset():
                     items_in_class += 1
 
             labels.append(torch.ones(items_in_class) * label)
-            
+        
+        indices = list(range(len(filenames)))
+        random.shuffle(indices)
+        indices = indices[:LIMIT_SIZE]
+        filenames = [filenames[i] for i in indices]        
+
         models = []
         pool = torch.nn.MaxPool3d(4)
         print("Loading models...")
@@ -83,7 +90,7 @@ class Dataset():
         tensor = torch.stack(models).to(torch.int8)
         torch.save(tensor, MODELS_FILENAME)
 
-        labels = torch.cat(labels).to(torch.int8)
+        labels = torch.cat(labels).to(torch.int8)[indices]
         torch.save(labels, LABELS_FILENAME)
 
         print("Done.")
