@@ -4,7 +4,7 @@ import torch.optim as optim
 
 import torch.nn.functional as F
 
-DATA_PATH = "data"
+MODEL_PATH = "models"
 
 import os
 
@@ -43,7 +43,7 @@ class Generator(nn.Module):
         return self.forward(x)
 
     def get_filename(self):
-        return os.path.join(DATA_PATH, self.filename)
+        return os.path.join(MODEL_PATH, self.filename)
 
     def load(self):
         if os.path.isfile(self.get_filename()):
@@ -95,7 +95,7 @@ class Discriminator(nn.Module):
         return x
     
     def get_filename(self):
-        return os.path.join(DATA_PATH, self.filename)
+        return os.path.join(MODEL_PATH, self.filename)
 
     def load(self):
         if os.path.isfile(self.get_filename()):
@@ -172,7 +172,7 @@ class Autoencoder(nn.Module):
         return x, mean, log_variance
     
     def get_filename(self):
-        return os.path.join(DATA_PATH, self.filename)
+        return os.path.join(MODEL_PATH, self.filename)
 
     def load(self):
         if os.path.isfile(self.get_filename()):
@@ -180,3 +180,44 @@ class Autoencoder(nn.Module):
     
     def save(self):
         torch.save(self.state_dict(), self.get_filename())
+
+class Classifier(nn.Module):
+    def __init__(self):
+        super(Classifier, self).__init__()
+        from dataset import dataset as dataset
+        
+        self.conv1 = nn.Conv3d(in_channels = 1, out_channels = 12, kernel_size = 4)
+        self.mp1 = nn.MaxPool3d(2)
+        self.conv2 = nn.Conv3d(in_channels = 12, out_channels = 16, kernel_size = 4)
+        self.mp2 = nn.MaxPool3d(2)
+        self.conv3 = nn.Conv3d(in_channels = 16, out_channels = 32, kernel_size = 4)
+        self.fc = nn.Linear(in_features = 32 * 2 * 2 * 2, out_features = dataset.label_count)
+        
+        self.softmax = torch.nn.Softmax(dim=1)
+
+        self.filename = "classifier.to"
+
+        self.cuda()
+
+    def forward(self, x):
+        if len(x.shape) == 3:
+            x = x.unsqueeze(dim = 0)  # add dimension for batch
+        if len(x.shape) == 4:
+            x = x.unsqueeze(dim = 1)  # add dimension for channels
+        x = self.mp1(F.relu(self.conv1(x)))
+        x = self.mp2(F.relu(self.conv2(x)))
+        x = F.relu(self.conv3(x))
+        x = x.view(x.shape[0], -1)
+        x = self.softmax(self.fc(x))
+        return x
+    
+    def get_filename(self):
+        return os.path.join(MODEL_PATH, self.filename)
+
+    def load(self):
+        if os.path.isfile(self.get_filename()):
+            self.load_state_dict(torch.load(self.get_filename()), strict=False)
+    
+    def save(self):
+        torch.save(self.state_dict(), self.get_filename())
+
