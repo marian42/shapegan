@@ -66,8 +66,9 @@ class Generator(nn.Module):
         copy(autoencoder.bn7, self.bn3)
 
     def get_inception_score(self, device, sample_size = 1000):
-        sample = self.generate(device, sample_size)
-        return inception_score(sample)
+        with torch.no_grad():
+            sample = self.generate(device, sample_size)
+            return inception_score(sample)
         
 
 
