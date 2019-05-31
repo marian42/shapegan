@@ -8,7 +8,7 @@ MODEL_PATH = "models"
 
 import os
 
-LATENT_CODE_SIZE = 200
+LATENT_CODE_SIZE = 32
 
 standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
 
@@ -113,22 +113,22 @@ class Autoencoder(nn.Module):
     def __init__(self):
         super(Autoencoder, self).__init__()
 
-        self.conv1 = nn.Conv3d(in_channels = 1, out_channels = 64, kernel_size = 4, stride = 2, padding = 1)
-        self.bn1 = nn.BatchNorm3d(64)
-        self.conv2 = nn.Conv3d(in_channels = 64, out_channels = 128, kernel_size = 4, stride = 2, padding = 1)
-        self.bn2 = nn.BatchNorm3d(128)
-        self.conv3 = nn.Conv3d(in_channels = 128, out_channels = 256, kernel_size = 4, stride = 2, padding = 1)
-        self.bn3 = nn.BatchNorm3d(256)
-        self.conv4_mean = nn.Conv3d(in_channels = 256, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
-        self.conv4_log_variance = nn.Conv3d(in_channels = 256, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
+        self.conv1 = nn.Conv3d(in_channels = 1, out_channels = 16, kernel_size = 4, stride = 2, padding = 1)
+        self.bn1 = nn.BatchNorm3d(16)
+        self.conv2 = nn.Conv3d(in_channels = 16, out_channels = 32, kernel_size = 4, stride = 2, padding = 1)
+        self.bn2 = nn.BatchNorm3d(32)
+        self.conv3 = nn.Conv3d(in_channels = 32, out_channels = 64, kernel_size = 4, stride = 2, padding = 1)
+        self.bn3 = nn.BatchNorm3d(64)
+        self.conv4_mean = nn.Conv3d(in_channels = 64, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
+        self.conv4_log_variance = nn.Conv3d(in_channels = 64, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
         
-        self.convT5 = nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 256, kernel_size = 4, stride = 1)
-        self.bn5 = nn.BatchNorm3d(256)
-        self.convT6 = nn.ConvTranspose3d(in_channels = 256, out_channels = 128, kernel_size = 4, stride = 2, padding = 1)
-        self.bn6 = nn.BatchNorm3d(128)
-        self.convT7 = nn.ConvTranspose3d(in_channels = 128, out_channels = 64, kernel_size = 4, stride = 2, padding = 1)
-        self.bn7 = nn.BatchNorm3d(64)
-        self.convT8 = nn.ConvTranspose3d(in_channels = 64, out_channels = 1, kernel_size = 4, stride = 2, padding = 1)
+        self.convT5 = nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 64, kernel_size = 4, stride = 1)
+        self.bn5 = nn.BatchNorm3d(64)
+        self.convT6 = nn.ConvTranspose3d(in_channels = 64, out_channels = 32, kernel_size = 4, stride = 2, padding = 1)
+        self.bn6 = nn.BatchNorm3d(32)
+        self.convT7 = nn.ConvTranspose3d(in_channels = 32, out_channels = 16, kernel_size = 4, stride = 2, padding = 1)
+        self.bn7 = nn.BatchNorm3d(16)
+        self.convT8 = nn.ConvTranspose3d(in_channels = 16, out_channels = 1, kernel_size = 4, stride = 2, padding = 1)
         self.tanh = nn.Tanh()
 
         self.filename = "autoencoder.to"

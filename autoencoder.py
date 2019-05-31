@@ -24,7 +24,7 @@ from dataset import dataset as dataset
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 TEST_SPLIT = 0.05
 
 all_indices = list(range(dataset.size))
