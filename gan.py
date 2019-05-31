@@ -12,23 +12,20 @@ from model import Generator, Discriminator, Autoencoder
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-dataset = torch.load("data/chairs-32.to").to(device)
-dataset = dataset
-dataset_size = dataset.shape[0]
+from dataset import dataset as dataset
 
 generator = Generator()
-generator.load()
-
 discriminator = Discriminator()
-discriminator.load()
 
-def load_from_autoencoder():
+
+if "continue" in sys.argv:
+    generator.load()
+    discriminator.load()
+
+if "copy_autoencoder_weights" in sys.argv:
     autoencoder = Autoencoder()
     autoencoder.load()
     generator.copy_autoencoder_weights(autoencoder)
-
-
-#load_from_autoencoder()
 
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025)
 
@@ -62,7 +59,7 @@ def train():
     for epoch in count():
         batch_index = 0
         epoch_start_time = time.time()
-        for batch in create_batches(dataset_size, BATCH_SIZE):
+        for batch in create_batches(dataset.size, BATCH_SIZE):
             try:
                 # train generator
                 generator_optimizer.zero_grad()
@@ -91,7 +88,7 @@ def train():
                 discriminator_optimizer.step()
 
                 discriminator_optimizer.zero_grad()
-                valid_sample = dataset[indices, :, :, :]
+                valid_sample = dataset.voxels[indices, :, :, :]
                 discriminator_output_valid = discriminator.forward(valid_sample)
                 valid_loss = discriminator_criterion(discriminator_output_valid, valid_target)
                 valid_loss.backward()
