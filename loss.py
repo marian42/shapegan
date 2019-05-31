@@ -48,3 +48,5 @@ class InceptionScore():
             
             score = torch.exp(torch.mean(kld))
         return score.item()
+
+inception_score = InceptionScore()

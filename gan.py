@@ -27,6 +27,8 @@ if "copy_autoencoder_weights" in sys.argv:
     autoencoder.load()
     generator.copy_autoencoder_weights(autoencoder)
 
+print('Inception score: {:.4f}'.format(generator.get_inception_score(device)))
+
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025)
 
 discriminator_criterion = torch.nn.functional.mse_loss
@@ -64,7 +66,7 @@ def train():
                 # train generator
                 generator_optimizer.zero_grad()
                     
-                fake_sample = generator.generate(device, batch_size = BATCH_SIZE)
+                fake_sample = generator.generate(device, sample_size = BATCH_SIZE)
                 if show_viewer:
                     viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                 
@@ -81,7 +83,7 @@ def train():
                 valid_target = valid_target_default if current_batch_size == BATCH_SIZE else torch.ones(current_batch_size, requires_grad=False).to(device)
 
                 discriminator_optimizer.zero_grad()
-                fake_sample = generator.generate(device, batch_size = current_batch_size).detach()
+                fake_sample = generator.generate(device, sample_size = current_batch_size).detach()
                 discriminator_output_fake = discriminator.forward(fake_sample)
                 fake_loss = discriminator_criterion(discriminator_output_fake, fake_target)
                 fake_loss.backward()
@@ -97,7 +99,11 @@ def train():
                 fake_sample_prediction = torch.mean(discriminator_output_fake).item()
                 valid_sample_prediction = torch.mean(discriminator_output_valid).item()
                 batch_index += 1
-                print("epoch " + str(epoch) + ", batch " + str(batch_index) + ": prediction on fake samples: " + '{0:.4f}'.format(fake_sample_prediction) + ", prediction on valid samples: " + '{0:.4f}'.format(valid_sample_prediction))
+
+                if "verbose" in sys.argv:
+                    print("Wpoch " + str(epoch) + ", batch " + str(batch_index) +
+                        ": prediction on fake samples: " + '{0:.4f}'.format(fake_sample_prediction) +
+                        ", prediction on valid samples: " + '{0:.4f}'.format(valid_sample_prediction))
             except KeyboardInterrupt:
                 if show_viewer:
                     viewer.stop()
@@ -105,7 +111,7 @@ def train():
         
         generator.save()
         discriminator.save()
-        print("Model parameters saved. Epoch took " + '{0:.1f}'.format(time.time() - epoch_start_time) + "s.")
+        print('Epoch {:d} ({:.1f}s), inception score: {:.4f}'.format(epoch, time.time() - epoch_start_time, generator.get_inception_score(device, sample_size=800)))
 
 
 train()                

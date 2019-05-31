@@ -7,6 +7,7 @@ import torch.nn.functional as F
 MODEL_PATH = "models"
 
 import os
+from loss import inception_score
 
 LATENT_CODE_SIZE = 32
 
@@ -37,8 +38,8 @@ class Generator(nn.Module):
         x = self.tanh(self.convT4(x))
         return x
 
-    def generate(self, device, batch_size = 1):
-        shape = torch.Size([batch_size, LATENT_CODE_SIZE, 1, 1, 1])
+    def generate(self, device, sample_size = 1):
+        shape = torch.Size([sample_size, LATENT_CODE_SIZE, 1, 1, 1])
         x = standard_normal_distribution.sample(shape).to(device)
         return self.forward(x)
 
@@ -63,6 +64,10 @@ class Generator(nn.Module):
         copy(autoencoder.bn5, self.bn1)
         copy(autoencoder.bn6, self.bn2)
         copy(autoencoder.bn7, self.bn3)
+
+    def get_inception_score(self, device, sample_size = 1000):
+        sample = self.generate(device, sample_size)
+        return inception_score(sample)
         
 
 
