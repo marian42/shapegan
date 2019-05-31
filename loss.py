@@ -29,3 +29,22 @@ def voxel_difference(input, target):
 
 def kld_loss(mean, log_variance):
     return -0.5 * torch.sum(1 + log_variance - mean.pow(2) - log_variance.exp())
+
+class InceptionScore():
+    def __init__(self):
+        self.classifier = None
+
+    def __call__(self, input):
+        if self.classifier is None:
+            from model import Classifier
+            self.classifier = Classifier()
+            self.classifier.load()
+
+        with torch.no_grad():
+            label_distribution = self.classifier.forward(input)
+            marginal_distribution = torch.mean(label_distribution, dim = 0)
+            
+            kld = -torch.sum(label_distribution * torch.log(marginal_distribution / label_distribution), dim = 1)
+            
+            score = torch.exp(torch.mean(kld))
+        return score.item()
