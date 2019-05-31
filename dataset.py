@@ -74,7 +74,8 @@ class Dataset():
         
         indices = list(range(len(filenames)))
         random.shuffle(indices)
-        indices = indices[:LIMIT_SIZE]
+        if LIMIT_SIZE > 0:
+            indices = indices[:LIMIT_SIZE]
         filenames = [filenames[i] for i in indices]        
 
         models = []
