@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import torch
 import sys
 
@@ -11,7 +12,7 @@ from dataset import dataset as dataset
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if "plot_embedding" in sys.argv:
-    indices = random.sample(list(range(dataset.size)), 5000)
+    indices = random.sample(list(range(dataset.size)), 1000)
     voxels = dataset.voxels[indices, :, :, :]
     autoencoder = Autoencoder()
     autoencoder.load()
@@ -24,9 +25,15 @@ if "plot_embedding" in sys.argv:
     tsne = TSNE(n_components=2)
     embedded = tsne.fit_transform(codes)
 
+    
     print("Plotting...")
-    plt.scatter(embedded[:, 0], embedded[:, 1], c=labels, s = 4)
-    plt.show()
+    fig, ax = plt.subplots()
+    ax.scatter(embedded[:, 0], embedded[:, 1], c=labels, s = 4)
+    fig.set_size_inches(40, 40)
+    for i in range(len(indices)):
+        box = AnnotationBbox(OffsetImage(plt.imread("images/{:d}.png".format(indices[i])), zoom = 0.5), embedded[i, :], frameon=True)
+        ax.add_artist(box)
+    plt.savefig("t-sne.pdf", dpi=200, bbox_inches='tight')
 
 if "create_images" in sys.argv:
     from voxel.viewer import VoxelViewer
