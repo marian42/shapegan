@@ -29,6 +29,8 @@ class Generator(nn.Module):
 
         self.filename = "generator.to"
 
+        self.inception_score_latent_codes = dict()
+
         self.cuda()
 
     def forward(self, x):
@@ -67,7 +69,11 @@ class Generator(nn.Module):
 
     def get_inception_score(self, device, sample_size = 1000):
         with torch.no_grad():
-            sample = self.generate(device, sample_size)
+            if sample_size not in self.inception_score_latent_codes:
+                shape = torch.Size([sample_size, LATENT_CODE_SIZE, 1, 1, 1])
+                self.inception_score_latent_codes[sample_size] = standard_normal_distribution.sample(shape).to(device)
+
+            sample = self.forward(self.inception_score_latent_codes[sample_size])
             return inception_score(sample)
         
 
