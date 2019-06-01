@@ -6,7 +6,7 @@ const float diffuse = 0.8;
 const float specular = 0.3;
 const vec3 viewDirection = vec3(0.0, 0.0, 1.0);
 
-const vec3 albedo = vec3(0.5);
+const vec3 albedo = vec3(0.4);
 void main() {
     vec3 color = albedo * (ambient
         + diffuse * (0.5 + 0.5 * dot(lightDirection, normal))

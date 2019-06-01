@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 from OpenGL.arrays import vbo
+import pygame.image
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
@@ -13,7 +14,7 @@ from voxel.viewer.shader import Shader
 from threading import Thread
 
 class VoxelViewer():
-    def __init__(self, size = (800, 600)):
+    def __init__(self, size = (800, 800), start_thread = True, background_color = (0.01, 0.01, 0.01, 1.0)):
         self.size = size
         
         self.mouse = None
@@ -29,8 +30,13 @@ class VoxelViewer():
 
         self.running = True
 
-        thread = Thread(target = self._run)
-        thread.start()
+        self.window = None
+
+        self.background_color = background_color
+
+        if start_thread:
+            thread = Thread(target = self._run)
+            thread.start()
 
     def set_voxels(self, voxels):
         vertices, normals = create_vertices(voxels)
@@ -74,10 +80,9 @@ class VoxelViewer():
         glRotatef(self.rotation[0], 0, 1.0, 0)
         glTranslatef(-(self.voxel_shape[0] - 1) / 2, -(self.voxel_shape[0] - 1) / 2, -(self.voxel_shape[0] - 1) / 2)        
 
-        glClearColor(0.01, 0.01, 0.01, 1.0)
+        glClearColor(*self.background_color)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glColor4d(1.0, 1.0, 0.0, 1.0)
-
+        
         if self.vertex_buffer is not None and self.normal_buffer is not None:
             self.shader.use()
 
@@ -93,11 +98,11 @@ class VoxelViewer():
 
     def _initialize_opengl(self):
         pygame.init()
-        pygame.display.set_mode(self.size, DOUBLEBUF | OPENGL)
+        self.window = pygame.display.set_mode(self.size, pygame.OPENGLBLIT)
         pygame.display.set_caption('Voxel Viewer')
 
         glEnable(GL_CULL_FACE)
-        glClearColor(0.0, 0.0, 0.0, 0.0)
+        glClearColor(*self.background_color)
         glClearDepth(1.0)
         glDepthFunc(GL_LESS)
         glEnable(GL_DEPTH_TEST)
@@ -124,12 +129,8 @@ class VoxelViewer():
     def stop(self):
         self.running = False
 
-
-if __name__ == "__main__":    
-    from voxels import load_voxels
-    
-    FILENAME = '/home/marian/shapenet/ShapeNetCore.v2/02691156/1bea1445065705eb37abdc1aa610476c/models/model_normalized.solid.binvox'
-    voxels = load_voxels(FILENAME, 48)
-
-    viewer = VoxelViewer()
-    viewer.set_voxels(voxels)
+    def save_image(self, filename):
+        string_image = pygame.image.tostring(self.window, 'RGB')
+        image = pygame.image.fromstring(string_image, self.size, 'RGB')
+        image = pygame.transform.smoothscale(image, (128, 128), )
+        pygame.image.save(image, filename)

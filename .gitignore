@@ -6,3 +6,6 @@
 *.to
 
 *.gz
+
+images/**
+*.pdf
