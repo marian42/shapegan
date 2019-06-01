@@ -143,7 +143,7 @@ class Autoencoder(nn.Module):
         self.convT8 = nn.ConvTranspose3d(in_channels = 16, out_channels = 1, kernel_size = 4, stride = 2, padding = 1)
         self.tanh = nn.Tanh()
 
-        self.filename = "autoencoder.to"
+        self.filename = "autoencoder-{:d}.to".format(LATENT_CODE_SIZE)
 
         self.cuda()
 
