@@ -48,6 +48,23 @@ if "autoencoder" in sys.argv:
     create_tsne_plot(codes, voxels, labels, "plots/autoencoder-images.pdf")
     #create_tsne_plot(codes, None, labels, "plots/autoencoder-dots.pdf")
 
+if "autoencoder_hist" in sys.argv:
+    indices = random.sample(list(range(dataset.size)), 6000)
+    voxels = dataset.voxels[indices, :, :, :]
+    autoencoder = Autoencoder()
+    autoencoder.load()
+    print("Generating codes...")
+    with torch.no_grad():
+        codes = autoencoder.create_latent_code(*autoencoder.encode(voxels), device).cpu().numpy()
+    
+    print("Plotting...")
+    plt.hist(codes, bins=50, range=(-3, 3), histtype='step')
+    plt.savefig("plots/autoencoder-histogram.pdf")
+    codes = codes.flatten()
+    plt.clf()
+    plt.hist(codes, bins=100, range=(-3, 3))
+    plt.savefig("plots/autoencoder-histogram-combined.pdf")
+
 if "gan" in sys.argv:
     generator = Generator()
     generator.load()
