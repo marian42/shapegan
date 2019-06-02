@@ -65,6 +65,38 @@ if "autoencoder_hist" in sys.argv:
     plt.hist(codes, bins=100, range=(-3, 3))
     plt.savefig("plots/autoencoder-histogram-combined.pdf")
 
+if "autoencoder_examples" in sys.argv:
+    from voxel.viewer import VoxelViewer
+    viewer = VoxelViewer(start_thread=False, background_color = (1.0, 1.0, 1.0, 1.0))
+    
+    indices = random.sample(list(range(dataset.size)), 20)
+    voxels = dataset.voxels[indices, :, :, :]
+    autoencoder = Autoencoder()
+    autoencoder.load()
+    print("Generating codes...")
+    with torch.no_grad():
+        codes = autoencoder.create_latent_code(*autoencoder.encode(voxels), device)
+        reconstructed = autoencoder.decode(codes).cpu().numpy()
+        codes = codes.cpu().numpy()
+
+    print("Plotting")
+    fig, axs = plt.subplots(len(indices), 3, figsize=(10, 32))
+    for i in range(len(indices)):
+        viewer.set_voxels(voxels[i, :, :, :].cpu().numpy())
+        image = viewer.get_image(output_size=512)
+        axs[i, 0].imshow(image, cmap='gray')
+        axs[i, 0].axis('off')
+
+        axs[i, 1].bar(range(codes.shape[1]), codes[i, :])
+        axs[i, 1].set_ylim((-3, 3))
+
+        viewer.set_voxels(reconstructed[i, :, :, :])
+        image = viewer.get_image(output_size=512)
+        axs[i, 2].imshow(image, cmap='gray')
+        axs[i, 2].axis('off')
+    plt.savefig("plots/autoencoder-examples.pdf", bbox_inches='tight')
+    
+
 if "gan" in sys.argv:
     generator = Generator()
     generator.load()
