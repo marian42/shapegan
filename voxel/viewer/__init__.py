@@ -11,6 +11,8 @@ import numpy as np
 from voxel.viewer.voxels_to_mesh import create_vertices
 from voxel.viewer.shader import Shader
 
+import cv2
+
 from threading import Thread
 
 class VoxelViewer():
@@ -37,6 +39,8 @@ class VoxelViewer():
         if start_thread:
             thread = Thread(target = self._run)
             thread.start()
+        else:
+            self._initialize_opengl()
 
     def set_voxels(self, voxels):
         vertices, normals = create_vertices(voxels)
@@ -129,8 +133,26 @@ class VoxelViewer():
     def stop(self):
         self.running = False
 
-    def save_image(self, filename):
+    def get_image(self, crop = True, output_size = 128):
+        if self.request_render:
+            self._render()
+
         string_image = pygame.image.tostring(self.window, 'RGB')
         image = pygame.image.fromstring(string_image, self.size, 'RGB')
-        image = pygame.transform.smoothscale(image, (128, 128), )
-        pygame.image.save(image, filename)
+        array = np.transpose(pygame.surfarray.array3d(image)[:, :, 0])
+
+        if crop:
+            mask = array[:, :] != int(self.background_color[0] * 255)
+            coords = np.array(np.nonzero(mask))
+            top_left = np.min(coords, axis=1)
+            bottom_right = np.max(coords, axis=1)
+            
+            half_size = int(max(bottom_right[0] - top_left[0], bottom_right[1] - top_left[1]) / 2)
+            center = ((top_left + bottom_right) / 2).astype(int)
+            center = (min(max(half_size, center[0]), array.shape[0] - half_size), min(max(half_size, center[1]), array.shape[1] - half_size))
+            if half_size > 100:
+                array = array[center[0] - half_size : center[0] + half_size, center[1] - half_size : center[1] + half_size]
+
+        array = cv2.resize(array, dsize=(output_size, output_size), interpolation=cv2.INTER_CUBIC)
+
+        return array        
