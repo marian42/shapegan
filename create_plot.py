@@ -119,6 +119,22 @@ if "gan" in sys.argv:
     print(voxels.shape)
     create_tsne_plot(codes, voxels, labels = None, filename = "plots/gan-images.pdf")
 
+if "wgan" in sys.argv:
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    generator = Generator()
+    generator.filename = "wgan-generator.to"
+    generator.load()
+    standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
+    shape = torch.Size([500, LATENT_CODE_SIZE, 1, 1, 1])
+    x = standard_normal_distribution.sample(shape).to(device)
+    with torch.no_grad():
+        voxels = generator.forward(x).squeeze()
+    codes = x.squeeze().cpu().numpy()
+    print(codes.shape)
+    print(voxels.shape)
+    create_tsne_plot(codes, voxels, labels = None, filename = "plots/wgan-images.pdf")
+
 def get_moving_average(data, window_size):
     moving_average = []
     for i in range(data.shape[0] - window_size):
