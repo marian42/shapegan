@@ -101,7 +101,7 @@ if "autoencoder_examples" in sys.argv:
         image = viewer.get_image(output_size=512)
         axs[i, 2].imshow(image, cmap='gray')
         axs[i, 2].axis('off')
-    plt.savefig("plots/autoencoder-examples.pdf", bbox_inches='tight')
+    plt.savefig("plots/autoencoder-examples.pdf", bbox_inches='tight', dpi=400)
     
 
 if "gan" in sys.argv:
