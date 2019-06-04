@@ -140,7 +140,7 @@ def get_moving_average(data, window_size):
     for i in range(data.shape[0] - window_size):
         moving_average.append(np.mean(data[i:i+window_size]))
     
-    return range(window_size, data.shape[0]), moving_average
+    return np.arange(window_size / 2, data.shape[0] - window_size / 2, dtype=int), moving_average
 
 if "gan_training" in sys.argv:
     data = genfromtxt('plots/gan_training.csv', delimiter=' ')
