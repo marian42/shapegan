@@ -151,9 +151,15 @@ class VoxelViewer():
         if crop:
             mask = array[:, :] != int(self.background_color[0] * 255)
             coords = np.array(np.nonzero(mask))
-            top_left = np.min(coords, axis=1)
-            bottom_right = np.max(coords, axis=1)
             
+            if coords.size != 0:
+                top_left = np.min(coords, axis=1)
+                bottom_right = np.max(coords, axis=1)
+            else:
+                top_left = np.array((0, 0))
+                bottom_right = np.array(array.shape)
+                print("Warning: Image contains only black pixels.")
+                
             half_size = int(max(bottom_right[0] - top_left[0], bottom_right[1] - top_left[1]) / 2)
             center = ((top_left + bottom_right) / 2).astype(int)
             center = (min(max(half_size, center[0]), array.shape[0] - half_size), min(max(half_size, center[1]), array.shape[1] - half_size))
