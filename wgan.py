@@ -47,6 +47,8 @@ critic_optimizer = optim.RMSprop(critic.parameters(), lr=LEARN_RATE)
 
 print('Inception score: {:.4f}'.format(generator.get_inception_score(device)))
 
+log_file = open("plots/wgan_training.csv", "a" if "continue" in sys.argv else "w")
+
 def create_batches(sample_count, batch_size):
     batch_count = int(sample_count / batch_size)
     indices = list(range(sample_count))
@@ -108,12 +110,14 @@ def train():
         
         generator.save()
         critic.save()
+        score = generator.get_inception_score(device, sample_size=800)
+        epoch_duration = time.time() - epoch_start_time
         print('Epoch {:d} ({:.1f}s), inception score: {:.4f}, critic values: {:.2f}, {:.2f}'.format(
-            epoch,
-            time.time() - epoch_start_time,
-            generator.get_inception_score(device, sample_size=800),
-            fake_sample_prediction,
-            valid_sample_prediction))
+            epoch, epoch_duration, score, fake_sample_prediction, valid_sample_prediction))
+        log_file.write("{:d} {:.1f} {:.4f} {:.2f} {:.2f}\n".format(
+            epoch, epoch_duration, score, fake_sample_prediction, valid_sample_prediction))
+        log_file.flush()
 
 
 train()                
+log_file.close()

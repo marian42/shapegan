@@ -27,6 +27,8 @@ if "copy_autoencoder_weights" in sys.argv:
     autoencoder.load()
     generator.copy_autoencoder_weights(autoencoder)
 
+log_file = open("plots/gan_training.csv", "a" if "continue" in sys.argv else "w")
+
 print('Inception score: {:.4f}'.format(generator.get_inception_score(device)))
 
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025)
@@ -111,7 +113,11 @@ def train():
         
         generator.save()
         discriminator.save()
-        print('Epoch {:d} ({:.1f}s), inception score: {:.4f}'.format(epoch, time.time() - epoch_start_time, generator.get_inception_score(device, sample_size=800)))
+        score = generator.get_inception_score(device, sample_size=800)
+        print('Epoch {:d} ({:.1f}s), inception score: {:.4f}'.format(epoch, time.time() - epoch_start_time, score))
+        log_file.write('{:d} {:.1f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score))
+        log_file.flush()
 
 
-train()                
+train()
+log_file.close()
