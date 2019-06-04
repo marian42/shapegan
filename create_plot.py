@@ -136,3 +136,14 @@ if "gan_training" in sys.argv:
     plt.xlabel('Epoch')
     plt.title('GAN Training')
     plt.savefig("plots/gan-training.pdf")
+
+if "wgan_training" in sys.argv:
+    data = genfromtxt('plots/wgan_training.csv', delimiter=' ')
+        
+    plt.plot(data[:, 2])
+    plt.plot(*get_moving_average(data[:, 2], 10))
+
+    plt.ylabel('Inception Score')
+    plt.xlabel('Epoch')
+    plt.title('WGAN Training')
+    plt.savefig("plots/wgan-training.pdf")
