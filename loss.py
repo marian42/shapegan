@@ -46,7 +46,7 @@ class InceptionScore():
             
             kld = -torch.sum(label_distribution * torch.log(marginal_distribution / label_distribution), dim = 1)
             
-            score = torch.exp(torch.mean(kld))
+            score = torch.exp(torch.mean(kld[torch.isfinite(kld)]))
         return score.item()
 
 inception_score = InceptionScore()
