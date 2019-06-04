@@ -158,7 +158,7 @@ class VoxelViewer():
             else:
                 top_left = np.array((0, 0))
                 bottom_right = np.array(array.shape)
-                print("Warning: Image contains only black pixels.")
+                print("Warning: Image contains only white pixels.")
                 
             half_size = int(max(bottom_right[0] - top_left[0], bottom_right[1] - top_left[1]) / 2)
             center = ((top_left + bottom_right) / 2).astype(int)
