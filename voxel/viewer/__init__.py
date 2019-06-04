@@ -129,6 +129,13 @@ class VoxelViewer():
             pygame.display.flip()
             
             pygame.time.wait(10)
+        
+        self.__del__()
+
+    def __del__(self):
+        for buffer in [self.normal_buffer, self.vertex_buffer]:
+            if buffer is not None:
+                buffer.delete()
 
     def stop(self):
         self.running = False
