@@ -4,13 +4,11 @@ from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import torch
 import sys
 from tqdm import tqdm
+from numpy import genfromtxt
 
 from sklearn.manifold import TSNE
 from model import Autoencoder, Generator, LATENT_CODE_SIZE
 import random
-
-from dataset import dataset as dataset
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf"):
@@ -37,6 +35,9 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
     plt.savefig(filename, dpi=200, bbox_inches='tight')
 
 if "autoencoder" in sys.argv:
+    from dataset import dataset as dataset
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     indices = random.sample(list(range(dataset.size)), 1000)
     voxels = dataset.voxels[indices, :, :, :]
     autoencoder = Autoencoder()
@@ -49,6 +50,9 @@ if "autoencoder" in sys.argv:
     #create_tsne_plot(codes, None, labels, "plots/autoencoder-dots.pdf")
 
 if "autoencoder_hist" in sys.argv:
+    from dataset import dataset as dataset
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     indices = random.sample(list(range(dataset.size)), 6000)
     voxels = dataset.voxels[indices, :, :, :]
     autoencoder = Autoencoder()
@@ -66,6 +70,9 @@ if "autoencoder_hist" in sys.argv:
     plt.savefig("plots/autoencoder-histogram-combined.pdf")
 
 if "autoencoder_examples" in sys.argv:
+    from dataset import dataset as dataset
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     from voxel.viewer import VoxelViewer
     viewer = VoxelViewer(start_thread=False, background_color = (1.0, 1.0, 1.0, 1.0))
     
@@ -98,6 +105,8 @@ if "autoencoder_examples" in sys.argv:
     
 
 if "gan" in sys.argv:
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
     generator = Generator()
     generator.load()
     standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
@@ -110,6 +119,20 @@ if "gan" in sys.argv:
     print(voxels.shape)
     create_tsne_plot(codes, voxels, labels = None, filename = "plots/gan-images.pdf")
 
-        
-
+def get_moving_average(data, window_size):
+    moving_average = []
+    for i in range(data.shape[0] - window_size):
+        moving_average.append(np.mean(data[i:i+window_size]))
     
+    return range(window_size, data.shape[0]), moving_average
+
+if "gan_training" in sys.argv:
+    data = genfromtxt('plots/gan_training.csv', delimiter=' ')
+        
+    plt.plot(data[:, 2])
+    plt.plot(*get_moving_average(data[:, 2], 10))
+
+    plt.ylabel('Inception Score')
+    plt.xlabel('Epoch')
+    plt.title('GAN Training')
+    plt.savefig("plots/gan-training.pdf")
