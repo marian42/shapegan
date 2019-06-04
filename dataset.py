@@ -98,7 +98,7 @@ class Dataset():
 
     def load(self, device):
         print("Loading dataset...")
-        self.voxels = torch.load(MODELS_FILENAME).float().to(device)
+        self.voxels = torch.load(MODELS_FILENAME).to(device).float()
         self.size = self.voxels.shape[0]
         self.label_indices = torch.load(LABELS_FILENAME).to(torch.int64).to(device)
         self.labels = torch.zeros((self.size, self.label_count))
