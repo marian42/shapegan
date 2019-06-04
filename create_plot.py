@@ -53,7 +53,7 @@ if "autoencoder_hist" in sys.argv:
     from dataset import dataset as dataset
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    indices = random.sample(list(range(dataset.size)), 6000)
+    indices = random.sample(list(range(dataset.size)), 5000)
     voxels = dataset.voxels[indices, :, :, :]
     autoencoder = Autoencoder()
     autoencoder.load()
