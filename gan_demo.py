@@ -1,14 +1,10 @@
 from itertools import count
-
 import torch
-
 import time
-
-
 import numpy as np
+import sys
 
 from voxel.viewer import VoxelViewer
-
 from model import Generator, standard_normal_distribution, LATENT_CODE_SIZE
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -17,6 +13,8 @@ dataset = torch.load("data/chairs-32.to").to(device)
 dataset_size = dataset.shape[0]
 
 generator = Generator()
+if "wgan" in sys.argv:
+    generator.filename = "wgan-generator.to"
 generator.load()
 generator.eval()
 
