@@ -13,6 +13,7 @@ from model import Generator, Discriminator, Autoencoder
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 from dataset import dataset as dataset
+from loss import inception_score
 
 show_viewer = "nogui" not in sys.argv
 
@@ -45,7 +46,8 @@ CRITIC_WEIGHT_LIMIT = 0.01
 generator_optimizer = optim.RMSprop(generator.parameters(), lr=LEARN_RATE)
 critic_optimizer = optim.RMSprop(critic.parameters(), lr=LEARN_RATE)
 
-print('Inception score: {:.4f}'.format(generator.get_inception_score(device)))
+print('Inception score of the dataset: {:.4f}'.format(inception_score(dataset.voxels[:1400, :, :, :])))
+print('Inception score at start: {:.4f}'.format(generator.get_inception_score(device)))
 
 log_file = open("plots/wgan_training.csv", "a" if "continue" in sys.argv else "w")
 

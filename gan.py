@@ -13,6 +13,7 @@ from model import Generator, Discriminator, Autoencoder
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 from dataset import dataset as dataset
+from loss import inception_score
 
 generator = Generator()
 discriminator = Discriminator()
@@ -29,7 +30,8 @@ if "copy_autoencoder_weights" in sys.argv:
 
 log_file = open("plots/gan_training.csv", "a" if "continue" in sys.argv else "w")
 
-print('Inception score: {:.4f}'.format(generator.get_inception_score(device)))
+print('Inception score of the dataset: {:.4f}'.format(inception_score(dataset.voxels[:1400, :, :, :])))
+print('Inception score at start: {:.4f}'.format(generator.get_inception_score(device)))
 
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025)
 
