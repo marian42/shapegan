@@ -198,12 +198,12 @@ class Classifier(nn.Module):
         super(Classifier, self).__init__()
         from dataset import dataset as dataset
         
-        self.conv1 = nn.Conv3d(in_channels = 1, out_channels = 12, kernel_size = 4)
+        self.conv1 = nn.Conv3d(in_channels = 1, out_channels = 12, kernel_size = 5)
         self.mp1 = nn.MaxPool3d(2)
-        self.conv2 = nn.Conv3d(in_channels = 12, out_channels = 16, kernel_size = 4)
+        self.conv2 = nn.Conv3d(in_channels = 12, out_channels = 16, kernel_size = 5)
         self.mp2 = nn.MaxPool3d(2)
-        self.conv3 = nn.Conv3d(in_channels = 16, out_channels = 32, kernel_size = 4)
-        self.fc = nn.Linear(in_features = 32 * 2 * 2 * 2, out_features = dataset.label_count)
+        self.conv3 = nn.Conv3d(in_channels = 16, out_channels = 32, kernel_size = 5)
+        self.fc = nn.Linear(in_features = 32, out_features = dataset.label_count)
         
         self.softmax = torch.nn.Softmax(dim=1)
 
