@@ -65,7 +65,9 @@ def test(epoch_index, epoch_time):
             "BCE loss: {:.4f}, ".format(reconstruction_loss * scale_factor) +
             "Voxel diff: {:.4f}, ".format(voxel_difference(output, test_data)) + 
             "KLD loss: {:4f}, ".format(kld * scale_factor) + 
-            "training loss: {:4f}".format(sum(error_history) / len(error_history)))
+            "training loss: {:4f}, ".format(sum(error_history) / len(error_history)) +
+            "inception score: {:4f}".format(autoencoder.get_inception_score(device = device))
+        )
 
 
 def train():    

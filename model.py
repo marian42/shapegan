@@ -145,6 +145,8 @@ class Autoencoder(nn.Module):
 
         self.filename = "autoencoder-{:d}.to".format(LATENT_CODE_SIZE)
 
+        self.inception_score_latent_codes = dict()
+
         self.cuda()
 
     def encode(self, x):
@@ -195,6 +197,15 @@ class Autoencoder(nn.Module):
     
     def save(self):
         torch.save(self.state_dict(), self.get_filename())
+
+    def get_inception_score(self, device, sample_size = 1000):
+        with torch.no_grad():
+            if sample_size not in self.inception_score_latent_codes:
+                shape = torch.Size([sample_size, LATENT_CODE_SIZE])
+                self.inception_score_latent_codes[sample_size] = standard_normal_distribution.sample(shape).to(device)
+
+            sample = self.decode(self.inception_score_latent_codes[sample_size])
+            return inception_score(sample)
 
 class Classifier(nn.Module):
     def __init__(self):
