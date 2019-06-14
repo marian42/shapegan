@@ -160,9 +160,12 @@ class Autoencoder(nn.Module):
         return mean, log_variance
 
     def create_latent_code(self, mean, log_variance, device):
-        standard_deviation = torch.exp(log_variance * 0.5)
-        eps = standard_normal_distribution.sample(mean.shape).to(device)
-        return mean + standard_deviation * eps
+        if self.training:
+            standard_deviation = torch.exp(log_variance * 0.5)
+            eps = standard_normal_distribution.sample(mean.shape).to(device)
+            return mean + standard_deviation * eps
+        else:
+            return mean
 
     def decode(self, x):
         if len(x.shape) == 1:

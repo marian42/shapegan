@@ -56,6 +56,7 @@ def create_batches():
 
 def test(epoch_index, epoch_time):
     with torch.no_grad():
+        autoencoder.eval()
         output, mean, log_variance = autoencoder.forward(test_data, device)
         reconstruction_loss = bce_loss(output, test_data).item()
         kld = kld_loss(mean, log_variance)
@@ -78,6 +79,7 @@ def train():
                 scale_factor = 1.0 / np.prod(sample.shape)    
 
                 autoencoder.zero_grad()
+                autoencoder.train()
                 output, mean, log_variance = autoencoder.forward(sample, device)
                 reconstruction_loss = bce_loss(output, sample)
                 error_history.append(reconstruction_loss.item() * scale_factor)
