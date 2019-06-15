@@ -15,7 +15,7 @@ import time
 
 from model import Autoencoder
 
-from loss import bce_loss, voxel_difference, kld_loss
+from loss import voxel_difference, kld_loss
 
 from collections import deque
 
@@ -46,6 +46,8 @@ if show_viewer:
     viewer = VoxelViewer()
 
 error_history = deque(maxlen = BATCH_SIZE)
+
+bce_loss = lambda a, b: torch.nn.functional.binary_cross_entropy_with_logits(a, b, reduction="sum")
 
 def create_batches():
     batch_count = int(len(training_indices) / BATCH_SIZE)

@@ -2,8 +2,6 @@ import torch
 from operator import mul
 from functools import reduce
 
-bce_loss = lambda a, b: torch.nn.functional.binary_cross_entropy(a * 0.5 + 0.5, b * 0.5 + 0.5, reduction="sum")
-
 
 class VoxelReconstructionLoss():
     def __init__(self):

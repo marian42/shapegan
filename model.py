@@ -178,7 +178,8 @@ class Autoencoder(nn.Module):
         x = F.leaky_relu(self.bn5(self.convT5(x)), 0.2)
         x = F.leaky_relu(self.bn6(self.convT6(x)), 0.2)
         x = F.leaky_relu(self.bn7(self.convT7(x)), 0.2)
-        x = self.tanh(self.convT8(x))
+        x = self.convT8(x)
+        x.clamp_(-1, 1)
         x = x.squeeze()
         return x
 
