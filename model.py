@@ -26,27 +26,29 @@ class Generator(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
 
-        self.convT1 = nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 256, kernel_size = 4, stride = 1)
-        self.bn1 = nn.BatchNorm3d(256)
-        self.convT2 = nn.ConvTranspose3d(in_channels = 256, out_channels = 128, kernel_size = 4, stride = 2, padding = 1)
-        self.bn2 = nn.BatchNorm3d(128)
-        self.convT3 = nn.ConvTranspose3d(in_channels = 128, out_channels = 64, kernel_size = 4, stride = 2, padding = 1)
-        self.bn3 = nn.BatchNorm3d(64)
-        self.convT4 = nn.ConvTranspose3d(in_channels = 64, out_channels = 1, kernel_size = 4, stride = 2, padding = 1)
-        self.tanh = nn.Tanh()
+        self.layers = nn.Sequential(
+            nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 256, kernel_size = 4, stride = 1),
+            nn.BatchNorm3d(256),
+            nn.LeakyReLU(negative_slope = 0.2),
+            
+            nn.ConvTranspose3d(in_channels = 256, out_channels = 128, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(128),
+            nn.LeakyReLU(negative_slope = 0.2),
+
+            nn.ConvTranspose3d(in_channels = 128, out_channels = 64, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(64),
+            nn.LeakyReLU(negative_slope = 0.2),
+
+            nn.ConvTranspose3d(in_channels = 64, out_channels = 1, kernel_size = 4, stride = 2, padding = 1),
+            nn.Tanh()
+        )
 
         self.filename = "generator.to"
-
         self.inception_score_latent_codes = dict()
-
         self.cuda()
 
     def forward(self, x):
-        x = F.leaky_relu(self.bn1(self.convT1(x)), 0.2)
-        x = F.leaky_relu(self.bn2(self.convT2(x)), 0.2)
-        x = F.leaky_relu(self.bn3(self.convT3(x)), 0.2)
-        x = self.tanh(self.convT4(x))
-        return x
+        return self.layers.forward(x)
 
     def generate(self, device, sample_size = 1):
         shape = torch.Size([sample_size, LATENT_CODE_SIZE, 1, 1, 1])
@@ -67,13 +69,7 @@ class Generator(nn.Module):
         def copy(source, destination):
             destination.load_state_dict(source.state_dict(), strict=False)
 
-        copy(autoencoder.convT5, self.convT1)
-        copy(autoencoder.convT6, self.convT2)
-        copy(autoencoder.convT7, self.convT3)
-        copy(autoencoder.convT8, self.convT4)
-        copy(autoencoder.bn5, self.bn1)
-        copy(autoencoder.bn6, self.bn2)
-        copy(autoencoder.bn7, self.bn3)
+        raise Exception("Not implemented.")        
 
     def get_inception_score(self, device, sample_size = 1000):
         with torch.no_grad():
@@ -90,29 +86,26 @@ class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
 
-        self.conv1 = nn.Conv3d(in_channels = 1, out_channels = 64, kernel_size = 4, stride = 2, padding = 1)
-        self.conv2 = nn.Conv3d(in_channels = 64, out_channels = 128, kernel_size = 4, stride = 2, padding = 1)
-        self.conv3 = nn.Conv3d(in_channels = 128, out_channels = 256, kernel_size = 4, stride = 2, padding = 1)
-        self.conv4 = nn.Conv3d(in_channels = 256, out_channels = 1, kernel_size = 4, stride = 1)
-        self.sigmoid = nn.Sigmoid()
-
         self.use_sigmoid = True
+        self.layers = nn.Sequential(
+            nn.Conv3d(in_channels = 1, out_channels = 64, kernel_size = 4, stride = 2, padding = 1),
+            nn.LeakyReLU(negative_slope = 0.2),
+            nn.Conv3d(in_channels = 64, out_channels = 128, kernel_size = 4, stride = 2, padding = 1),
+            nn.LeakyReLU(negative_slope = 0.2),
+            nn.Conv3d(in_channels = 128, out_channels = 256, kernel_size = 4, stride = 2, padding = 1),
+            nn.LeakyReLU(negative_slope = 0.2),
+            nn.Conv3d(in_channels = 256, out_channels = 1, kernel_size = 4, stride = 1),
+            Lambda(lambda x: torch.sigmoid(x) if self.use_sigmoid else x)
+        )
+
         self.filename = "discriminator.to"
-
         self.cuda()
-
 
     def forward(self, x):
         if (len(x.shape) < 5):
             x = x.unsqueeze(dim = 1) # add dimension for channels
-        x = F.leaky_relu(self.conv1(x), 0.2)
-        x = F.leaky_relu(self.conv2(x), 0.2)
-        x = F.leaky_relu(self.conv3(x), 0.2)
-        x = self.conv4(x)
-        if self.use_sigmoid:
-            x = self.sigmoid(x)
-        x = x.squeeze()
-        return x
+            
+        return self.layers.forward(x).squeeze()
     
     def get_filename(self):
         return os.path.join(MODEL_PATH, self.filename)
