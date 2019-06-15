@@ -21,10 +21,25 @@ class Lambda(nn.Module):
     def forward(self, x):
         return self.function(x)
 
+class SavableModule(nn.Module):
+    def __init__(self, filename):
+        super(SavableModule, self).__init__()
+        self.filename = filename
+
+    def get_filename(self):
+        return os.path.join(MODEL_PATH, self.filename)
+
+    def load(self):
+        if os.path.isfile(self.get_filename()):
+            self.load_state_dict(torch.load(self.get_filename()), strict=False)
+    
+    def save(self):
+        torch.save(self.state_dict(), self.get_filename())
+
 # Based on http://3dgan.csail.mit.edu/papers/3dgan_nips.pdf
-class Generator(nn.Module):
+class Generator(SavableModule):
     def __init__(self):
-        super(Generator, self).__init__()
+        super(Generator, self).__init__(filename="generator.to")
 
         self.layers = nn.Sequential(
             nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 256, kernel_size = 4, stride = 1),
@@ -43,7 +58,6 @@ class Generator(nn.Module):
             nn.Tanh()
         )
 
-        self.filename = "generator.to"
         self.inception_score_latent_codes = dict()
         self.cuda()
 
@@ -54,16 +68,6 @@ class Generator(nn.Module):
         shape = torch.Size([sample_size, LATENT_CODE_SIZE, 1, 1, 1])
         x = standard_normal_distribution.sample(shape).to(device)
         return self.forward(x)
-
-    def get_filename(self):
-        return os.path.join(MODEL_PATH, self.filename)
-
-    def load(self):
-        if os.path.isfile(self.get_filename()):
-            self.load_state_dict(torch.load(self.get_filename()), strict=False)
-    
-    def save(self):
-        torch.save(self.state_dict(), self.get_filename())
 
     def copy_autoencoder_weights(self, autoencoder):
         def copy(source, destination):
@@ -79,12 +83,11 @@ class Generator(nn.Module):
 
             sample = self.forward(self.inception_score_latent_codes[sample_size])
             return inception_score(sample)
-        
 
 
-class Discriminator(nn.Module):
+class Discriminator(SavableModule):
     def __init__(self):
-        super(Discriminator, self).__init__()
+        super(Discriminator, self).__init__(filename="discriminator.to")
 
         self.use_sigmoid = True
         self.layers = nn.Sequential(
@@ -98,7 +101,6 @@ class Discriminator(nn.Module):
             Lambda(lambda x: torch.sigmoid(x) if self.use_sigmoid else x)
         )
 
-        self.filename = "discriminator.to"
         self.cuda()
 
     def forward(self, x):
@@ -106,25 +108,15 @@ class Discriminator(nn.Module):
             x = x.unsqueeze(dim = 1) # add dimension for channels
             
         return self.layers.forward(x).squeeze()
-    
-    def get_filename(self):
-        return os.path.join(MODEL_PATH, self.filename)
-
-    def load(self):
-        if os.path.isfile(self.get_filename()):
-            self.load_state_dict(torch.load(self.get_filename()), strict=False)
-    
-    def save(self):
-        torch.save(self.state_dict(), self.get_filename())
 
     def clip_weights(self, value):
         for parameter in self.parameters():
             parameter.data.clamp_(-value, value)
 
 
-class Autoencoder(nn.Module):
+class Autoencoder(SavableModule):
     def __init__(self):
-        super(Autoencoder, self).__init__()
+        super(Autoencoder, self).__init__(filename="autoencoder-{:d}.to".format(LATENT_CODE_SIZE))
 
         self.encoder = nn.Sequential(
             nn.Conv3d(in_channels = 1, out_channels = 16, kernel_size = 4, stride = 2, padding = 1),
@@ -160,7 +152,6 @@ class Autoencoder(nn.Module):
             Lambda(lambda x: torch.clamp(x, -1, 1))
         )
         
-        self.filename = "autoencoder-{:d}.to".format(LATENT_CODE_SIZE)
         self.inception_score_latent_codes = dict()
         self.cuda()
 
@@ -201,16 +192,6 @@ class Autoencoder(nn.Module):
         z, mean, log_variance = self.encode(x, device, return_mean_and_log_variance = True)
         x = self.decode(z)
         return x, mean, log_variance
-    
-    def get_filename(self):
-        return os.path.join(MODEL_PATH, self.filename)
-
-    def load(self):
-        if os.path.isfile(self.get_filename()):
-            self.load_state_dict(torch.load(self.get_filename()), strict=False)
-    
-    def save(self):
-        torch.save(self.state_dict(), self.get_filename())
 
     def get_inception_score(self, device, sample_size = 1000):
         with torch.no_grad():
@@ -222,9 +203,9 @@ class Autoencoder(nn.Module):
             return inception_score(sample)
 
 
-class Classifier(nn.Module):
+class Classifier(SavableModule):
     def __init__(self):
-        super(Classifier, self).__init__()
+        super(Classifier, self).__init__(filename="classifier.to")
         from dataset import dataset as dataset
         
         self.layers = nn.Sequential(
@@ -245,7 +226,6 @@ class Classifier(nn.Module):
             nn.Softmax(dim=1)
         )
 
-        self.filename = "classifier.to"
         self.cuda()
 
     def forward(self, x):
@@ -255,14 +235,3 @@ class Classifier(nn.Module):
             x = x.unsqueeze(dim = 1)  # add dimension for channels
         
         return self.layers.forward(x)
-    
-    def get_filename(self):
-        return os.path.join(MODEL_PATH, self.filename)
-
-    def load(self):
-        if os.path.isfile(self.get_filename()):
-            self.load_state_dict(torch.load(self.get_filename()), strict=False)
-    
-    def save(self):
-        torch.save(self.state_dict(), self.get_filename())
-
