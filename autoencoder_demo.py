@@ -37,7 +37,7 @@ def get_random_():
 
 def get_random():
     index = random.randint(0, dataset.size -1)
-    return autoencoder.create_latent_code(*autoencoder.encode(dataset.voxels[index, :, :, :]), device)
+    return autoencoder.encode(dataset.voxels[index, :, :, :], device)
 
 
 previous_model = None

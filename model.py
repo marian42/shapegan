@@ -13,6 +13,16 @@ LATENT_CODE_SIZE = 32
 
 standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
 
+class Clamp(nn.Module):
+    def __init__(self, min, max):
+        super(Clamp, self).__init__()
+        self.min = min
+        self.max = max
+
+    def forward(self, x):
+        x.clamp_(self.min, self.max)
+        return x
+
 # Based on http://3dgan.csail.mit.edu/papers/3dgan_nips.pdf
 class Generator(nn.Module):
     def __init__(self):
@@ -125,49 +135,67 @@ class Autoencoder(nn.Module):
     def __init__(self):
         super(Autoencoder, self).__init__()
 
-        self.conv1 = nn.Conv3d(in_channels = 1, out_channels = 16, kernel_size = 4, stride = 2, padding = 1)
-        self.bn1 = nn.BatchNorm3d(16)
-        self.conv2 = nn.Conv3d(in_channels = 16, out_channels = 32, kernel_size = 4, stride = 2, padding = 1)
-        self.bn2 = nn.BatchNorm3d(32)
-        self.conv3 = nn.Conv3d(in_channels = 32, out_channels = 64, kernel_size = 4, stride = 2, padding = 1)
-        self.bn3 = nn.BatchNorm3d(64)
-        self.conv4_mean = nn.Conv3d(in_channels = 64, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
-        self.conv4_log_variance = nn.Conv3d(in_channels = 64, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
+        self.encoder = nn.Sequential(
+            nn.Conv3d(in_channels = 1, out_channels = 16, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(16),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+            
+            nn.Conv3d(in_channels = 16, out_channels = 32, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(32),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+
+            nn.Conv3d(in_channels = 32, out_channels = 64, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(64),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True)
+        )
         
-        self.convT5 = nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 64, kernel_size = 4, stride = 1)
-        self.bn5 = nn.BatchNorm3d(64)
-        self.convT6 = nn.ConvTranspose3d(in_channels = 64, out_channels = 32, kernel_size = 4, stride = 2, padding = 1)
-        self.bn6 = nn.BatchNorm3d(32)
-        self.convT7 = nn.ConvTranspose3d(in_channels = 32, out_channels = 16, kernel_size = 4, stride = 2, padding = 1)
-        self.bn7 = nn.BatchNorm3d(16)
-        self.convT8 = nn.ConvTranspose3d(in_channels = 16, out_channels = 1, kernel_size = 4, stride = 2, padding = 1)
-        self.tanh = nn.Tanh()
+        self.encode_mean = nn.Conv3d(in_channels = 64, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
+        self.encode_log_variance = nn.Conv3d(in_channels = 64, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
+        
+        self.decoder = nn.Sequential(
+            nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 64, kernel_size = 4, stride = 1),
+            nn.BatchNorm3d(64),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+            
+            nn.ConvTranspose3d(in_channels = 64, out_channels = 32, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(32),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
 
+            nn.ConvTranspose3d(in_channels = 32, out_channels = 16, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(16),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+
+            nn.ConvTranspose3d(in_channels = 16, out_channels = 1, kernel_size = 4, stride = 2, padding = 1),
+            Clamp(-1, 1)
+        )
+        
         self.filename = "autoencoder-{:d}.to".format(LATENT_CODE_SIZE)
-
         self.inception_score_latent_codes = dict()
-
         self.cuda()
 
-    def encode(self, x):
+    def encode(self, x, device, return_mean_and_log_variance = False):
         if len(x.shape) == 3:
             x = x.unsqueeze(dim = 0)  # add dimension for batch
         if len(x.shape) == 4:
             x = x.unsqueeze(dim = 1)  # add dimension for channels
-        x = F.leaky_relu(self.bn1(self.conv1(x)), 0.2)
-        x = F.leaky_relu(self.bn2(self.conv2(x)), 0.2)
-        x = F.leaky_relu(self.bn3(self.conv3(x)), 0.2)
-        mean = self.conv4_mean(x).squeeze()
-        log_variance = self.conv4_log_variance(x).squeeze()
-        return mean, log_variance
-
-    def create_latent_code(self, mean, log_variance, device):
-        if self.training:
+        
+        x = self.encoder.forward(x)
+        mean = self.encode_mean(x).squeeze()
+        
+        if self.training or return_mean_and_log_variance:
+            log_variance = self.encode_log_variance(x).squeeze()
             standard_deviation = torch.exp(log_variance * 0.5)
             eps = standard_normal_distribution.sample(mean.shape).to(device)
-            return mean + standard_deviation * eps
+        
+        if self.training:
+            x = mean + standard_deviation * eps
         else:
-            return mean
+            x = mean
+
+        if return_mean_and_log_variance:
+            return x, mean, log_variance
+        else:
+            return x
 
     def decode(self, x):
         if len(x.shape) == 1:
@@ -175,17 +203,11 @@ class Autoencoder(nn.Module):
         while len(x.shape) < 5: 
             x = x.unsqueeze(dim = len(x.shape)) # add 3 voxel dimensions
         
-        x = F.leaky_relu(self.bn5(self.convT5(x)), 0.2)
-        x = F.leaky_relu(self.bn6(self.convT6(x)), 0.2)
-        x = F.leaky_relu(self.bn7(self.convT7(x)), 0.2)
-        x = self.convT8(x)
-        x.clamp_(-1, 1)
-        x = x.squeeze()
-        return x
+        x = self.decoder.forward(x)
+        return x.squeeze()
 
     def forward(self, x, device):
-        mean, log_variance = self.encode(x)
-        z = self.create_latent_code(mean, log_variance, device)
+        z, mean, log_variance = self.encode(x, device, return_mean_and_log_variance = True)
         x = self.decode(z)
         return x, mean, log_variance
     
@@ -207,6 +229,7 @@ class Autoencoder(nn.Module):
 
             sample = self.decode(self.inception_score_latent_codes[sample_size])
             return inception_score(sample)
+
 
 class Classifier(nn.Module):
     def __init__(self):

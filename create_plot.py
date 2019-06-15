@@ -44,7 +44,7 @@ if "autoencoder" in sys.argv:
     autoencoder.load()
     print("Generating codes...")
     with torch.no_grad():
-        codes = autoencoder.create_latent_code(*autoencoder.encode(voxels), device).cpu().numpy()
+        codes = autoencoder.encode(voxels, device).cpu().numpy()
     labels = dataset.label_indices[indices].cpu().numpy()
     create_tsne_plot(codes, voxels, labels, "plots/autoencoder-images.pdf")
     #create_tsne_plot(codes, None, labels, "plots/autoencoder-dots.pdf")
@@ -59,7 +59,7 @@ if "autoencoder_hist" in sys.argv:
     autoencoder.load()
     print("Generating codes...")
     with torch.no_grad():
-        codes = autoencoder.create_latent_code(*autoencoder.encode(voxels), device).cpu().numpy()
+        codes = autoencoder.encode(voxels, device).cpu().numpy()
     
     print("Plotting...")
     plt.hist(codes, bins=50, range=(-3, 3), histtype='step')
@@ -82,7 +82,7 @@ if "autoencoder_examples" in sys.argv:
     autoencoder.load()
     print("Generating codes...")
     with torch.no_grad():
-        codes = autoencoder.create_latent_code(*autoencoder.encode(voxels), device)
+        codes = autoencoder.encode(voxels, device)
         reconstructed = autoencoder.decode(codes).cpu().numpy()
         codes = codes.cpu().numpy()
 
