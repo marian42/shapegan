@@ -14,7 +14,7 @@ random.seed(0)
 torch.manual_seed(0)
 
 from model import Classifier
-from loss import bce_loss, voxel_difference, kld_loss
+from loss import voxel_difference, kld_loss
 from dataset import dataset as dataset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

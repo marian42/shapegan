@@ -13,15 +13,13 @@ LATENT_CODE_SIZE = 32
 
 standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
 
-class Clamp(nn.Module):
-    def __init__(self, min, max):
-        super(Clamp, self).__init__()
-        self.min = min
-        self.max = max
+class Lambda(nn.Module):
+    def __init__(self, function):
+        super(Lambda, self).__init__()
+        self.function = function
 
     def forward(self, x):
-        x.clamp_(self.min, self.max)
-        return x
+        return self.function(x)
 
 # Based on http://3dgan.csail.mit.edu/papers/3dgan_nips.pdf
 class Generator(nn.Module):
@@ -166,7 +164,7 @@ class Autoencoder(nn.Module):
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
 
             nn.ConvTranspose3d(in_channels = 16, out_channels = 1, kernel_size = 4, stride = 2, padding = 1),
-            Clamp(-1, 1)
+            Lambda(lambda x: torch.clamp(x, -1, 1))
         )
         
         self.filename = "autoencoder-{:d}.to".format(LATENT_CODE_SIZE)
@@ -236,17 +234,25 @@ class Classifier(nn.Module):
         super(Classifier, self).__init__()
         from dataset import dataset as dataset
         
-        self.conv1 = nn.Conv3d(in_channels = 1, out_channels = 12, kernel_size = 5)
-        self.mp1 = nn.MaxPool3d(2)
-        self.conv2 = nn.Conv3d(in_channels = 12, out_channels = 16, kernel_size = 5)
-        self.mp2 = nn.MaxPool3d(2)
-        self.conv3 = nn.Conv3d(in_channels = 16, out_channels = 32, kernel_size = 5)
-        self.fc = nn.Linear(in_features = 32, out_features = dataset.label_count)
-        
-        self.softmax = torch.nn.Softmax(dim=1)
+        self.layers = nn.Sequential(
+            nn.Conv3d(in_channels = 1, out_channels = 12, kernel_size = 5),
+            nn.ReLU(inplace=True),
+            nn.MaxPool3d(2),
+
+            nn.Conv3d(in_channels = 12, out_channels = 16, kernel_size = 5),
+            nn.ReLU(inplace=True),
+            nn.MaxPool3d(2),
+
+            nn.Conv3d(in_channels = 16, out_channels = 32, kernel_size = 5),
+            nn.ReLU(inplace=True),
+
+            Lambda(lambda x: x.view(x.shape[0], -1)),
+
+            nn.Linear(in_features = 32, out_features = dataset.label_count),
+            nn.Softmax(dim=1)
+        )
 
         self.filename = "classifier.to"
-
         self.cuda()
 
     def forward(self, x):
@@ -254,12 +260,8 @@ class Classifier(nn.Module):
             x = x.unsqueeze(dim = 0)  # add dimension for batch
         if len(x.shape) == 4:
             x = x.unsqueeze(dim = 1)  # add dimension for channels
-        x = self.mp1(F.relu(self.conv1(x)))
-        x = self.mp2(F.relu(self.conv2(x)))
-        x = F.relu(self.conv3(x))
-        x = x.view(x.shape[0], -1)
-        x = self.softmax(self.fc(x))
-        return x
+        
+        return self.layers.forward(x)
     
     def get_filename(self):
         return os.path.join(MODEL_PATH, self.filename)
