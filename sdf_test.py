@@ -12,7 +12,7 @@ import time
 PATH = '/home/marian/shapenet/ShapeNetCore.v2/02942699/1cc93f96ad5e16a85d3f270c1c35f1c7/models/model_normalized.obj'
 
 CAMERA_DISTANCE = 1.3
-VOXEL_COUNT = 128
+VOXEL_COUNT = 32
 VIEWPORT_SIZE = VOXEL_COUNT * 4
 
 def get_rotation_matrix(angle):
@@ -43,7 +43,7 @@ class DepthMap():
         half_viewport_size = 0.5 * VIEWPORT_SIZE
         clipping_to_viewport = np.array([
             [half_viewport_size, 0.0, 0.0, half_viewport_size],
-            [0.0, half_viewport_size, 0.0, half_viewport_size],
+            [0.0, -half_viewport_size, 0.0, half_viewport_size],
             [0.0, 0.0, 1.0, 0.0],
             [0, 0, 0.0, 1.0]
         ])
@@ -72,17 +72,31 @@ def get_voxel_coordinates(bounding_box, voxel_count):
     points = np.stack(points)
     return points.reshape(3, -1).transpose()
 
-def voxelize_mesh(mesh, voxel_count):
+def get_trimesh_sdf(mesh, points, chunk_size = 2000):
+    result = []
+    chunks = points.shape[0] // chunk_size + 1
+    for i in range(chunks):
+        sdf = trimesh.proximity.signed_distance(mesh, points[i * chunk_size : min((i + 1) * chunk_size, points.shape[0]), :])
+        result.append(sdf)
+    return np.concatenate(result)
+
+def get_combined_sdf(mesh, points):
     angles = [0, 90, 180, 270]
     depth_maps = [DepthMap(mesh, angle) for angle in angles]
 
-    points = get_voxel_coordinates(mesh.bounding_box, voxel_count)
-
-    voxels = np.ones(points.shape[0])
+    signs = np.ones(points.shape[0])
     for depth_map in depth_maps:
         voxels_inside = depth_map.check_inside(points)
-        voxels[voxels_inside] = -1
+        signs[voxels_inside] = -1
 
+    voxels = get_trimesh_sdf(mesh, points)
+    voxels[(voxels * signs) < 0] *= -1
+    return voxels
+
+def voxelize_mesh(mesh, voxel_count):
+    points = get_voxel_coordinates(mesh.bounding_box, voxel_count)
+    
+    voxels = get_combined_sdf(mesh, points)
     voxels = voxels.reshape(voxel_count, voxel_count, voxel_count)
     voxels = np.transpose(voxels, (1, 0, 2))
     return voxels
