@@ -1,0 +1,82 @@
+import trimesh
+import pyrender
+import numpy as np
+np.set_printoptions(suppress=True)
+from PIL import Image
+from scipy.spatial.transform import Rotation
+import time
+
+PATH = '/home/marian/shapenet/ShapeNetCore.v2/02942699/1cc93f96ad5e16a85d3f270c1c35f1c7/models/model_normalized.obj'
+
+
+CAMERA_DISTANCE = 1.2
+VOXEL_COUNT = 32
+VIEWPORT_SIZE = 800
+
+class CustomShaderCache():
+    def __init__(self):
+        self.program = None
+
+    def get_program(self, vertex_shader, fragment_shader, geometry_shader=None, defines=None):
+        if self.program is None:
+            self.program = pyrender.shader_program.ShaderProgram("sdf/shaders/mesh.vert", "sdf/shaders/mesh.frag", defines=defines)
+        return self.program
+
+def get_rotation_matrix(angle):
+    rotation = Rotation.from_euler('y', angle, degrees=True)
+    matrix = np.identity(4)
+    matrix[:3, :3] = rotation.as_dcm()
+    return matrix
+
+mesh = trimesh.load(PATH)
+
+test = 0.5
+
+def get_points(angle):
+    camera_pose = np.identity(4)
+    camera_pose[2, 3] = CAMERA_DISTANCE
+    camera_pose = np.matmul(get_rotation_matrix(angle), camera_pose)
+
+    scene = pyrender.Scene(bg_color=(1.0, 1.0, 1.0, 1.0), ambient_light=np.ones(4) * 0.1)
+    scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
+    camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0, znear=0.001, zfar = 2)
+    scene.add(camera, pose=camera_pose)
+
+    renderer = pyrender.OffscreenRenderer(VIEWPORT_SIZE, VIEWPORT_SIZE)
+    renderer._renderer._program_cache = CustomShaderCache()
+
+    camera_direction = np.matmul(camera_pose, np.array([0, 0, 1, 0]))[:3]
+
+    color, depth = renderer.render(scene)
+    indices = np.argwhere(depth != 0)
+
+    normals = color[indices[:, 0], indices[:, 1]] / 255 * 2 - 1
+    normal_orientation = np.dot(normals, camera_direction)
+    normals[normal_orientation < 0] *= -1
+
+    points = np.ones((indices.shape[0], 4))
+    points[:, :2] = indices.astype(float) / VIEWPORT_SIZE * 2 - 1
+    points[:, 2] = depth[indices[:, 0], indices[:, 1]] * test
+
+    world_to_clipping = np.matmul(camera.get_projection_matrix(), np.linalg.inv(camera_pose))
+    inverted = np.linalg.inv(world_to_clipping)
+
+    points = np.matmul(inverted, points.transpose()).transpose()
+    points /= points[:, 3][:, np.newaxis]
+    return points[:, :3]
+
+
+points = np.concatenate((get_points(135), get_points(145)))
+pyrender_mesh = pyrender.Mesh.from_points(points)
+scene = pyrender.Scene()
+node = scene.add(pyrender_mesh)
+viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
+
+
+
+if False:
+    img = Image.fromarray(depth / np.max(depth) * 255, 'F')
+    img.show()
+
+    img = Image.fromarray(color, 'RGB')
+    img.show()
