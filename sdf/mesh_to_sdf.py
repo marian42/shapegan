@@ -37,7 +37,7 @@ def get_points(angle):
 
     scene = pyrender.Scene(bg_color=(1.0, 1.0, 1.0, 1.0), ambient_light=np.ones(4) * 0.1)
     scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
-    camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0, znear=0.001, zfar = 200)
+    camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0, znear = 0.5, zfar = 2)
     scene.add(camera, pose=camera_pose)
 
     renderer = pyrender.OffscreenRenderer(VIEWPORT_SIZE, VIEWPORT_SIZE)
@@ -54,13 +54,11 @@ def get_points(angle):
     points = np.ones((indices.shape[0], 4))
     points[:, [1, 0]] = indices.astype(float) / VIEWPORT_SIZE * 2 - 1
     points[:, 1] *= -1
-    points[:, 2] = depth[indices[:, 0], indices[:, 1]]
+    points[:, 2] = depth[indices[:, 0], indices[:, 1]] * 2 - 1
     
-    scale = np.identity(4) * 0.5
-    scale[3, 3] = 1
-    matrix = np.matmul(np.matmul(camera_pose, scale), np.linalg.inv(camera.get_projection_matrix()))
+    clipping_to_world = np.matmul(camera_pose, np.linalg.inv(camera.get_projection_matrix()))
 
-    points = np.matmul(points, matrix.transpose())
+    points = np.matmul(points, clipping_to_world.transpose())
     points /= points[:, 3][:, np.newaxis]
 
     return points[:, :3]
