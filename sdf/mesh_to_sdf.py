@@ -8,9 +8,7 @@ import time
 
 PATH = '/home/marian/shapenet/ShapeNetCore.v2/02942699/1cc93f96ad5e16a85d3f270c1c35f1c7/models/model_normalized.obj'
 
-
 CAMERA_DISTANCE = 1.2
-VOXEL_COUNT = 32
 VIEWPORT_SIZE = 800
 
 class CustomShaderCache():
@@ -28,14 +26,8 @@ def get_rotation_matrix(angle, axis='y'):
     matrix[:3, :3] = rotation.as_dcm()
     return matrix
 
-mesh = trimesh.load(PATH)
-
-def get_points(angle):
-    camera_pose = np.identity(4)
-    camera_pose[2, 3] = CAMERA_DISTANCE
-    camera_pose = np.matmul(get_rotation_matrix(angle), camera_pose)
-
-    scene = pyrender.Scene(bg_color=(1.0, 1.0, 1.0, 1.0), ambient_light=np.ones(4) * 0.1)
+def render_to_pointcloud(mesh, camera_pose):
+    scene = pyrender.Scene()
     scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
     camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0, znear = 0.5, zfar = 2)
     scene.add(camera, pose=camera_pose)
@@ -61,11 +53,30 @@ def get_points(angle):
     points = np.matmul(points, clipping_to_world.transpose())
     points /= points[:, 3][:, np.newaxis]
 
-    return points[:, :3]
+    return points[:, :3], normals
 
+def mesh_to_pointcloud(mesh, camera_count = 10):
+    points_list = []
+    normals_list = []
 
-points = np.concatenate((get_points(0), get_points(90)))
-pyrender_mesh = pyrender.Mesh.from_points(points)
+    for i in range(camera_count):
+        camera_pose = np.identity(4)
+        camera_pose[2, 3] = CAMERA_DISTANCE
+        camera_pose = np.matmul(get_rotation_matrix(360.0 * i / camera_count), camera_pose)
+        camera_pose = np.matmul(get_rotation_matrix(45 if i % 2 == 0 else -45, axis='x'), camera_pose)
+
+        points, normals = render_to_pointcloud(mesh, camera_pose)
+        points_list.append(points)
+        normals_list.append(normals)
+
+    points = np.concatenate(points_list, axis=0)
+    normals = np.concatenate(normals_list, axis=0)
+
+    return points, normals
+
+mesh = trimesh.load(PATH)
+points, normals = mesh_to_pointcloud(mesh)
+pyrender_mesh = pyrender.Mesh.from_points(points, normals=normals)
 scene = pyrender.Scene()
 #scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
 scene.add(pyrender_mesh)
