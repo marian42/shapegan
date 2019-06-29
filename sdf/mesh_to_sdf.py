@@ -5,11 +5,13 @@ np.set_printoptions(suppress=True)
 from PIL import Image
 from scipy.spatial.transform import Rotation
 import time
+from scipy.spatial import KDTree
+import skimage
 
 PATH = '/home/marian/shapenet/ShapeNetCore.v2/02942699/1cc93f96ad5e16a85d3f270c1c35f1c7/models/model_normalized.obj'
 
 CAMERA_DISTANCE = 1.2
-VIEWPORT_SIZE = 800
+VIEWPORT_SIZE = 512
 
 class CustomShaderCache():
     def __init__(self):
@@ -74,10 +76,54 @@ def mesh_to_pointcloud(mesh, camera_count = 10):
 
     return points, normals
 
+class MeshSDF:
+    def __init__(self, mesh):
+        self.bounding_box = mesh.bounding_box
+        self.points, self.normals = mesh_to_pointcloud(mesh)
+        self.kd_tree = KDTree(self.points, leafsize=100)
+
+    def get_sdf(self, query_points):
+        start = time.time()
+        distances, indices = self.kd_tree.query(query_points, eps=0.001)
+        end = time.time()
+        print(end - start)
+        closest_points = self.points[indices]
+        direction_to_surface = query_points - closest_points
+        inside = np.einsum('ij,ij->i', direction_to_surface, self.normals[indices]) < 0
+        distances[inside] *= -1
+        return distances
+
+    def get_pyrender_pointcloud(self):
+        return pyrender.Mesh.from_points(self.points, normals=self.normals)
+
+    def get_voxel_sdf(self, voxel_count = 32):
+        return self.get_sdf(self.get_voxel_coordinates(voxel_count=voxel_count))
+
+    def get_voxel_coordinates(self, voxel_count = 32):
+        centroid = self.bounding_box.centroid
+        size = np.max(self.bounding_box.extents) / 2
+        points = np.meshgrid(
+            np.linspace(centroid[0] - size, centroid[0] + size, voxel_count),
+            np.linspace(centroid[1] - size, centroid[1] + size, voxel_count),
+            np.linspace(centroid[2] - size, centroid[2] + size, voxel_count)
+        )
+        points = np.stack(points)
+        return points.reshape(3, -1).transpose()
+
+
 mesh = trimesh.load(PATH)
-points, normals = mesh_to_pointcloud(mesh)
-pyrender_mesh = pyrender.Mesh.from_points(points, normals=normals)
+mesh_sdf = MeshSDF(mesh)
+
+voxel_size = 32
+voxels = mesh_sdf.get_voxel_sdf(voxel_count=voxel_size)
+voxels = voxels.reshape(voxel_size, voxel_size, voxel_size)
+
+vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(voxel_size, voxel_size, voxel_size))
+reconstructed = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
+
 scene = pyrender.Scene()
-#scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
-scene.add(pyrender_mesh)
+reconstructed_pyrender = pyrender.Mesh.from_trimesh(reconstructed, smooth=False)
+scene.add(reconstructed_pyrender)
+
+#scene.add(mesh_sdf.get_pyrender_pointcloud())
 viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
