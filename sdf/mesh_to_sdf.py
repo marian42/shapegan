@@ -11,7 +11,7 @@ import skimage
 PATH = '/home/marian/shapenet/ShapeNetCore.v2/02942699/1cc93f96ad5e16a85d3f270c1c35f1c7/models/model_normalized.obj'
 
 CAMERA_DISTANCE = 1.2
-VIEWPORT_SIZE = 256
+VIEWPORT_SIZE = 512
 
 class CustomShaderCache():
     def __init__(self):
@@ -38,12 +38,13 @@ class Scan():
         renderer._renderer._program_cache = CustomShaderCache()
 
         self.color, self.depth = renderer.render(scene)
+        self.depth = self.depth * 2 - 1
         indices = np.argwhere(self.depth != 1)
 
         points = np.ones((indices.shape[0], 4))
         points[:, [1, 0]] = indices.astype(float) / VIEWPORT_SIZE * 2 - 1
         points[:, 1] *= -1
-        points[:, 2] = self.depth[indices[:, 0], indices[:, 1]] * 2 - 1
+        points[:, 2] = self.depth[indices[:, 0], indices[:, 1]]
         
         clipping_to_world = np.matmul(camera_pose, np.linalg.inv(camera.get_projection_matrix()))
 
@@ -57,31 +58,39 @@ class Scan():
         normals[normal_orientation < 0] *= -1
         self.normals = normals
 
+    def convert_world_space_to_viewport(self, points):
+        half_viewport_size = 0.5 * VIEWPORT_SIZE
+        clipping_to_viewport = np.array([
+            [half_viewport_size, 0.0, 0.0, half_viewport_size],
+            [0.0, -half_viewport_size, 0.0, half_viewport_size],
+            [0.0, 0.0, 1.0, 0.0],
+            [0, 0, 0.0, 1.0]
+        ])
+
+        world_to_clipping = np.matmul(self.projection_matrix, np.linalg.inv(self.camera_pose))
+        world_to_viewport = np.matmul(clipping_to_viewport, world_to_clipping)
+        
+        world_space_points = np.concatenate([points, np.ones((points.shape[0], 1))], axis=1)
+        viewport_points = np.matmul(world_space_points, world_to_viewport.transpose())
+        viewport_points /= viewport_points[:, 3][:, np.newaxis]
+        return viewport_points
+
+    def is_visible(self, points):
+        viewport_points = self.convert_world_space_to_viewport(points)
+        pixels = viewport_points[:, :2].astype(int)
+        return viewport_points[:, 2] < self.depth[pixels[:, 1], pixels[:, 0]]
+
     def remove_thin_geometry(self, other_scans):
         thin_points = np.zeros(self.points.shape[0], dtype=np.uint8)
         for scan in other_scans:
             if np.dot(self.camera_direction, scan.camera_direction) > 0.2:
                 continue
 
-            world_space_points = np.concatenate([self.points, np.ones((self.points.shape[0], 1))], axis=1)
-
-            half_viewport_size = 0.5 * VIEWPORT_SIZE
-            clipping_to_viewport = np.array([
-                [half_viewport_size, 0.0, 0.0, half_viewport_size],
-                [0.0, -half_viewport_size, 0.0, half_viewport_size],
-                [0.0, 0.0, 1.0, 0.0],
-                [0, 0, 0.0, 1.0]
-            ])
-
-            world_to_clipping = np.matmul(scan.projection_matrix, np.linalg.inv(scan.camera_pose))
-            world_to_viewport = np.matmul(clipping_to_viewport, world_to_clipping)
-            
-            viewport_points = np.matmul(world_space_points, world_to_viewport.transpose())
-            viewport_points /= viewport_points[:, 3][:, np.newaxis]
+            viewport_points = self.convert_world_space_to_viewport(self.points)            
 
             pixels = viewport_points[:, :2].astype(int)
             current_depth = viewport_points[:, 2]
-            scan_depth = scan.depth[pixels[:, 1], pixels[:, 0]] * 2 - 1
+            scan_depth = scan.depth[pixels[:, 1], pixels[:, 0]]
             
             # Points that are seen by two cameras pointing in opposing directions
             candidates = current_depth < scan_depth + 0.007
@@ -100,7 +109,7 @@ def get_rotation_matrix(angle, axis='y'):
     matrix[:3, :3] = rotation.as_dcm()
     return matrix
 
-def create_scans(mesh, camera_count = 30):
+def create_scans(mesh, camera_count = 10):
     scans = []
 
     for i in range(camera_count):
@@ -113,13 +122,38 @@ def create_scans(mesh, camera_count = 30):
 
     return scans
 
+def remove_thin_triangles(mesh):
+    EPSILON = 0.05
+
+    mesh.remove_degenerate_faces()
+    scans = create_scans(mesh, camera_count=20)
+
+    triangle_positions = mesh.triangles_center
+    triangle_normals = mesh.triangles_cross
+    
+    triangle_normals /= np.linalg.norm(triangle_normals, axis=1)[:, np.newaxis]
+    
+    points_a = triangle_positions + triangle_normals * EPSILON
+    points_b = triangle_positions - triangle_normals * EPSILON
+
+    outside_a = np.zeros(points_a.shape[0], dtype=np.uint8)
+    outside_b = np.zeros(points_a.shape[0], dtype=np.uint8)
+
+    for scan in scans:
+        outside_a = np.logical_or(outside_a, scan.is_visible(points_a))
+        outside_b = np.logical_or(outside_b, scan.is_visible(points_b))
+
+    thin_triangles = outside_a & outside_b
+    mesh.update_faces(~thin_triangles)
+
+
 class MeshSDF:
     def __init__(self, mesh):
         self.bounding_box = mesh.bounding_box
         self.scans = create_scans(mesh)
 
-        for scan in self.scans:
-            scan.remove_thin_geometry(self.scans)
+        #for scan in self.scans:
+        #    scan.remove_thin_geometry(self.scans)
 
         self.points = np.concatenate([scan.points for scan in self.scans], axis=0)
         self.normals = np.concatenate([scan.normals for scan in self.scans], axis=0)
@@ -142,7 +176,9 @@ class MeshSDF:
         return pyrender.Mesh.from_points(self.points, normals=self.normals)
 
     def get_voxel_sdf(self, voxel_count = 32):
-        return self.get_sdf(self.get_voxel_coordinates(voxel_count=voxel_count))
+        voxels = self.get_sdf(self.get_voxel_coordinates(voxel_count=voxel_count))
+        voxels = voxels.reshape(voxel_size, voxel_size, voxel_size)
+        return voxels
 
     def get_voxel_coordinates(self, voxel_count = 32):
         centroid = self.bounding_box.centroid
@@ -156,15 +192,15 @@ class MeshSDF:
         return points.reshape(3, -1).transpose()
 
 
+scene = pyrender.Scene()
 mesh = trimesh.load(PATH)
+remove_thin_triangles(mesh)
+
 mesh_sdf = MeshSDF(mesh)
 
-scene = pyrender.Scene()
 
 voxel_size = 32
 voxels = mesh_sdf.get_voxel_sdf(voxel_count=voxel_size)
-voxels = voxels.reshape(voxel_size, voxel_size, voxel_size)
-
 vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(voxel_size, voxel_size, voxel_size))
 reconstructed = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
 
@@ -172,4 +208,5 @@ reconstructed_pyrender = pyrender.Mesh.from_trimesh(reconstructed, smooth=False)
 scene.add(reconstructed_pyrender)
 
 #scene.add(mesh_sdf.get_pyrender_pointcloud())
+#scene.add(pyrender.Mesh.from_trimesh(mesh, smooth=False))
 viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
