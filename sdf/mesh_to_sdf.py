@@ -11,7 +11,7 @@ import skimage
 PATH = '/home/marian/shapenet/ShapeNetCore.v2/02942699/1cc93f96ad5e16a85d3f270c1c35f1c7/models/model_normalized.obj'
 
 CAMERA_DISTANCE = 1.2
-VIEWPORT_SIZE = 512
+VIEWPORT_SIZE = 256
 
 class CustomShaderCache():
     def __init__(self):
@@ -26,12 +26,13 @@ class Scan():
     def __init__(self, mesh, camera_pose):
         self.camera_pose = camera_pose
         self.camera_direction = np.matmul(camera_pose, np.array([0, 0, 1, 0]))[:3]
-        self.camera_position = np.matmul(camera_pose, np.array([0, 0, 0, 1]))[:3]        
-
+        self.camera_position = np.matmul(camera_pose, np.array([0, 0, 0, 1]))[:3]
+        
         scene = pyrender.Scene()
         scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
         camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0, znear = 0.5, zfar = 2)
         scene.add(camera, pose=camera_pose)
+        self.projection_matrix = camera.get_projection_matrix()
 
         renderer = pyrender.OffscreenRenderer(VIEWPORT_SIZE, VIEWPORT_SIZE)
         renderer._renderer._program_cache = CustomShaderCache()
@@ -56,6 +57,42 @@ class Scan():
         normals[normal_orientation < 0] *= -1
         self.normals = normals
 
+    def remove_thin_geometry(self, other_scans):
+        thin_points = np.zeros(self.points.shape[0], dtype=np.uint8)
+        for scan in other_scans:
+            if np.dot(self.camera_direction, scan.camera_direction) > 0.2:
+                continue
+
+            world_space_points = np.concatenate([self.points, np.ones((self.points.shape[0], 1))], axis=1)
+
+            half_viewport_size = 0.5 * VIEWPORT_SIZE
+            clipping_to_viewport = np.array([
+                [half_viewport_size, 0.0, 0.0, half_viewport_size],
+                [0.0, -half_viewport_size, 0.0, half_viewport_size],
+                [0.0, 0.0, 1.0, 0.0],
+                [0, 0, 0.0, 1.0]
+            ])
+
+            world_to_clipping = np.matmul(scan.projection_matrix, np.linalg.inv(scan.camera_pose))
+            world_to_viewport = np.matmul(clipping_to_viewport, world_to_clipping)
+            
+            viewport_points = np.matmul(world_space_points, world_to_viewport.transpose())
+            viewport_points /= viewport_points[:, 3][:, np.newaxis]
+
+            pixels = viewport_points[:, :2].astype(int)
+            current_depth = viewport_points[:, 2]
+            scan_depth = scan.depth[pixels[:, 1], pixels[:, 0]] * 2 - 1
+            
+            # Points that are seen by two cameras pointing in opposing directions
+            candidates = current_depth < scan_depth + 0.007
+            
+            camera_to_points = scan.camera_position - self.points 
+            candidates = np.logical_and(candidates, np.einsum('ij,ij->i', camera_to_points, self.normals) < -0.5)            
+
+            thin_points = np.logical_or(thin_points, candidates)
+        self.points = self.points[~thin_points]
+        self.normals = self.normals[~thin_points]
+
 
 def get_rotation_matrix(angle, axis='y'):
     rotation = Rotation.from_euler(axis, angle, degrees=True)
@@ -63,8 +100,7 @@ def get_rotation_matrix(angle, axis='y'):
     matrix[:3, :3] = rotation.as_dcm()
     return matrix
 
-
-def create_scans(mesh, camera_count = 10):
+def create_scans(mesh, camera_count = 30):
     scans = []
 
     for i in range(camera_count):
@@ -81,6 +117,9 @@ class MeshSDF:
     def __init__(self, mesh):
         self.bounding_box = mesh.bounding_box
         self.scans = create_scans(mesh)
+
+        for scan in self.scans:
+            scan.remove_thin_geometry(self.scans)
 
         self.points = np.concatenate([scan.points for scan in self.scans], axis=0)
         self.normals = np.concatenate([scan.normals for scan in self.scans], axis=0)
