@@ -22,44 +22,48 @@ class CustomShaderCache():
             self.program = pyrender.shader_program.ShaderProgram("sdf/shaders/mesh.vert", "sdf/shaders/mesh.frag", defines=defines)
         return self.program
 
+class Scan():
+    def __init__(self, mesh, camera_pose):
+        self.camera_pose = camera_pose
+
+        scene = pyrender.Scene()
+        scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
+        camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0, znear = 0.5, zfar = 2)
+        scene.add(camera, pose=camera_pose)
+
+        renderer = pyrender.OffscreenRenderer(VIEWPORT_SIZE, VIEWPORT_SIZE)
+        renderer._renderer._program_cache = CustomShaderCache()
+
+        self.color, self.depth = renderer.render(scene)
+        indices = np.argwhere(self.depth != 1)
+
+        normals = self.color[indices[:, 0], indices[:, 1]] / 255 * 2 - 1
+        self.camera_direction = np.matmul(camera_pose, np.array([0, 0, 1, 0]))[:3]
+        normal_orientation = np.dot(normals, self.camera_direction)
+        normals[normal_orientation < 0] *= -1
+        self.normals = normals
+
+        points = np.ones((indices.shape[0], 4))
+        points[:, [1, 0]] = indices.astype(float) / VIEWPORT_SIZE * 2 - 1
+        points[:, 1] *= -1
+        points[:, 2] = self.depth[indices[:, 0], indices[:, 1]] * 2 - 1
+        
+        clipping_to_world = np.matmul(camera_pose, np.linalg.inv(camera.get_projection_matrix()))
+
+        points = np.matmul(points, clipping_to_world.transpose())
+        points /= points[:, 3][:, np.newaxis]
+        self.points = points[:, :3]
+
+
 def get_rotation_matrix(angle, axis='y'):
     rotation = Rotation.from_euler(axis, angle, degrees=True)
     matrix = np.identity(4)
     matrix[:3, :3] = rotation.as_dcm()
     return matrix
 
-def render_to_pointcloud(mesh, camera_pose):
-    scene = pyrender.Scene()
-    scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
-    camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0, znear = 0.5, zfar = 2)
-    scene.add(camera, pose=camera_pose)
 
-    renderer = pyrender.OffscreenRenderer(VIEWPORT_SIZE, VIEWPORT_SIZE)
-    renderer._renderer._program_cache = CustomShaderCache()
-
-    color, depth = renderer.render(scene)
-    indices = np.argwhere(depth != 1)
-
-    normals = color[indices[:, 0], indices[:, 1]] / 255 * 2 - 1
-    camera_direction = np.matmul(camera_pose, np.array([0, 0, 1, 0]))[:3]
-    normal_orientation = np.dot(normals, camera_direction)
-    normals[normal_orientation < 0] *= -1
-
-    points = np.ones((indices.shape[0], 4))
-    points[:, [1, 0]] = indices.astype(float) / VIEWPORT_SIZE * 2 - 1
-    points[:, 1] *= -1
-    points[:, 2] = depth[indices[:, 0], indices[:, 1]] * 2 - 1
-    
-    clipping_to_world = np.matmul(camera_pose, np.linalg.inv(camera.get_projection_matrix()))
-
-    points = np.matmul(points, clipping_to_world.transpose())
-    points /= points[:, 3][:, np.newaxis]
-
-    return points[:, :3], normals
-
-def mesh_to_pointcloud(mesh, camera_count = 10):
-    points_list = []
-    normals_list = []
+def create_scans(mesh, camera_count = 10):
+    scans = []
 
     for i in range(camera_count):
         camera_pose = np.identity(4)
@@ -67,19 +71,19 @@ def mesh_to_pointcloud(mesh, camera_count = 10):
         camera_pose = np.matmul(get_rotation_matrix(360.0 * i / camera_count), camera_pose)
         camera_pose = np.matmul(get_rotation_matrix(45 if i % 2 == 0 else -45, axis='x'), camera_pose)
 
-        points, normals = render_to_pointcloud(mesh, camera_pose)
-        points_list.append(points)
-        normals_list.append(normals)
+        scans.append(Scan(mesh, camera_pose))
 
-    points = np.concatenate(points_list, axis=0)
-    normals = np.concatenate(normals_list, axis=0)
-
-    return points, normals
+    return scans
 
 class MeshSDF:
     def __init__(self, mesh):
         self.bounding_box = mesh.bounding_box
-        self.points, self.normals = mesh_to_pointcloud(mesh)
+        self.scans = create_scans(mesh)
+
+        self.points = np.concatenate([scan.points for scan in self.scans], axis=0)
+        self.normals = np.concatenate([scan.normals for scan in self.scans], axis=0)
+
+        self.points += self.normals * 0.0005
         self.kd_tree = KDTree(self.points, leafsize=100)
 
     def get_sdf(self, query_points):
@@ -114,6 +118,8 @@ class MeshSDF:
 mesh = trimesh.load(PATH)
 mesh_sdf = MeshSDF(mesh)
 
+scene = pyrender.Scene()
+
 voxel_size = 32
 voxels = mesh_sdf.get_voxel_sdf(voxel_count=voxel_size)
 voxels = voxels.reshape(voxel_size, voxel_size, voxel_size)
@@ -121,7 +127,6 @@ voxels = voxels.reshape(voxel_size, voxel_size, voxel_size)
 vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(voxel_size, voxel_size, voxel_size))
 reconstructed = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
 
-scene = pyrender.Scene()
 reconstructed_pyrender = pyrender.Mesh.from_trimesh(reconstructed, smooth=False)
 scene.add(reconstructed_pyrender)
 
