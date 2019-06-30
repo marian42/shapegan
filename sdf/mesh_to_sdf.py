@@ -25,6 +25,8 @@ class CustomShaderCache():
 class Scan():
     def __init__(self, mesh, camera_pose):
         self.camera_pose = camera_pose
+        self.camera_direction = np.matmul(camera_pose, np.array([0, 0, 1, 0]))[:3]
+        self.camera_position = np.matmul(camera_pose, np.array([0, 0, 0, 1]))[:3]        
 
         scene = pyrender.Scene()
         scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
@@ -37,12 +39,6 @@ class Scan():
         self.color, self.depth = renderer.render(scene)
         indices = np.argwhere(self.depth != 1)
 
-        normals = self.color[indices[:, 0], indices[:, 1]] / 255 * 2 - 1
-        self.camera_direction = np.matmul(camera_pose, np.array([0, 0, 1, 0]))[:3]
-        normal_orientation = np.dot(normals, self.camera_direction)
-        normals[normal_orientation < 0] *= -1
-        self.normals = normals
-
         points = np.ones((indices.shape[0], 4))
         points[:, [1, 0]] = indices.astype(float) / VIEWPORT_SIZE * 2 - 1
         points[:, 1] *= -1
@@ -53,6 +49,12 @@ class Scan():
         points = np.matmul(points, clipping_to_world.transpose())
         points /= points[:, 3][:, np.newaxis]
         self.points = points[:, :3]
+
+        normals = self.color[indices[:, 0], indices[:, 1]] / 255 * 2 - 1
+        camera_to_points = self.camera_position - self.points
+        normal_orientation = np.einsum('ij,ij->i', camera_to_points, normals)
+        normals[normal_orientation < 0] *= -1
+        self.normals = normals
 
 
 def get_rotation_matrix(angle, axis='y'):
