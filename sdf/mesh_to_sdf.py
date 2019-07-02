@@ -152,6 +152,7 @@ def remove_thin_triangles(mesh):
 
 class MeshSDF:
     def __init__(self, mesh):
+        self.mesh = mesh
         self.bounding_box = mesh.bounding_box
         self.scans = create_scans(mesh)
 
@@ -160,7 +161,7 @@ class MeshSDF:
 
         self.kd_tree = KDTree(self.points, leafsize=100)
 
-    def get_sdf(self, query_points = 32, sample_count = 30):
+    def get_sdf(self, query_points, sample_count = 30):
         start = time.time()
         distances, indices = self.kd_tree.query(query_points, eps=0.001, k=sample_count)
         end = time.time()
@@ -191,6 +192,22 @@ class MeshSDF:
         )
         points = np.stack(points)
         return points.reshape(3, -1).transpose()
+
+    def get_sample_points(self):
+        ''' Use sample points as described in the DeepSDF paper '''
+        points = []
+
+        surface_points = self.mesh.sample(250000)
+        points.append(surface_points + np.random.normal(scale=0.0025, size=(250000, 3)))
+        points.append(surface_points + np.random.normal(scale=0.00025, size=(250000, 3)))
+
+        unit_sphere_points = np.random.uniform(-1, 1, size=(int(25000 * 1.90985), 3))
+        unit_sphere_points = unit_sphere_points[np.linalg.norm(unit_sphere_points, axis=1) < 1]
+        points.append(unit_sphere_points)
+        points = np.concatenate(points)
+
+        return points, self.get_sdf(points)
+
     
     def show_pointcloud(self):
         scene = pyrender.Scene()
