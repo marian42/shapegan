@@ -11,7 +11,7 @@ import logging
 
 PATH = '/home/marian/shapenet/ShapeNetCore.v2/03001627/64871dc28a21843ad504e40666187f4e/models/model_normalized.obj'
 
-CAMERA_DISTANCE = 1.2
+CAMERA_DISTANCE = 2
 VIEWPORT_SIZE = 512
 
 logging.getLogger("trimesh").setLevel(9000)
@@ -33,7 +33,7 @@ class Scan():
         
         scene = pyrender.Scene()
         scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
-        camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0, znear = 0.5, zfar = 2)
+        camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0, znear = 0.5, zfar = 4)
         scene.add(camera, pose=camera_pose)
         self.projection_matrix = camera.get_projection_matrix()
 
@@ -148,6 +148,14 @@ def remove_thin_triangles(mesh):
 
     thin_triangles = outside_a & outside_b
     mesh.update_faces(~thin_triangles)
+
+def scale_to_unit_sphere(mesh):
+    origin = mesh.bounding_box.centroid
+    vertices = mesh.vertices - origin
+    distances = np.linalg.norm(vertices, axis=1)
+    size = np.max(distances)
+    vertices /= size
+    return trimesh.base.Trimesh(vertices=vertices, faces=mesh.faces)
 
 
 class MeshSDF:
