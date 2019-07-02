@@ -155,23 +155,21 @@ class MeshSDF:
         self.bounding_box = mesh.bounding_box
         self.scans = create_scans(mesh)
 
-        #for scan in self.scans:
-        #    scan.remove_thin_geometry(self.scans)
-
         self.points = np.concatenate([scan.points for scan in self.scans], axis=0)
         self.normals = np.concatenate([scan.normals for scan in self.scans], axis=0)
 
-        self.points += self.normals * 0.0005
         self.kd_tree = KDTree(self.points, leafsize=100)
 
-    def get_sdf(self, query_points):
+    def get_sdf(self, query_points = 32, sample_count = 30):
         start = time.time()
-        distances, indices = self.kd_tree.query(query_points, eps=0.001)
+        distances, indices = self.kd_tree.query(query_points, eps=0.001, k=sample_count)
         end = time.time()
-        print(end - start)
+        print('Time for KD-Tree query: {:.1f}s'.format(end - start))
         closest_points = self.points[indices]
-        direction_to_surface = query_points - closest_points
-        inside = np.einsum('ij,ij->i', direction_to_surface, self.normals[indices]) < 0
+        direction_to_surface = query_points[:, np.newaxis, :] - closest_points
+        inside = np.einsum('ijk,ijk->ij', direction_to_surface, self.normals[indices]) < 0
+        inside = np.sum(inside, axis=1) > sample_count * 0.5
+        distances = distances[:, 0]
         distances[inside] *= -1
         return distances
 
