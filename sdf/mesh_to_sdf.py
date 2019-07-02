@@ -180,7 +180,7 @@ class MeshSDF:
 
     def get_voxel_sdf(self, voxel_count = 32):
         voxels = self.get_sdf(self.get_voxel_coordinates(voxel_count=voxel_count))
-        voxels = voxels.reshape(voxel_size, voxel_size, voxel_size)
+        voxels = voxels.reshape(voxel_count, voxel_count, voxel_count)
         return voxels
 
     def get_voxel_coordinates(self, voxel_count = 32):
