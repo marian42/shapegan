@@ -7,11 +7,14 @@ from scipy.spatial.transform import Rotation
 import time
 from scipy.spatial import KDTree
 import skimage
+import logging
 
-PATH = '/home/marian/shapenet/ShapeNetCore.v2/02942699/1cc93f96ad5e16a85d3f270c1c35f1c7/models/model_normalized.obj'
+PATH = '/home/marian/shapenet/ShapeNetCore.v2/03001627/64871dc28a21843ad504e40666187f4e/models/model_normalized.obj'
 
 CAMERA_DISTANCE = 1.2
 VIEWPORT_SIZE = 512
+
+logging.getLogger("trimesh").setLevel(9000)
 
 class CustomShaderCache():
     def __init__(self):
@@ -190,23 +193,32 @@ class MeshSDF:
         )
         points = np.stack(points)
         return points.reshape(3, -1).transpose()
+    
+    def show_pointcloud(self):
+        scene = pyrender.Scene()
+        scene.add(self.get_pyrender_pointcloud())
+        viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
+
+    def show_reconstructed_mesh(self):
+        scene = pyrender.Scene()
+        voxel_size = 32
+        voxels = self.get_voxel_sdf(voxel_count=voxel_size)
+        vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(voxel_size, voxel_size, voxel_size))
+        reconstructed = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
+        reconstructed_pyrender = pyrender.Mesh.from_trimesh(reconstructed, smooth=False)
+        scene.add(reconstructed_pyrender)
+        viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
 
 
-scene = pyrender.Scene()
+def show_mesh(mesh):
+    scene = pyrender.Scene()
+    scene.add(pyrender.Mesh.from_trimesh(mesh, smooth=False))
+    viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
+
 mesh = trimesh.load(PATH)
-remove_thin_triangles(mesh)
-
+#remove_thin_triangles(mesh)
 mesh_sdf = MeshSDF(mesh)
 
-
-voxel_size = 32
-voxels = mesh_sdf.get_voxel_sdf(voxel_count=voxel_size)
-vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(voxel_size, voxel_size, voxel_size))
-reconstructed = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
-
-reconstructed_pyrender = pyrender.Mesh.from_trimesh(reconstructed, smooth=False)
-scene.add(reconstructed_pyrender)
-
-#scene.add(mesh_sdf.get_pyrender_pointcloud())
-#scene.add(pyrender.Mesh.from_trimesh(mesh, smooth=False))
-viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
+mesh_sdf.show_pointcloud()
+#mesh_sdf.show_reconstructed_mesh()
+#show_mesh(mesh)
