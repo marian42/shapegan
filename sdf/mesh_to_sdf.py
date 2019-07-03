@@ -239,6 +239,7 @@ def show_mesh(mesh):
     viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
 
 mesh = trimesh.load(PATH)
+mesh = scale_to_unit_sphere(mesh)
 #remove_thin_triangles(mesh)
 mesh_sdf = MeshSDF(mesh)
 
