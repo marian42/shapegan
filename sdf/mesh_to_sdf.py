@@ -242,6 +242,11 @@ mesh = trimesh.load(PATH)
 #remove_thin_triangles(mesh)
 mesh_sdf = MeshSDF(mesh)
 
-mesh_sdf.show_pointcloud()
+#mesh_sdf.show_pointcloud()
 #mesh_sdf.show_reconstructed_mesh()
 #show_mesh(mesh)
+
+points, sdf = mesh_sdf.get_sample_points()
+combined = np.concatenate((points, sdf[:, np.newaxis]), axis=1)
+print(combined.shape)
+np.save("sdf_test.npy", combined)
