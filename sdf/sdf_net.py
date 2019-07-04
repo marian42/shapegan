@@ -30,7 +30,7 @@ class SDFNet(nn.Module):
         self.cuda()
 
     def forward(self, x):
-        return self.layers.forward(x)
+        return self.layers.forward(x).squeeze()
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
