@@ -11,3 +11,6 @@ images/**
 *.pdf
 
 *.csv
+
+*.npy
+*.txt
