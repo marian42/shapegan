@@ -69,7 +69,7 @@ BATCH_SIZE = 128
 
 sdf_net = SDFNet()
 
-optimizer = optim.Adam(sdf_net.parameters(), lr=1e-4)
+optimizer = optim.Adam(sdf_net.parameters(), lr=1e-3)
 criterion = nn.MSELoss()
 
 def create_batches():
@@ -101,6 +101,7 @@ def train():
         loss = criterion(test_output, sdf[:1000]).item()
         print("Epoch {:d}. Loss: {:.8f}".format(epoch, loss))
 
-        mesh = sdf_net.get_mesh()
-        viewer.set_mesh(mesh)
+        viewer.set_mesh(sdf_net.get_mesh())
+       
+
 train()
