@@ -52,7 +52,6 @@ class SDFNet(nn.Module):
 
         vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(distances, level=0, spacing=(2.0 / voxel_count, 2.0 / voxel_count, 2.0 / voxel_count))
         vertices -= 1
-        normals = normals[:, [2, 1, 0]]        
         mesh = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
         return mesh
 
