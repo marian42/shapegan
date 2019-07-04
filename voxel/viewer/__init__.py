@@ -25,8 +25,7 @@ class VoxelViewer():
         self.vertex_buffer = None
         self.normal_buffer = None
 
-        self.voxel_shape = [1, 1, 1]
-        self.voxel_size = 1
+        self.model_size = 1
 
         self.request_render = False
 
@@ -42,9 +41,7 @@ class VoxelViewer():
         else:
             self._initialize_opengl()
 
-    def set_voxels(self, voxels):
-        vertices, normals = create_vertices(voxels)
-        
+    def _update_buffers(self, vertices, normals):
         if self.vertex_buffer is None:
             self.vertex_buffer = vbo.VBO(vertices)
         else:
@@ -54,12 +51,29 @@ class VoxelViewer():
             self.normal_buffer = vbo.VBO(normals)
         else:
             self.normal_buffer.set_array(normals)
-
-        self.voxel_shape = [voxels.shape[0] + 2, voxels.shape[1] + 2, voxels.shape[2] + 2]
-        self.voxel_size = max(self.voxel_shape)
-
+        
         self.vertex_buffer_size = vertices.shape[0]
         self.request_render = True
+
+
+    def set_voxels(self, voxels):
+        vertices, normals = create_vertices(voxels)
+        vertices -= (voxels.shape[0] + 1) / 2
+
+        self._update_buffers(vertices, normals)        
+        self.model_size = max([voxels.shape[0] + 1, voxels.shape[1] + 1, voxels.shape[2] + 1])
+
+
+    def set_mesh(self, mesh):
+        vertices = np.array(mesh.triangles, dtype=np.float32).reshape(-1, 3)
+        vertices -= mesh.bounding_box.centroid[np.newaxis, :]
+        vertices = vertices.reshape((-1))
+
+        normals = np.repeat(mesh.face_normals, 3, axis=0).astype(np.float32)
+        
+        self._update_buffers(vertices, normals)
+        self.model_size = np.max(mesh.bounding_box.extents)
+
 
     def _poll_mouse(self):
         left_mouse, _, right_mouse = pygame.mouse.get_pressed()
@@ -75,15 +89,14 @@ class VoxelViewer():
         self.request_render = False
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        gluPerspective(45.0, float(self.size[0]) / float(self.size[1]), 0.1, self.voxel_size * 4)
+        gluPerspective(45.0, float(self.size[0]) / float(self.size[1]), 0.1, self.model_size * 4)
         
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
-        glTranslatef(0.0, 0.0, -self.voxel_size * 2)
+        glTranslatef(0.0, 0.0, -self.model_size * 2)
         glRotatef(self.rotation[1], 1.0, 0, 0)
         glRotatef(self.rotation[0], 0, 1.0, 0)
-        glTranslatef(-(self.voxel_shape[0] - 1) / 2, -(self.voxel_shape[0] - 1) / 2, -(self.voxel_shape[0] - 1) / 2)        
-
+        
         glClearColor(*self.background_color)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         
