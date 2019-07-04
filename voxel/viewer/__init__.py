@@ -66,13 +66,12 @@ class VoxelViewer():
 
     def set_mesh(self, mesh):
         vertices = np.array(mesh.triangles, dtype=np.float32).reshape(-1, 3)
-        vertices -= mesh.bounding_box.centroid[np.newaxis, :]
         vertices = vertices.reshape((-1))
 
         normals = np.repeat(mesh.face_normals, 3, axis=0).astype(np.float32)
         
         self._update_buffers(vertices, normals)
-        self.model_size = np.max(mesh.bounding_box.extents)
+        self.model_size = 1.5
 
 
     def _poll_mouse(self):
