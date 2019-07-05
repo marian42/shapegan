@@ -273,7 +273,11 @@ class MeshSDF:
                 result = np.logical_or(result, scan.is_visible(points))
         return result
 
-    def sanity_check(self, points, sdf, bad_points_threshold=0.05):
+    def sanity_check(self, points, sdf, bad_points_threshold=0.005):
+        high_distance = np.abs(sdf) > 0.02
+        points = points[high_distance]
+        sdf = sdf[high_distance]
+
         outside_visibility = self.is_outside(points)
         outside_sdf = sdf > 0
         bad_points = np.count_nonzero(outside_visibility != outside_sdf) / sdf.shape[0]
