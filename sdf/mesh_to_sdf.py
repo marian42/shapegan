@@ -126,8 +126,8 @@ def get_camera_transform(rotation_y, rotation_x = 0):
 def create_scans(mesh, camera_count = 10):
     scans = []
 
-    scans.append(Scan(mesh, get_camera_transform(0, 90)))
-    scans.append(Scan(mesh, get_camera_transform(0, -90)))
+    #scans.append(Scan(mesh, get_camera_transform(0, 90)))
+    #scans.append(Scan(mesh, get_camera_transform(0, -90)))
 
     for i in range(camera_count):
         camera_pose = get_camera_transform(360.0 * i / camera_count, 45 if i % 2 == 0 else -45)
