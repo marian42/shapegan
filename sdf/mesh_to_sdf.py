@@ -137,7 +137,7 @@ def create_scans(mesh, camera_count = 20):
 
 
 def get_thin_triangles(mesh):
-    EPSILON = 0.05
+    EPSILON = 0.005
 
     scans = create_scans(mesh, camera_count=20)
 
@@ -183,6 +183,7 @@ def scale_to_unit_sphere(mesh):
 def count_thin_triangles(mesh):
     thin_triangles = get_thin_triangles(mesh)
     return np.count_nonzero(thin_triangles) / thin_triangles.shape[0]
+
 
 class MeshSDF:
     def __init__(self, mesh):
