@@ -180,6 +180,10 @@ def scale_to_unit_sphere(mesh):
     return trimesh.base.Trimesh(vertices=vertices, faces=mesh.faces)
 
 
+def count_thin_triangles(mesh):
+    thin_triangles = get_thin_triangles(mesh)
+    return np.count_nonzero(thin_triangles) / thin_triangles.shape[0]
+
 class MeshSDF:
     def __init__(self, mesh):
         self.mesh = mesh
@@ -273,7 +277,7 @@ class MeshSDF:
         outside_sdf = sdf > 0
         bad_points = np.count_nonzero(outside_visibility != outside_sdf) / sdf.shape[0]
         
-        print('SDF sanity check with {:d} samples: {:.1f}%  inconsistent signs.'.format(sdf.shape[0], bad_points * 100))
+        print('SDF sanity check with {:d} samples: {:.1f}% inconsistent signs.'.format(sdf.shape[0], bad_points * 100))
         if bad_points > bad_points_threshold:
             raise BadMeshException("{:.1f}% of the SDF values have the wrong sign. Make sure the supplied mesh is watertight.".format(bad_points * 100))
 
@@ -285,6 +289,9 @@ def show_mesh(mesh):
 
 mesh = trimesh.load(PATH)
 mesh = scale_to_unit_sphere(mesh)
+
+print("{:.2f}% thin triangles".format(count_thin_triangles(mesh) * 100))
+
 #remove_thin_triangles(mesh)
 mesh_sdf = MeshSDF(mesh)
 
