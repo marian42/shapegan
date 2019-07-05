@@ -16,6 +16,9 @@ VIEWPORT_SIZE = 512
 
 logging.getLogger("trimesh").setLevel(9000)
 
+class BadMeshException(Exception):
+    pass
+
 class CustomShaderCache():
     def __init__(self):
         self.program = None
@@ -188,7 +191,7 @@ class MeshSDF:
 
         self.kd_tree = KDTree(self.points, leafsize=100)
 
-    def get_sdf(self, query_points, sample_count = 30):
+    def get_sdf(self, query_points, sample_count = 30, perform_sanity_check=True):
         start = time.time()
         distances, indices = self.kd_tree.query(query_points, eps=0.001, k=sample_count)
         distances = distances.astype(np.float32)
@@ -200,6 +203,8 @@ class MeshSDF:
         inside = np.sum(inside, axis=1) > sample_count * 0.5
         distances = distances[:, 0]
         distances[inside] *= -1
+        if perform_sanity_check:
+            self.sanity_check(query_points, distances)
         return distances
 
     def get_pyrender_pointcloud(self):
@@ -253,6 +258,24 @@ class MeshSDF:
         reconstructed_pyrender = pyrender.Mesh.from_trimesh(reconstructed, smooth=False)
         scene.add(reconstructed_pyrender)
         viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
+        
+    def is_outside(self, points):
+        result = None
+        for scan in self.scans:
+            if result is None:
+                result = scan.is_visible(points)
+            else:
+                result = np.logical_or(result, scan.is_visible(points))
+        return result
+
+    def sanity_check(self, points, sdf, bad_points_threshold=0.05):
+        outside_visibility = self.is_outside(points)
+        outside_sdf = sdf > 0
+        bad_points = np.count_nonzero(outside_visibility != outside_sdf) / sdf.shape[0]
+        
+        print('SDF sanity check with {:d} samples: {:.1f}%  inconsistent signs.'.format(sdf.shape[0], bad_points * 100))
+        if bad_points > bad_points_threshold:
+            raise BadMeshException("{:.1f}% of the SDF values have the wrong sign. Make sure the supplied mesh is watertight.".format(bad_points * 100))
 
 
 def show_mesh(mesh):
