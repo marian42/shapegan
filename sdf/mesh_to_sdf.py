@@ -81,6 +81,7 @@ class Scan():
     def is_visible(self, points):
         viewport_points = self.convert_world_space_to_viewport(points)
         pixels = viewport_points[:, :2].astype(int)
+        pixels = np.clip(pixels, 0, VIEWPORT_SIZE - 1)
         return viewport_points[:, 2] < self.depth[pixels[:, 1], pixels[:, 0]]
 
     def remove_thin_geometry(self, other_scans):
