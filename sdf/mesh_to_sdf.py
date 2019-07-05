@@ -126,7 +126,8 @@ def create_scans(mesh, camera_count = 10):
 
     return scans
 
-def remove_thin_triangles(mesh):
+
+def get_thin_triangles(mesh):
     EPSILON = 0.05
 
     mesh.remove_degenerate_faces()
@@ -147,8 +148,18 @@ def remove_thin_triangles(mesh):
         outside_a = np.logical_or(outside_a, scan.is_visible(points_a))
         outside_b = np.logical_or(outside_b, scan.is_visible(points_b))
 
-    thin_triangles = outside_a & outside_b
-    mesh.update_faces(~thin_triangles)
+    return outside_a & outside_b
+
+
+def remove_thin_triangles(mesh, max_iter = 4):
+    iterations = 0
+    while iterations < max_iter:
+        iterations += 1
+        thin_triangles = get_thin_triangles(mesh)
+        if np.count_nonzero(thin_triangles) == 0:
+            return
+        mesh.update_faces(~thin_triangles)
+
 
 def scale_to_unit_sphere(mesh):
     origin = mesh.bounding_box.centroid
