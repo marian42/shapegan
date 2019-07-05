@@ -5,7 +5,7 @@ np.set_printoptions(suppress=True)
 from PIL import Image
 from scipy.spatial.transform import Rotation
 import time
-from scipy.spatial import KDTree
+from sklearn.neighbors import KDTree
 import skimage
 import logging
 
@@ -123,11 +123,11 @@ def get_camera_transform(rotation_y, rotation_x = 0):
     camera_pose = np.matmul(get_rotation_matrix(rotation_x, axis='x'), camera_pose)
     return camera_pose
 
-def create_scans(mesh, camera_count = 10):
+def create_scans(mesh, camera_count = 20):
     scans = []
 
-    #scans.append(Scan(mesh, get_camera_transform(0, 90)))
-    #scans.append(Scan(mesh, get_camera_transform(0, -90)))
+    scans.append(Scan(mesh, get_camera_transform(0, 90)))
+    scans.append(Scan(mesh, get_camera_transform(0, -90)))
 
     for i in range(camera_count):
         camera_pose = get_camera_transform(360.0 * i / camera_count, 45 if i % 2 == 0 else -45)
@@ -193,14 +193,15 @@ class MeshSDF:
         self.points = np.concatenate([scan.points for scan in self.scans], axis=0)
         self.normals = np.concatenate([scan.normals for scan in self.scans], axis=0)
 
-        self.kd_tree = KDTree(self.points, leafsize=100)
+        self.kd_tree = KDTree(self.points)
 
     def get_sdf(self, query_points, sample_count = 30, perform_sanity_check=True):
         start = time.time()
-        distances, indices = self.kd_tree.query(query_points, eps=0.001, k=sample_count)
+        distances, indices = self.kd_tree.query(query_points, k=sample_count)
         distances = distances.astype(np.float32)
         end = time.time()
         print('Time for KD-Tree query: {:.1f}s'.format(end - start))
+
         closest_points = self.points[indices]
         direction_to_surface = query_points[:, np.newaxis, :] - closest_points
         inside = np.einsum('ijk,ijk->ij', direction_to_surface, self.normals[indices]) < 0
@@ -253,9 +254,8 @@ class MeshSDF:
         scene.add(self.get_pyrender_pointcloud())
         viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
 
-    def show_reconstructed_mesh(self):
+    def show_reconstructed_mesh(self, voxel_size=64):
         scene = pyrender.Scene()
-        voxel_size = 32
         voxels = self.get_voxel_sdf(voxel_count=voxel_size)
         vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(voxel_size, voxel_size, voxel_size))
         reconstructed = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
