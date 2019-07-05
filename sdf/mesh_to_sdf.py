@@ -113,15 +113,21 @@ def get_rotation_matrix(angle, axis='y'):
     matrix[:3, :3] = rotation.as_dcm()
     return matrix
 
+def get_camera_transform(rotation_y, rotation_x = 0):
+    camera_pose = np.identity(4)
+    camera_pose[2, 3] = CAMERA_DISTANCE
+    camera_pose = np.matmul(get_rotation_matrix(rotation_y, axis='y'), camera_pose)
+    camera_pose = np.matmul(get_rotation_matrix(rotation_x, axis='x'), camera_pose)
+    return camera_pose
+
 def create_scans(mesh, camera_count = 10):
     scans = []
 
-    for i in range(camera_count):
-        camera_pose = np.identity(4)
-        camera_pose[2, 3] = CAMERA_DISTANCE
-        camera_pose = np.matmul(get_rotation_matrix(360.0 * i / camera_count), camera_pose)
-        camera_pose = np.matmul(get_rotation_matrix(45 if i % 2 == 0 else -45, axis='x'), camera_pose)
+    scans.append(Scan(mesh, get_camera_transform(0, 90)))
+    scans.append(Scan(mesh, get_camera_transform(0, -90)))
 
+    for i in range(camera_count):
+        camera_pose = get_camera_transform(360.0 * i / camera_count, 45 if i % 2 == 0 else -45)
         scans.append(Scan(mesh, camera_pose))
 
     return scans
@@ -130,7 +136,6 @@ def create_scans(mesh, camera_count = 10):
 def get_thin_triangles(mesh):
     EPSILON = 0.05
 
-    mesh.remove_degenerate_faces()
     scans = create_scans(mesh, camera_count=20)
 
     triangle_positions = mesh.triangles_center
@@ -152,6 +157,8 @@ def get_thin_triangles(mesh):
 
 
 def remove_thin_triangles(mesh, max_iter = 4):
+    mesh.remove_degenerate_faces()
+    
     iterations = 0
     while iterations < max_iter:
         iterations += 1
