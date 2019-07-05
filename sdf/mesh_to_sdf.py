@@ -9,8 +9,6 @@ from sklearn.neighbors import KDTree
 import skimage
 import logging
 
-PATH = '/home/marian/shapenet/ShapeNetCore.v2/03001627/64871dc28a21843ad504e40666187f4e/models/model_normalized.obj'
-
 CAMERA_DISTANCE = 2
 VIEWPORT_SIZE = 512
 
@@ -201,7 +199,7 @@ class MeshSDF:
         distances, indices = self.kd_tree.query(query_points, k=sample_count)
         distances = distances.astype(np.float32)
         end = time.time()
-        print('Time for KD-Tree query: {:.1f}s'.format(end - start))
+        #print('Time for KD-Tree query: {:.1f}s'.format(end - start))
 
         closest_points = self.points[indices]
         direction_to_surface = query_points[:, np.newaxis, :] - closest_points
@@ -282,7 +280,7 @@ class MeshSDF:
         outside_sdf = sdf > 0
         bad_points = np.count_nonzero(outside_visibility != outside_sdf) / sdf.shape[0]
         
-        print('SDF sanity check with {:d} samples: {:.1f}% inconsistent signs.'.format(sdf.shape[0], bad_points * 100))
+        #print('SDF sanity check with {:d} samples: {:.1f}% inconsistent signs.'.format(sdf.shape[0], bad_points * 100))
         if bad_points > bad_points_threshold:
             raise BadMeshException("{:.1f}% of the SDF values have the wrong sign. Make sure the supplied mesh is watertight.".format(bad_points * 100))
 
@@ -292,19 +290,20 @@ def show_mesh(mesh):
     scene.add(pyrender.Mesh.from_trimesh(mesh, smooth=False))
     viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
 
-mesh = trimesh.load(PATH)
-mesh = scale_to_unit_sphere(mesh)
+if __name__ == "__main__":
+    PATH = '/home/marian/shapenet/ShapeNetCore.v2/03001627/64871dc28a21843ad504e40666187f4e/models/model_normalized.obj'
+    mesh = trimesh.load(PATH)
+    mesh = scale_to_unit_sphere(mesh)
 
-print("{:.2f}% thin triangles".format(count_thin_triangles(mesh) * 100))
+    print("{:.2f}% thin triangles".format(count_thin_triangles(mesh) * 100))
 
-#remove_thin_triangles(mesh)
-mesh_sdf = MeshSDF(mesh)
+    remove_thin_triangles(mesh)
+    show_mesh(mesh)
+    mesh_sdf = MeshSDF(mesh)
 
-#mesh_sdf.show_pointcloud()
-#mesh_sdf.show_reconstructed_mesh()
-#show_mesh(mesh)
+    #mesh_sdf.show_pointcloud()
+    mesh_sdf.show_reconstructed_mesh()
 
-points, sdf = mesh_sdf.get_sample_points()
-combined = np.concatenate((points, sdf[:, np.newaxis]), axis=1)
-print(combined.shape)
-np.save("sdf_test.npy", combined)
+    #points, sdf = mesh_sdf.get_sample_points()
+    #combined = np.concatenate((points, sdf[:, np.newaxis]), axis=1)
+    #np.save("sdf_test.npy", combined)
