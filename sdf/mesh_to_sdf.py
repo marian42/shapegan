@@ -173,6 +173,7 @@ class MeshSDF:
     def get_sdf(self, query_points, sample_count = 30):
         start = time.time()
         distances, indices = self.kd_tree.query(query_points, eps=0.001, k=sample_count)
+        distances = distances.astype(np.float32)
         end = time.time()
         print('Time for KD-Tree query: {:.1f}s'.format(end - start))
         closest_points = self.points[indices]
@@ -202,18 +203,20 @@ class MeshSDF:
         points = np.stack(points)
         return points.reshape(3, -1).transpose()
 
-    def get_sample_points(self):
+    def get_sample_points(self, number_of_points = 100000):
         ''' Use sample points as described in the DeepSDF paper '''
         points = []
 
-        surface_points = self.mesh.sample(250000)
-        points.append(surface_points + np.random.normal(scale=0.0025, size=(250000, 3)))
-        points.append(surface_points + np.random.normal(scale=0.00025, size=(250000, 3)))
+        surface_sample_count = int(number_of_points * 0.4)
+        surface_points = self.mesh.sample(surface_sample_count)
+        points.append(surface_points + np.random.normal(scale=0.0025, size=(surface_sample_count, 3)))
+        points.append(surface_points + np.random.normal(scale=0.00025, size=(surface_sample_count, 3)))
 
-        unit_sphere_points = np.random.uniform(-1, 1, size=(int(25000 * 1.90985), 3))
+        unit_sphere_sample_count = int(number_of_points * 0.2)
+        unit_sphere_points = np.random.uniform(-1, 1, size=(unit_sphere_sample_count * 2, 3))
         unit_sphere_points = unit_sphere_points[np.linalg.norm(unit_sphere_points, axis=1) < 1]
-        points.append(unit_sphere_points)
-        points = np.concatenate(points)
+        points.append(unit_sphere_points[:unit_sphere_sample_count, :])
+        points = np.concatenate(points).astype(np.float32)
 
         return points, self.get_sdf(points)
 
