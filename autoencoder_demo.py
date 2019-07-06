@@ -17,6 +17,7 @@ from model import Autoencoder, LATENT_CODE_SIZE, standard_normal_distribution
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 from dataset import dataset as dataset
+from util import show_slice
 
 autoencoder = Autoencoder()
 autoencoder.load()
@@ -55,8 +56,10 @@ for epoch in count():
                 model = previous_model * (1 - progress) + next_model * progress
             else:
                 model = next_model
+            voxels = autoencoder.decode(model).detach().cpu()
+            viewer.set_voxels(voxels)
+            print(show_slice(voxels))
 
-            viewer.set_voxels(autoencoder.decode(model).detach().cpu())
             time.sleep(TRANSITION_TIME / STEPS)
 
         time.sleep(WAIT_TIME)
