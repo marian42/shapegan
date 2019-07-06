@@ -8,11 +8,14 @@ import time
 from sklearn.neighbors import KDTree
 import skimage
 import logging
+from threading import Lock
 
 CAMERA_DISTANCE = 2
 VIEWPORT_SIZE = 512
 
 logging.getLogger("trimesh").setLevel(9000)
+
+render_lock = Lock()
 
 class BadMeshException(Exception):
     pass
@@ -124,6 +127,7 @@ def get_camera_transform(rotation_y, rotation_x = 0):
 def create_scans(mesh, camera_count = 20):
     scans = []
 
+    render_lock.acquire()
     scans.append(Scan(mesh, get_camera_transform(0, 90)))
     scans.append(Scan(mesh, get_camera_transform(0, -90)))
 
@@ -131,6 +135,7 @@ def create_scans(mesh, camera_count = 20):
         camera_pose = get_camera_transform(360.0 * i / camera_count, 45 if i % 2 == 0 else -45)
         scans.append(Scan(mesh, camera_pose))
 
+    render_lock.release()
     return scans
 
 

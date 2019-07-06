@@ -1,6 +1,9 @@
 import os
 from mesh_to_sdf import *
 from tqdm import tqdm
+from queue import Queue
+from threading import Thread
+import time
 
 PATH = '/home/marian/shapenet/ShapeNetCore.v2/03001627/'
 
@@ -65,19 +68,21 @@ def delete_existing_data(directories):
                 os.remove(file)
 
 print("Scanning for directories.")
-directories = list(get_directorries())
-print("Found {:d} models.".format(len(directories)))
+directories = Queue()
+for directory in get_directorries():
+    directories.put(directory)
+print("Found {:d} models.".format(directories.qsize()))
 
-good_meshes = 0
-bad_meshes = 0
+progress = tqdm(total=directories.qsize())
 
-for directory in tqdm(directories):
-    success = process_directory(directory)
-    if success:
-        good_meshes += 1
-    else:
-        bad_meshes += 1
-    if good_meshes % 10 == 0:
-        print("Success rate: {:d} / {:d}".format(good_meshes, good_meshes + bad_meshes))
+def worker():
+    while not directories.empty():
+        directory = directories.get()
+        process_directory(directory)
+        progress.update()
+        time.sleep(0.001)
 
-print("Done. Success rate: {:d} / {:d}".format(good_meshes, len(directories)))
+for _ in range(4):
+    thread = Thread(target=worker)
+    thread.start()
+directories.join()
