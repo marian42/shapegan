@@ -13,7 +13,10 @@ MIN_SAMPLES_PER_CLASS = 500
 VOXEL_SIZE = 32
 LIMIT_SIZE = 15000
 MODELS_FILENAME = "data/dataset-{:d}-{:d}-{:d}.to".format(VOXEL_SIZE, LIMIT_SIZE, MIN_SAMPLES_PER_CLASS)
+MODELS_SDF_FILENAME = "data/dataset-sdf-{:d}.to".format(VOXEL_SIZE)
 LABELS_FILENAME = "data/labels-{:d}-{:d}-{:d}.to".format(VOXEL_SIZE, LIMIT_SIZE, MIN_SAMPLES_PER_CLASS)
+
+SDF_CLIPPING = 0.1
 
 class DataClass():
     def __init__(self, name, id, count):
@@ -55,7 +58,7 @@ class Dataset():
         self.classes = [item for item in classes.values() if item.is_root and item.count >= MIN_SAMPLES_PER_CLASS]
         self.label_count = len(self.classes)
 
-    def prepare(self):
+    def find_model_files(self, model_filename):
         labels = []
         filenames = []
 
@@ -65,12 +68,17 @@ class Dataset():
             items_in_class = 0
             class_directory = os.path.join(DATASET_DIRECTORY, str(current_class.id).rjust(8, '0'))
             for subdirectory in os.listdir(class_directory):
-                filename = os.path.join(class_directory, subdirectory, "models" , "model_normalized.solid.binvox")
+                filename = os.path.join(class_directory, subdirectory, "models", model_filename)
                 if os.path.isfile(filename):
                     filenames.append(filename)
                     items_in_class += 1
 
             labels.append(torch.ones(items_in_class) * label)
+
+        return filenames, labels
+
+    def prepare_binary(self):
+        filenames, labels = self.find_model_files("model_normalized.solid.binvox")        
         
         indices = list(range(len(filenames)))
         random.shuffle(indices)
@@ -82,7 +90,7 @@ class Dataset():
         pool = torch.nn.MaxPool3d(4)
         print("Loading models...")
         for filename in tqdm(filenames):
-            voxels = torch.tensor(read_as_3d_array(open(filename, 'rb')).data.astype(np.float32)) * 2 - 1
+            voxels = torch.tensor(read_as_3d_array(open(filename, 'rb')).data.astype(np.float32)) * -2 + 1
             voxels = torch.unsqueeze(voxels, 0)
             voxels = pool(voxels).squeeze()
             models.append(voxels.to(torch.int8))
@@ -96,11 +104,41 @@ class Dataset():
 
         print("Done.")
 
-    def load(self, device):
+    def prepare_sdf(self):
+        filenames, _ = self.find_model_files("sdf-{:d}.npy".format(VOXEL_SIZE))
+        
+        random.shuffle(filenames)
+
+        models = []
+        print("Loading models...")
+        for filename in tqdm(filenames):
+            voxels = np.load(filename)
+            voxels = torch.tensor(voxels)
+            models.append(voxels)
+        
+        print("Saving...")
+        tensor = torch.stack(models)
+        tensor = torch.transpose(tensor, 1, 2)
+        torch.save(tensor, MODELS_SDF_FILENAME)
+        
+        print("Done.")
+
+
+    def load_binary(self, device):
         print("Loading dataset...")
         self.voxels = torch.load(MODELS_FILENAME).to(device).float()
         self.size = self.voxels.shape[0]
         self.label_indices = torch.load(LABELS_FILENAME).to(torch.int64).to(device)
+        self.labels = torch.zeros((self.size, self.label_count))
+        self.labels[torch.arange(0, self.size, dtype=torch.long, device=device), self.label_indices] = 1
+        self.labels = self.labels.to(device)
+
+    def load_sdf(self, device):
+        print("Loading dataset...")
+        self.voxels = torch.load(MODELS_SDF_FILENAME).to(device).float()
+        self.voxels = torch.clamp(self.voxels, -SDF_CLIPPING, SDF_CLIPPING) / SDF_CLIPPING
+        self.size = self.voxels.shape[0]
+        self.label_indices = torch.zeros(self.size).to(torch.int64).to(device)
         self.labels = torch.zeros((self.size, self.label_count))
         self.labels[torch.arange(0, self.size, dtype=torch.long, device=device), self.label_indices] = 1
         self.labels = self.labels.to(device)
@@ -110,6 +148,6 @@ dataset = Dataset()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
-    dataset.prepare()
+    dataset.prepare_sdf()
 else:
-    dataset.load(device)
+    dataset.load_sdf(device)
