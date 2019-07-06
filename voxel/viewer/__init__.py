@@ -62,6 +62,7 @@ class VoxelViewer():
         if use_marching_cubes:
             if type(voxels) is torch.Tensor:
                 voxels = voxels.cpu().numpy()
+            voxels = np.pad(voxels, 1, mode='constant', constant_values=1)
             voxel_size = voxels.shape[1]
             try:
                 vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(1.0 / voxel_size, 1.0 / voxel_size, 1.0 / voxel_size))
