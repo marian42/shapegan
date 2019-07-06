@@ -58,7 +58,7 @@ class VoxelViewer():
         self.request_render = True
 
 
-    def set_voxels(self, voxels, use_marching_cubes=True):
+    def set_voxels(self, voxels, use_marching_cubes=True, shade_smooth=False):
         if use_marching_cubes:
             if type(voxels) is torch.Tensor:
                 voxels = voxels.cpu().numpy()
@@ -66,11 +66,15 @@ class VoxelViewer():
             voxel_size = voxels.shape[1]
             try:
                 vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(1.0 / voxel_size, 1.0 / voxel_size, 1.0 / voxel_size))
-                
-                vertices = vertices[faces, :].reshape((-1)).astype(np.float32) - 0.5
-                normals = normals[faces, :].reshape((-1)).astype(np.float32)
+                vertices = vertices[faces, :].astype(np.float32) - 0.5
 
-                self._update_buffers(vertices, normals)            
+                if shade_smooth:
+                    normals = normals[faces, :].astype(np.float32)
+                else:
+                    normals = np.cross(vertices[:, 1, :] - vertices[:, 0, :], vertices[:, 2, :] - vertices[:, 0, :])
+                    normals = np.repeat(normals, 3, axis=0)
+
+                self._update_buffers(vertices.reshape((-1)), normals.reshape((-1)))            
                 self.model_size = 1
             except ValueError:
                 pass # Voxel array contains no sign change
