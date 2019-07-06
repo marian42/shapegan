@@ -12,8 +12,10 @@ from voxel.viewer.voxels_to_mesh import create_vertices
 from voxel.viewer.shader import Shader
 
 import cv2
+import skimage
 
 from threading import Thread
+import torch
 
 class VoxelViewer():
     def __init__(self, size = (800, 800), start_thread = True, background_color = (0.01, 0.01, 0.01, 1.0)):
@@ -56,12 +58,26 @@ class VoxelViewer():
         self.request_render = True
 
 
-    def set_voxels(self, voxels):
-        vertices, normals = create_vertices(voxels)
-        vertices -= (voxels.shape[0] + 1) / 2
+    def set_voxels(self, voxels, use_marching_cubes=True):
+        if use_marching_cubes:
+            if type(voxels) is torch.Tensor:
+                voxels = voxels.cpu().numpy()
+            voxel_size = voxels.shape[1]
+            try:
+                vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(1.0 / voxel_size, 1.0 / voxel_size, 1.0 / voxel_size))
+                
+                vertices = vertices[faces, :].reshape((-1)).astype(np.float32) - 0.5
+                normals = normals[faces, :].reshape((-1)).astype(np.float32)
 
-        self._update_buffers(vertices, normals)        
-        self.model_size = max([voxels.shape[0] + 1, voxels.shape[1] + 1, voxels.shape[2] + 1])
+                self._update_buffers(vertices, normals)            
+                self.model_size = 1
+            except ValueError:
+                pass # Voxel array contains no sign change
+        else:
+            vertices, normals = create_vertices(voxels)
+            vertices -= (voxels.shape[0] + 1) / 2
+            self._update_buffers(vertices, normals)         
+            self.model_size = max([voxels.shape[0] + 1, voxels.shape[1] + 1, voxels.shape[2] + 1])
 
 
     def set_mesh(self, mesh):

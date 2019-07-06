@@ -10,7 +10,7 @@ viewer = VoxelViewer()
 while True:
     try:
         viewer.set_voxels(dataset.voxels[random.randint(0, dataset.size - 1), :, :, :].squeeze().detach().cpu().numpy())
-        time.sleep(0.4)
+        time.sleep(1)
     except KeyboardInterrupt:
         viewer.stop()
         break
