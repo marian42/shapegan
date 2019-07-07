@@ -44,9 +44,11 @@ for epoch in count():
             else:
                 model = next_model
 
-            
-            viewer.set_mesh(sdf_net.get_mesh(model, device))
-            #time.sleep(TRANSITION_TIME / STEPS)
+            try:
+                viewer.set_mesh(sdf_net.get_mesh(model, device, voxel_count=96))
+            except ValueError:
+                pass
+            time.sleep(TRANSITION_TIME / STEPS)
 
         time.sleep(WAIT_TIME)
         
