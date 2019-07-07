@@ -140,7 +140,8 @@ class Dataset():
                 print("Bad pointcloud shape: ", cloud.shape)
                 continue
             cloud = torch.tensor(cloud)
-            result[position:position + POINTCLOUD_SIZE, :] = cloud
+            result[position * POINTCLOUD_SIZE:(position + 1) * POINTCLOUD_SIZE, :] = cloud
+            position += 1
         
         print("Saving...")
         torch.save(result, CLOUDS_SDF_FILENAME)
