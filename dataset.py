@@ -14,6 +14,7 @@ VOXEL_SIZE = 32
 LIMIT_SIZE = 15000
 MODELS_FILENAME = "data/dataset-{:d}-{:d}-{:d}.to".format(VOXEL_SIZE, LIMIT_SIZE, MIN_SAMPLES_PER_CLASS)
 MODELS_SDF_FILENAME = "data/dataset-sdf-{:d}.to".format(VOXEL_SIZE)
+CLOUDS_SDF_FILENAME = "data/dataset-sdf-clouds.to"
 LABELS_FILENAME = "data/labels-{:d}-{:d}-{:d}.to".format(VOXEL_SIZE, LIMIT_SIZE, MIN_SAMPLES_PER_CLASS)
 
 SDF_CLIPPING = 0.1
@@ -123,6 +124,29 @@ class Dataset():
         
         print("Done.")
 
+    def prepare_sdf_clouds(self):
+        filenames, _ = self.find_model_files("sdf-pointcloud.npy")
+        
+        POINTCLOUD_SIZE = 100000
+
+        random.shuffle(filenames)
+        result = torch.zeros((POINTCLOUD_SIZE * len(filenames), 4))
+        position = 0
+
+        print("Loading models...")
+        for filename in tqdm(filenames):
+            cloud = np.load(filename)
+            if cloud.shape[0] != POINTCLOUD_SIZE:
+                print("Bad pointcloud shape: ", cloud.shape)
+                continue
+            cloud = torch.tensor(cloud)
+            result[position:position + POINTCLOUD_SIZE, :] = cloud
+        
+        print("Saving...")
+        torch.save(result, CLOUDS_SDF_FILENAME)
+        
+        print("Done.")
+
 
     def load_binary(self, device):
         print("Loading dataset...")
@@ -148,6 +172,6 @@ dataset = Dataset()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
-    dataset.prepare_sdf()
+    dataset.prepare_sdf_clouds()
 else:
     dataset.load_sdf(device)
