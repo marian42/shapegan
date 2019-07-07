@@ -2,13 +2,14 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-import torch.nn.functional as F
-
-MODEL_PATH = "models"
-
 import os
 from loss import inception_score
+import numpy as np
+import skimage
+import trimesh
 
+MODEL_PATH = "models"
+LATENT_CODES_FILENAME = os.path.join(MODEL_PATH, "sdf_net_latent_codes.to")
 LATENT_CODE_SIZE = 32
 
 standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
@@ -235,3 +236,47 @@ class Classifier(SavableModule):
             x = x.unsqueeze(dim = 1)  # add dimension for channels
         
         return self.layers.forward(x)
+
+
+class SDFNet(SavableModule):
+    def __init__(self):
+        super(SDFNet, self).__init__(filename="sdf_net.to")
+
+        self.layers = nn.Sequential(
+            nn.Linear(in_features = 3 + LATENT_CODE_SIZE, out_features = 256),
+            nn.ReLU(inplace=True),
+
+            nn.Linear(in_features = 256, out_features = 256),
+            nn.ReLU(inplace=True),
+
+            nn.Linear(in_features = 256, out_features = 256),
+            nn.ReLU(inplace=True),
+
+            nn.Linear(in_features = 256, out_features = 1),
+            nn.Tanh()
+        )
+
+        self.cuda()
+
+    def forward(self, points, latent_codes):
+        x = torch.cat((points, latent_codes), dim=1)
+        return self.layers.forward(x).squeeze()
+
+    def get_mesh(self, latent_code, device, voxel_count = 64):
+        sample_points = np.meshgrid(
+            np.linspace(-1, 1, voxel_count),
+            np.linspace(-1, 1, voxel_count),
+            np.linspace(-1, 1, voxel_count)
+        )
+        sample_points = np.stack(sample_points)
+        sample_points = sample_points.reshape(3, -1).transpose()
+        sample_points = torch.tensor(sample_points, dtype=torch.float, device = device)
+        with torch.no_grad():
+            distances = self.forward(sample_points, latent_code.repeat(sample_points.shape[0], 1)).cpu().numpy()
+        distances = distances.reshape(voxel_count, voxel_count, voxel_count)
+        distances = np.swapaxes(distances, 0, 1)
+
+        vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(distances, level=0, spacing=(2.0 / voxel_count, 2.0 / voxel_count, 2.0 / voxel_count))
+        vertices -= 1
+        mesh = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
+        return mesh
