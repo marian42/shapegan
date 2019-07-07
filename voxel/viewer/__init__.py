@@ -18,7 +18,7 @@ from threading import Thread
 import torch
 
 class VoxelViewer():
-    def __init__(self, size = (800, 800), start_thread = True, background_color = (0.01, 0.01, 0.01, 1.0)):
+    def __init__(self, size = (800, 800), start_thread = True, background_color = (0, 0, 0, 1)):
         self.size = size
         
         self.mouse = None
