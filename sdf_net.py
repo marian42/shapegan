@@ -14,12 +14,16 @@ import trimesh
 from voxel.viewer import VoxelViewer
 
 from tqdm import tqdm
+from model import SavableModule
+
+import sys
 
 LATENT_CODE_SIZE = 32
+LATENT_CODES_FILENAME = "models/sdf_net_latent_codes.to"
 
-class SDFNet(nn.Module):
+class SDFNet(SavableModule):
     def __init__(self):
-        super(SDFNet, self).__init__()        
+        super(SDFNet, self).__init__(filename="sdf_net.to")
 
         self.layers = nn.Sequential(
             nn.Linear(in_features = 3 + LATENT_CODE_SIZE, out_features = 256),
@@ -73,7 +77,6 @@ data = torch.load("data/dataset-sdf-clouds.to")
 
 POINTCLOUD_SIZE = 100000
 
-standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
 
 points = data[:, :3]
 points = points.cuda()
@@ -83,11 +86,18 @@ del data
 
 MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
 
-latent_codes = standard_normal_distribution.sample((MODEL_COUNT, LATENT_CODE_SIZE)).to(device)
+
+if "continue" in sys.argv:
+    sdf_net.load()
+    latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
+else:    
+    standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
+    latent_codes = standard_normal_distribution.sample((MODEL_COUNT, LATENT_CODE_SIZE)).to(device)
+
 latent_codes.requires_grad = True
 
 
-BATCH_SIZE = 512
+BATCH_SIZE = 2048
 
 network_optimizer = optim.Adam(sdf_net.parameters(), lr=1e-4)
 latent_code_optimizer = optim.Adam([latent_codes], lr=1e-6)
@@ -131,11 +141,7 @@ def train():
                     pass
         
         print("Epoch {:d}. Loss: {:.8f}".format(epoch, loss.item()))
+        sdf_net.save()
+        torch.save(latent_codes, LATENT_CODES_FILENAME)
 
-        try:
-            viewer.set_mesh(sdf_net.get_mesh(latent_codes[0, :]))
-        except ValueError:
-            pass
-       
-print("Start training")
 train()
