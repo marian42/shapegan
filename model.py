@@ -257,21 +257,29 @@ class SDFVoxelizationHelperData():
 
 sdf_voxelization_helper = dict()
 
+SDF_NET_BREADTH = 512
+
 class SDFNet(SavableModule):
     def __init__(self):
         super(SDFNet, self).__init__(filename="sdf_net.to")
 
         self.layers = nn.Sequential(
-            nn.Linear(in_features = 3 + LATENT_CODE_SIZE, out_features = 256),
+            nn.Linear(in_features = 3 + LATENT_CODE_SIZE, out_features = SDF_NET_BREADTH),
             nn.ReLU(inplace=True),
 
-            nn.Linear(in_features = 256, out_features = 256),
+            nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
             nn.ReLU(inplace=True),
 
-            nn.Linear(in_features = 256, out_features = 256),
+            nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
             nn.ReLU(inplace=True),
 
-            nn.Linear(in_features = 256, out_features = 1),
+            nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
+            nn.ReLU(inplace=True),
+
+            nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
+            nn.ReLU(inplace=True),
+
+            nn.Linear(in_features = SDF_NET_BREADTH, out_features = 1),
             nn.Tanh()
         )
 
