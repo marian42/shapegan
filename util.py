@@ -2,7 +2,7 @@ import torch
 
 CHARACTERS = '      `.-:/+osyhdmm###############'
 
-def show_slice(voxels):
+def create_text_slice(voxels):
     voxel_size = voxels.shape[-1]
     center = voxels.shape[-1] // 4
     data = voxels[center, :, :]

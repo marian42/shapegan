@@ -14,6 +14,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 from dataset import dataset as dataset
 from loss import inception_score
+from util import create_text_slice
 
 generator = Generator()
 discriminator = Discriminator()
@@ -115,6 +116,11 @@ def train():
         
         generator.save()
         discriminator.save()
+
+        if "show_slice" in sys.argv:
+            voxels = generator.generate(device).squeeze()
+            print(create_text_slice(voxels))
+
         score = generator.get_inception_score(device, sample_size=800)
         print('Epoch {:d} ({:.1f}s), inception score: {:.4f}'.format(epoch, time.time() - epoch_start_time, score))
         log_file.write('{:d} {:.1f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score))

@@ -20,6 +20,7 @@ from loss import voxel_difference, kld_loss
 from collections import deque
 
 from dataset import dataset as dataset
+from util import create_text_slice
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -63,6 +64,10 @@ def test(epoch_index, epoch_time):
         reconstruction_loss = bce_loss(output, test_data).item()
         kld = kld_loss(mean, log_variance)
         scale_factor = 1.0 / np.prod(test_data.shape)
+
+        if "show_slice" in sys.argv:
+            print(create_text_slice(output[0, :, :, :]))
+
         print("Epoch {:d} ({:.1f}s): ".format(epoch_index, epoch_time) +
             "BCE loss: {:.4f}, ".format(reconstruction_loss * scale_factor) +
             "Voxel diff: {:.4f}, ".format(voxel_difference(output, test_data)) + 

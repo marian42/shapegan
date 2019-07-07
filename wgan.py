@@ -14,6 +14,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 from dataset import dataset as dataset
 from loss import inception_score
+from util import create_text_slice
 
 show_viewer = "nogui" not in sys.argv
 
@@ -112,6 +113,11 @@ def train():
         
         generator.save()
         critic.save()
+
+        if "show_slice" in sys.argv:
+            voxels = generator.generate(device).squeeze()
+            print(create_text_slice(voxels))
+
         score = generator.get_inception_score(device, sample_size=800)
         epoch_duration = time.time() - epoch_start_time
         print('Epoch {:d} ({:.1f}s), inception score: {:.4f}, critic values: {:.2f}, {:.2f}'.format(
