@@ -131,14 +131,13 @@ def train():
             network_optimizer.step()
             latent_code_optimizer.step()
 
-            batch_index += 1
-
             if batch_index % 1000 == 0:
                 try:
-                    #viewer.set_mesh(sdf_net.get_mesh(latent_codes[random.randrange(MODEL_COUNT), :]))
-                    viewer.set_mesh(sdf_net.get_mesh(latent_codes[0, :]))
+                    viewer.set_mesh(sdf_net.get_mesh(latent_codes[random.randrange(MODEL_COUNT), :]))
                 except ValueError:
                     pass
+
+            batch_index += 1
         
         print("Epoch {:d}. Loss: {:.8f}".format(epoch, loss.item()))
         sdf_net.save()
