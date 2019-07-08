@@ -161,7 +161,8 @@ class Dataset():
     def load_sdf(self, device):
         print("Loading dataset...")
         self.voxels = torch.load(MODELS_SDF_FILENAME).to(device).float()
-        self.voxels = torch.clamp(self.voxels, -SDF_CLIPPING, SDF_CLIPPING) / SDF_CLIPPING
+        torch.clamp_(self.voxels, -SDF_CLIPPING, SDF_CLIPPING)
+        self.voxels /= SDF_CLIPPING
         self.size = self.voxels.shape[0]
         self.label_indices = torch.zeros(self.size).to(torch.int64).to(device)
         self.labels = torch.zeros((self.size, self.label_count))
