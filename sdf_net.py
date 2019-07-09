@@ -19,12 +19,15 @@ data = torch.load("data/dataset-sdf-clouds.to")
 points = data[:, :3]
 points = points.cuda()
 sdf = data[:, 3].to(device)
-torch.clamp_(sdf, -0.1, 0.1)
 del data
 
 POINTCLOUD_SIZE = 100000
 MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
 BATCH_SIZE = 2048
+SDF_CUTOFF = 0.1
+
+torch.clamp_(sdf, -SDF_CUTOFF, SDF_CUTOFF)
+sdf /= SDF_CUTOFF
 
 sdf_net = SDFNet()
 if "continue" in sys.argv:
