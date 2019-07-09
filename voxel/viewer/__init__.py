@@ -22,7 +22,7 @@ class VoxelViewer():
         self.size = size
         
         self.mouse = None
-        self.rotation = (147, 30)
+        self.rotation = [147, 30]
 
         self.vertex_buffer = None
         self.normal_buffer = None
@@ -92,7 +92,7 @@ class VoxelViewer():
         normals = np.repeat(mesh.face_normals, 3, axis=0).astype(np.float32)
         
         self._update_buffers(vertices, normals)
-        self.model_size = 1.5
+        self.model_size = 1.2
 
 
     def _poll_mouse(self):
@@ -101,7 +101,7 @@ class VoxelViewer():
         current_mouse = pygame.mouse.get_pos()
         if self.mouse is not None and pressed:
             movement = (current_mouse[0] - self.mouse[0], current_mouse[1] - self.mouse[1])
-            self.rotation = (self.rotation[0] + movement[0], max(-90, min(90, self.rotation[1] + movement[1])))
+            self.rotation = [self.rotation[0] + movement[0], max(-90, min(90, self.rotation[1] + movement[1]))]
         self.mouse = current_mouse
         return pressed
 
@@ -201,6 +201,7 @@ class VoxelViewer():
             if half_size > 100:
                 array = array[center[0] - half_size : center[0] + half_size, center[1] - half_size : center[1] + half_size]
 
-        array = cv2.resize(array, dsize=(output_size, output_size), interpolation=cv2.INTER_CUBIC)
+        if output_size != self.size[0] or output_size != self.size[1]:
+            array = cv2.resize(array, dsize=(output_size, output_size), interpolation=cv2.INTER_CUBIC)
 
         return array        
