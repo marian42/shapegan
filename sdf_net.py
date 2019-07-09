@@ -52,6 +52,7 @@ def create_batches():
     yield indices[(batch_count - 1) * BATCH_SIZE:]
 
 def train():
+    loss_values = []
     for epoch in count():
         batch_index = 0
         epoch_start_time = time.time()
@@ -69,6 +70,7 @@ def train():
             loss.backward()
             network_optimizer.step()
             latent_code_optimizer.step()
+            loss_values.append(loss.item())
 
             if batch_index % 1000 == 0:
                 try:
@@ -78,7 +80,7 @@ def train():
 
             batch_index += 1
         
-        print("Epoch {:d}. Loss: {:.8f}".format(epoch, loss.item()))
+        print("Epoch {:d}. Loss: {:.8f}".format(epoch, np.mean(loss_values)))
         sdf_net.save()
         torch.save(latent_codes, LATENT_CODES_FILENAME)
 
