@@ -35,8 +35,8 @@ else:
     latent_codes = standard_normal_distribution.sample((MODEL_COUNT, LATENT_CODE_SIZE)).to(device)
 latent_codes.requires_grad = True
 
-network_optimizer = optim.Adam(sdf_net.parameters(), lr=1e-4)
-latent_code_optimizer = optim.Adam([latent_codes], lr=1e-6)
+network_optimizer = optim.Adam(sdf_net.parameters(), lr=1e-5)
+latent_code_optimizer = optim.Adam([latent_codes], lr=1e-5)
 criterion = nn.MSELoss()
 
 def create_batches():
