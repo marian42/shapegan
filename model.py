@@ -279,8 +279,7 @@ class SDFNet(SavableModule):
             nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
             nn.ReLU(inplace=True),
 
-            nn.Linear(in_features = SDF_NET_BREADTH, out_features = 1),
-            nn.Tanh()
+            nn.Linear(in_features = SDF_NET_BREADTH, out_features = 1)
         )
 
         self.cuda()
