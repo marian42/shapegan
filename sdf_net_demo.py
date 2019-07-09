@@ -20,10 +20,9 @@ latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
 MODEL_COUNT = latent_codes.shape[0]
 TRANSITION_FRAMES = 40
 WAIT_FRAMES = 10
-SAMPLE_COUNT = 4
+SAMPLE_COUNT = 40
 
 WAIT_TIME = 0.8
-TRANSITION_TIME = 0.4
 
 def get_random_latent_code():
     return latent_codes[random.randrange(MODEL_COUNT), :]
@@ -86,7 +85,6 @@ def show_models():
                     viewer.set_mesh(sdf_net.get_mesh(model, device, voxel_count=64))
                 except ValueError:
                     pass
-                time.sleep(TRANSITION_TIME / TRANSITION_FRAMES)
 
             time.sleep(WAIT_TIME)
             
