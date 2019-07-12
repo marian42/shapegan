@@ -252,6 +252,14 @@ class MeshSDF:
 
         return points, self.get_sdf(points)
 
+    def get_points_and_normals(self, number_of_points = 50000):
+        count = self.points.shape[0]
+        if count < number_of_points:
+            print("Warning: Less than {:d} points sampled.".format(number_of_points))
+        indices = np.arange(count)
+        np.random.shuffle(indices)
+        indices = indices[:number_of_points]
+        return np.concatenate([self.points[indices, :], self.normals[indices, :]], axis=1)
     
     def show_pointcloud(self):
         scene = pyrender.Scene()

@@ -11,7 +11,8 @@ BAD_MODEL_FILENAME = "bad_model"
 VOXEL_RESOLUTION = 32
 MODEL_FILENAME = "model_normalized.obj"
 VOXEL_FILENAME = "sdf-{:d}.npy".format(VOXEL_RESOLUTION)
-CLOUD_FILENAME = "sdf-pointcloud.npy"
+SDF_CLOUD_FILENAME = "sdf-pointcloud.npy"
+SURFACE_POINTCLOUD_FILENAME = "surface-pointcloud.npy"
 
 def mark_bad_model(directory):
     open(os.path.join(directory, BAD_MODEL_FILENAME), 'w')
@@ -22,15 +23,20 @@ def process_directory(directory):
     
     model_filename = os.path.join(directory, MODEL_FILENAME)
     voxels_filename = os.path.join(directory, VOXEL_FILENAME)
-    cloud_filename = os.path.join(directory, CLOUD_FILENAME)
+    cloud_filename = os.path.join(directory, SDF_CLOUD_FILENAME)
+    surface_cloud_filename = os.path.join(directory, SURFACE_POINTCLOUD_FILENAME)
 
-    if os.path.isfile(voxels_filename) and os.path.isfile(cloud_filename):
+    if os.path.isfile(voxels_filename) and os.path.isfile(cloud_filename) and os.path.isfile(surface_cloud_filename):
         return True
 
     mesh = trimesh.load(model_filename)
     mesh = scale_to_unit_sphere(mesh)
 
     mesh_sdf = MeshSDF(mesh)
+
+    if not os.path.isfile(surface_cloud_filename):
+        pointcloud = mesh_sdf.get_points_and_normals()
+        np.save(surface_cloud_filename, pointcloud)
 
     if not os.path.isfile(voxels_filename):
         try:
@@ -60,7 +66,7 @@ def delete_existing_data(directories):
         files = [
             os.path.join(directory, BAD_MODEL_FILENAME),
             os.path.join(directory, VOXEL_FILENAME),
-            os.path.join(directory, CLOUD_FILENAME)
+            os.path.join(directory, SDF_CLOUD_FILENAME)
         ]
         
         for file in files:
