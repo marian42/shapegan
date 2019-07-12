@@ -61,6 +61,7 @@ for step in count():
     fake_discriminator_assessment = discriminator.forward(test_points, fake_sdf)
     history.append(fake_discriminator_assessment.item())
     loss = -torch.log(fake_discriminator_assessment)
+    loss.backward()
     generator_optimizer.step()
 
     # train discriminator on real sample
