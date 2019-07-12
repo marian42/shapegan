@@ -10,6 +10,8 @@ import numpy as np
 import skimage
 import trimesh
 
+from util import get_points_in_unit_sphere
+
 from torch_geometric.nn import PointConv, fps as sample_farthest_points, radius as find_neighbors_in_range, global_max_pool
 
 MODEL_PATH = "models"
@@ -40,6 +42,9 @@ class SavableModule(nn.Module):
     
     def save(self):
         torch.save(self.state_dict(), self.get_filename())
+
+    def get_device(self):
+        return next(self.parameters()).device
 
 # Based on http://3dgan.csail.mit.edu/papers/3dgan_nips.pdf
 class Generator(SavableModule):
@@ -309,6 +314,32 @@ class SDFNet(SavableModule):
         vertices -= 1
         mesh = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
         return mesh
+
+    def get_surface_points(self, latent_code, sample_size=100000, sdf_cutoff=0.1, return_normals=False):
+        points = get_points_in_unit_sphere(n=sample_size, device=self.get_device())
+        points.requires_grad = True
+        latent_codes = latent_code.repeat(points.shape[0], 1)
+    
+        sdf = self.forward(points, latent_codes)
+
+        sdf.backward(torch.ones((sdf.shape[0]), device=self.get_device()))
+        normals = points.grad
+        normals /= torch.norm(normals, dim=1).unsqueeze(dim=1)
+        points.requires_grad = False
+
+        # Move points towards surface by the amount given by the signed distance
+        points -= normals * sdf.unsqueeze(dim=1) * sdf_cutoff
+
+        # Discard points with truncated SDF values
+        mask = torch.abs(sdf) < 0.9
+        points = points[mask, :]
+        normals = normals[mask, :]
+        
+        if return_normals:
+            return points, normals
+        else:
+            return points
+       
 
 
 class SetAbstractionModule(torch.nn.Module):
