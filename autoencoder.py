@@ -48,7 +48,7 @@ if show_viewer:
 
 error_history = deque(maxlen = BATCH_SIZE)
 
-bce_loss = lambda a, b: torch.nn.functional.binary_cross_entropy_with_logits(a, b, reduction="sum")
+criterion = nn.functional.mse_loss
 
 def create_batches():
     batch_count = int(len(training_indices) / BATCH_SIZE)
@@ -61,7 +61,7 @@ def test(epoch_index, epoch_time):
     with torch.no_grad():
         autoencoder.eval()
         output, mean, log_variance = autoencoder.forward(test_data, device)
-        reconstruction_loss = bce_loss(output, test_data).item()
+        reconstruction_loss = criterion(output, test_data).item()
         kld = kld_loss(mean, log_variance)
         scale_factor = 1.0 / np.prod(test_data.shape)
 
@@ -69,7 +69,7 @@ def test(epoch_index, epoch_time):
             print(create_text_slice(output[0, :, :, :]))
 
         print("Epoch {:d} ({:.1f}s): ".format(epoch_index, epoch_time) +
-            "BCE loss: {:.4f}, ".format(reconstruction_loss * scale_factor) +
+            "Reconstruction loss: {:.4f}, ".format(reconstruction_loss * scale_factor) +
             "Voxel diff: {:.4f}, ".format(voxel_difference(output, test_data)) + 
             "KLD loss: {:4f}, ".format(kld * scale_factor) + 
             "training loss: {:4f}, ".format(sum(error_history) / len(error_history)) +
@@ -90,7 +90,7 @@ def train():
                 autoencoder.zero_grad()
                 autoencoder.train()
                 output, mean, log_variance = autoencoder.forward(sample, device)
-                reconstruction_loss = bce_loss(output, sample)
+                reconstruction_loss = criterion(output, sample)
                 error_history.append(reconstruction_loss.item() * scale_factor)
                 kld = kld_loss(mean, log_variance)
 
