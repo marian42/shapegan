@@ -36,7 +36,7 @@ print('Inception score at start: {:.4f}'.format(generator.get_inception_score(de
 
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025)
 
-discriminator_criterion = torch.nn.functional.mse_loss
+discriminator_criterion = torch.nn.functional.binary_cross_entropy
 discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00001)
 
 show_viewer = "nogui" not in sys.argv
