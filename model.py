@@ -288,7 +288,8 @@ class SDFNet(SavableModule):
             nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
             nn.ReLU(inplace=True),
 
-            nn.Linear(in_features = SDF_NET_BREADTH, out_features = 1)
+            nn.Linear(in_features = SDF_NET_BREADTH, out_features = 1),
+            nn.Tanh()
         )
 
         self.cuda()
@@ -328,10 +329,10 @@ class SDFNet(SavableModule):
         points.requires_grad = False
 
         # Move points towards surface by the amount given by the signed distance
-        points -= normals * sdf.unsqueeze(dim=1) * sdf_cutoff
+        points -= normals * sdf.unsqueeze(dim=1)
 
         # Discard points with truncated SDF values
-        mask = torch.abs(sdf) < 0.9
+        mask = torch.abs(sdf) < sdf_cutoff
         points = points[mask, :]
         normals = normals[mask, :]
         

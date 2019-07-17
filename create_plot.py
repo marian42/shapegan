@@ -72,7 +72,7 @@ if "autoencoder_hist" in sys.argv:
 if "autodecoder_hist" in sys.argv:
     latent_codes = torch.load(LATENT_CODES_FILENAME).cpu().detach().flatten().numpy()
     
-    plt.hist(latent_codes, bins=50, range=(-5, 5), histtype='step')
+    plt.hist(latent_codes, bins=50, range=(-1, 1), histtype='step')
     plt.savefig("plots/autodecoder-histogram.pdf")
 
 if "autoencoder_examples" in sys.argv:

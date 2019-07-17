@@ -26,16 +26,17 @@ MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
 BATCH_SIZE = 2048
 SDF_CUTOFF = 0.1
 
+SIGMA = 0.01
+
 torch.clamp_(sdf, -SDF_CUTOFF, SDF_CUTOFF)
-sdf /= SDF_CUTOFF
 
 sdf_net = SDFNet()
 if "continue" in sys.argv:
     sdf_net.load()
     latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
 else:    
-    standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
-    latent_codes = standard_normal_distribution.sample((MODEL_COUNT, LATENT_CODE_SIZE)).to(device)
+    normal_distribution = torch.distributions.normal.Normal(0, 0.0001)
+    latent_codes = normal_distribution.sample((MODEL_COUNT, LATENT_CODE_SIZE)).to(device)
 latent_codes.requires_grad = True
 
 network_optimizer = optim.Adam(sdf_net.parameters(), lr=1e-5)
@@ -66,7 +67,8 @@ def train():
 
             sdf_net.zero_grad()
             output = sdf_net.forward(batch_points, batch_latent_codes)
-            loss = criterion(output, batch_sdf)
+            output = output.clamp(-SDF_CUTOFF, SDF_CUTOFF)
+            loss = torch.mean(torch.abs(output - batch_sdf)) + SIGMA * torch.mean(torch.pow(batch_latent_codes, 2))
             loss.backward()
             network_optimizer.step()
             latent_code_optimizer.step()
