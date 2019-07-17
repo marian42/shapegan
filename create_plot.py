@@ -7,7 +7,7 @@ from tqdm import tqdm
 from numpy import genfromtxt
 
 from sklearn.manifold import TSNE
-from model import Autoencoder, Generator, LATENT_CODE_SIZE
+from model import Autoencoder, Generator, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 import random
 
 
@@ -68,6 +68,12 @@ if "autoencoder_hist" in sys.argv:
     plt.clf()
     plt.hist(codes, bins=100, range=(-3, 3))
     plt.savefig("plots/autoencoder-histogram-combined.pdf")
+
+if "autodecoder_hist" in sys.argv:
+    latent_codes = torch.load(LATENT_CODES_FILENAME).cpu().detach().flatten().numpy()
+    
+    plt.hist(latent_codes, bins=50, range=(-5, 5), histtype='step')
+    plt.savefig("plots/autodecoder-histogram.pdf")
 
 if "autoencoder_examples" in sys.argv:
     from dataset import dataset as dataset
