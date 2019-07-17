@@ -15,6 +15,7 @@ LIMIT_SIZE = 15000
 MODELS_FILENAME = "data/dataset-{:d}-{:d}-{:d}.to".format(VOXEL_SIZE, LIMIT_SIZE, MIN_SAMPLES_PER_CLASS)
 MODELS_SDF_FILENAME = "data/dataset-sdf-{:d}.to".format(VOXEL_SIZE)
 CLOUDS_SDF_FILENAME = "data/dataset-sdf-clouds.to"
+SURFACE_POINTCLOUDS_FILENAME = "data/dataset-surface-pointclouds.to"
 LABELS_FILENAME = "data/labels-{:d}-{:d}-{:d}.to".format(VOXEL_SIZE, LIMIT_SIZE, MIN_SAMPLES_PER_CLASS)
 
 SDF_CLIPPING = 0.1
@@ -145,6 +146,32 @@ class Dataset():
         
         print("Saving...")
         torch.save(result, CLOUDS_SDF_FILENAME)
+        
+        print("Done.")
+
+    def prepare_surface_clouds(self, limit_models_number=None):
+        filenames, _ = self.find_model_files("surface-pointcloud.npy")
+        
+        POINTCLOUD_SIZE = 50000
+        if limit_models_number is not None:
+            filenames = filenames[:limit_models_number]
+
+        random.shuffle(filenames)
+        result = torch.zeros((POINTCLOUD_SIZE * len(filenames), 6))
+        position = 0
+
+        print("Loading models...")
+        for filename in tqdm(filenames):
+            cloud = np.load(filename)
+            if cloud.shape[0] != POINTCLOUD_SIZE:
+                print("Bad pointcloud shape: ", cloud.shape)
+                continue
+            cloud = torch.tensor(cloud)
+            result[position * POINTCLOUD_SIZE:(position + 1) * POINTCLOUD_SIZE, :] = cloud
+            position += 1
+        
+        print("Saving...")
+        torch.save(result, SURFACE_POINTCLOUDS_FILENAME)
         
         print("Done.")
 
