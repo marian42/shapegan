@@ -6,6 +6,7 @@ import sys
 import random
 from tqdm import tqdm
 import cv2
+import pyrender
 
 from voxel.viewer import VoxelViewer
 from model import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
@@ -67,6 +68,16 @@ def create_image_sequence():
     print("\n\nUse this command to create a video:\n")
     print('ffmpeg -framerate 24 -i images/frame-%05d.png -c:v libx264 -profile:v high -crf 19 -pix_fmt yuv420p video.mp4')
 
+def show_random_pointclouds():
+    while True:
+        latent_code = get_random_latent_code()
+        points, normals = sdf_net.get_surface_points(latent_code, return_normals=True)
+
+        scene = pyrender.Scene()
+        pyrender_pointcloud = pyrender.Mesh.from_points(points.detach().cpu().numpy(), normals=normals.detach().cpu().numpy())
+        scene.add(pyrender_pointcloud)
+        viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
+
 def show_models():
     previous_model = None
     viewer = VoxelViewer()
@@ -94,5 +105,7 @@ def show_models():
 
 if "save" in sys.argv:
     create_image_sequence()
+elif "pointcloud" in sys.argv:
+    show_random_pointclouds()
 else:
     show_models()
