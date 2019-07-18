@@ -3,41 +3,37 @@ from itertools import count
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import numpy as np
 
 import random
 import time
 import sys
 
-from model import Generator, Discriminator, Autoencoder
+from model import SDFNet, Discriminator, Autoencoder, standard_normal_distribution, LATENT_CODE_SIZE
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-from dataset import dataset as dataset
+from dataset import dataset as dataset, VOXEL_SIZE
 from loss import inception_score
 from util import create_text_slice
 
-generator = Generator()
+generator = SDFNet()
+generator.filename = 'hybrid_gan_generator.to'
+
 discriminator = Discriminator()
+generator.filename = 'hybrid_gan_discriminator.to'
 
 
 if "continue" in sys.argv:
     generator.load()
     discriminator.load()
 
-if "copy_autoencoder_weights" in sys.argv:
-    autoencoder = Autoencoder()
-    autoencoder.load()
-    generator.copy_autoencoder_weights(autoencoder)
+log_file = open("plots/hybrid_gan_training.csv", "a" if "continue" in sys.argv else "w")
 
-log_file = open("plots/gan_training.csv", "a" if "continue" in sys.argv else "w")
-
-print('Inception score of the dataset: {:.4f}'.format(inception_score(dataset.voxels[:1400, :, :, :])))
-print('Inception score at start: {:.4f}'.format(generator.get_inception_score(device)))
-
-generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025)
+generator_optimizer = optim.Adam(generator.parameters(), lr=0.0001)
 
 discriminator_criterion = torch.nn.functional.binary_cross_entropy
-discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00001)
+discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.000001)
 
 show_viewer = "nogui" not in sys.argv
 
@@ -45,7 +41,7 @@ if show_viewer:
     from voxel.viewer import VoxelViewer
     viewer = VoxelViewer()
 
-BATCH_SIZE = 64
+BATCH_SIZE = 8
 
 
 valid_target_default = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
@@ -59,6 +55,26 @@ def create_batches(sample_count, batch_size):
         yield indices[i * batch_size:(i+1)*batch_size]
     yield indices[(batch_count - 1) * batch_size:]
 
+def create_grid_points():
+    sample_points = np.meshgrid(
+        np.linspace(-1, 1, VOXEL_SIZE),
+        np.linspace(-1, 1, VOXEL_SIZE),
+        np.linspace(-1, 1, VOXEL_SIZE)
+    )
+    sample_points = np.stack(sample_points).astype(np.float32)
+    sample_points = np.swapaxes(sample_points, 1, 2)
+    sample_points = sample_points.reshape(3, -1).transpose()
+    sample_points = torch.tensor(sample_points, device=device)
+    return sample_points
+
+def sample_latent_codes(current_batch_size):
+    latent_codes = standard_normal_distribution.sample(sample_shape=[current_batch_size, LATENT_CODE_SIZE]).to(device)
+    latent_codes = latent_codes.repeat((1, 1, grid_points.shape[0])).reshape(-1, LATENT_CODE_SIZE)
+    return latent_codes
+                
+
+grid_points = create_grid_points()
+
 def train():
     fake_sample_prediction = 0.5
     valid_sample_prediction = 0.5
@@ -68,10 +84,16 @@ def train():
         epoch_start_time = time.time()
         for batch in create_batches(dataset.size, BATCH_SIZE):
             try:
+                indices = torch.tensor(batch, device = device)
+                current_batch_size = indices.shape[0] # equals BATCH_SIZE for all batches except the last one
+                batch_grid_points = grid_points.repeat((current_batch_size, 1))
+
                 # train generator
                 generator_optimizer.zero_grad()
-                    
-                fake_sample = generator.generate(device, sample_size = BATCH_SIZE)
+                
+                latent_codes = sample_latent_codes(current_batch_size)                
+                fake_sample = generator.forward(batch_grid_points, latent_codes)
+                fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
                 if show_viewer:
                     viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                 
@@ -81,19 +103,20 @@ def train():
                 generator_optimizer.step()
                     
                 
-                # train discriminator
-                indices = torch.tensor(batch, device = device)
-                current_batch_size = indices.shape[0] # equals BATCH_SIZE for all batches except the last one
+                # train discriminator on fake samples
                 fake_target = fake_target_default if current_batch_size == BATCH_SIZE else torch.zeros(current_batch_size, requires_grad=False).to(device)
                 valid_target = valid_target_default if current_batch_size == BATCH_SIZE else torch.ones(current_batch_size, requires_grad=False).to(device)
 
-                discriminator_optimizer.zero_grad()
-                fake_sample = generator.generate(device, sample_size = current_batch_size).detach()
+                discriminator_optimizer.zero_grad()                
+                latent_codes = sample_latent_codes(current_batch_size)
+                fake_sample = generator.forward(batch_grid_points, latent_codes)
+                fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
                 discriminator_output_fake = discriminator.forward(fake_sample)
                 fake_loss = discriminator_criterion(discriminator_output_fake, fake_target)
                 fake_loss.backward()
                 discriminator_optimizer.step()
 
+                # train discriminator on real samples
                 discriminator_optimizer.zero_grad()
                 valid_sample = dataset.voxels[indices, :, :, :]
                 discriminator_output_valid = discriminator.forward(valid_sample)
