@@ -9,7 +9,7 @@ import cv2
 import pyrender
 
 from voxel.viewer import VoxelViewer
-from model import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
+from model import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME, standard_normal_distribution
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -26,6 +26,7 @@ SAMPLE_COUNT = 40
 WAIT_TIME = 0.8
 
 def get_random_latent_code():
+    #return standard_normal_distribution.sample((LATENT_CODE_SIZE,)).to(device)
     return latent_codes[random.randrange(MODEL_COUNT), :]
 
 start_model = get_random_latent_code()

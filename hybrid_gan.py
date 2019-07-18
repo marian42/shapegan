@@ -9,7 +9,7 @@ import random
 import time
 import sys
 
-from model import SDFNet, Discriminator, Autoencoder, standard_normal_distribution, LATENT_CODE_SIZE
+from model import SDFNet, Discriminator, standard_normal_distribution, LATENT_CODE_SIZE
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -21,7 +21,7 @@ generator = SDFNet()
 generator.filename = 'hybrid_gan_generator.to'
 
 discriminator = Discriminator()
-generator.filename = 'hybrid_gan_discriminator.to'
+discriminator.filename = 'hybrid_gan_discriminator.to'
 
 dataset.voxels *= SDF_CLIPPING # Undo scaling of SDF values that is done by the dataset loader
 

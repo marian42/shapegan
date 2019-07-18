@@ -37,8 +37,7 @@ class SavableModule(nn.Module):
         return os.path.join(MODEL_PATH, self.filename)
 
     def load(self):
-        if os.path.isfile(self.get_filename()):
-            self.load_state_dict(torch.load(self.get_filename()), strict=False)
+        self.load_state_dict(torch.load(self.get_filename()), strict=False)
     
     def save(self):
         torch.save(self.state_dict(), self.get_filename())
