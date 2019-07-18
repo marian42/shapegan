@@ -13,7 +13,7 @@ from model import SDFNet, Discriminator, Autoencoder, standard_normal_distributi
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-from dataset import dataset as dataset, VOXEL_SIZE
+from dataset import dataset as dataset, VOXEL_SIZE, SDF_CLIPPING
 from loss import inception_score
 from util import create_text_slice
 
@@ -23,6 +23,7 @@ generator.filename = 'hybrid_gan_generator.to'
 discriminator = Discriminator()
 generator.filename = 'hybrid_gan_discriminator.to'
 
+dataset.voxels *= SDF_CLIPPING # Undo scaling of SDF values that is done by the dataset loader
 
 if "continue" in sys.argv:
     generator.load()
@@ -144,7 +145,7 @@ def train():
             voxels = generator.generate(device).squeeze()
             print(create_text_slice(voxels))
 
-        score = generator.get_inception_score(device, sample_size=800)
+        score = 0
         print('Epoch {:d} ({:.1f}s), inception score: {:.4f}'.format(epoch, time.time() - epoch_start_time, score))
         log_file.write('{:d} {:.1f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score))
         log_file.flush()
