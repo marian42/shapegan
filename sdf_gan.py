@@ -19,7 +19,6 @@ MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
 POINT_SAMPLE_COUNT = 4096
 SDF_CUTOFF = 0.1
 torch.clamp_(sdf, -SDF_CUTOFF, SDF_CUTOFF)
-sdf /= SDF_CUTOFF
 
 
 generator = SDFNet()
