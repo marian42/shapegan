@@ -63,15 +63,14 @@ def test(epoch_index, epoch_time):
         output, mean, log_variance = autoencoder.forward(test_data, device)
         reconstruction_loss = criterion(output, test_data).item()
         kld = kld_loss(mean, log_variance)
-        scale_factor = 1.0 / np.prod(test_data.shape)
 
         if "show_slice" in sys.argv:
             print(create_text_slice(output[0, :, :, :]))
 
         print("Epoch {:d} ({:.1f}s): ".format(epoch_index, epoch_time) +
-            "Reconstruction loss: {:.4f}, ".format(reconstruction_loss * scale_factor) +
+            "Reconstruction loss: {:.4f}, ".format(reconstruction_loss) +
             "Voxel diff: {:.4f}, ".format(voxel_difference(output, test_data)) + 
-            "KLD loss: {:4f}, ".format(kld * scale_factor) + 
+            "KLD loss: {:4f}, ".format(kld) + 
             "training loss: {:4f}, ".format(sum(error_history) / len(error_history)) +
             "inception score: {:4f}".format(autoencoder.get_inception_score(device = device))
         )
@@ -85,13 +84,12 @@ def train():
             try:
                 indices = torch.tensor(batch, device = device)
                 sample = dataset.voxels[indices, :, :, :]
-                scale_factor = 1.0 / np.prod(sample.shape)    
 
                 autoencoder.zero_grad()
                 autoencoder.train()
                 output, mean, log_variance = autoencoder.forward(sample, device)
                 reconstruction_loss = criterion(output, sample)
-                error_history.append(reconstruction_loss.item() * scale_factor)
+                error_history.append(reconstruction_loss.item())
                 kld = kld_loss(mean, log_variance)
 
                 loss = reconstruction_loss + kld
@@ -105,9 +103,9 @@ def train():
 
                 if show_viewer:
                     print("epoch " + str(epoch) + ", batch " + str(batch_index) \
-                        + ', reconstruction loss: {0:.4f}'.format(reconstruction_loss.item() * scale_factor) \
+                        + ', reconstruction loss: {0:.4f}'.format(reconstruction_loss.item()) \
                         + ' (average: {0:.4f}), '.format(sum(error_history) / len(error_history)) \
-                        + 'KLD loss: {0:.4f}'.format(kld * scale_factor))
+                        + 'KLD loss: {0:.4f}'.format(kld))
                 batch_index += 1
             except KeyboardInterrupt:
                 if show_viewer:

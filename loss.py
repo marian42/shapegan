@@ -26,7 +26,7 @@ def voxel_difference(input, target):
 
 
 def kld_loss(mean, log_variance):
-    return -0.5 * torch.sum(1 + log_variance - mean.pow(2) - log_variance.exp())
+    return -0.5 * torch.sum(1 + log_variance - mean.pow(2) - log_variance.exp()) / mean.nelements()
 
 # Inception score of a sample from the dataset
 REFERENCE_INCEPTION_SCORE = 14.33
