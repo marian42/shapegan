@@ -18,7 +18,7 @@ from threading import Thread
 import torch
 
 class VoxelViewer():
-    def __init__(self, size = (800, 800), start_thread = True, background_color = (0, 0, 0, 1)):
+    def __init__(self, size = (800, 800), start_thread = True, background_color = (1, 1, 1, 1)):
         self.size = size
         
         self.mouse = None
@@ -84,16 +84,17 @@ class VoxelViewer():
             self._update_buffers(vertices, normals)         
             self.model_size = max([voxels.shape[0] + 1, voxels.shape[1] + 1, voxels.shape[2] + 1])
 
-
-    def set_mesh(self, mesh):
+    def set_mesh(self, mesh, smooth=False):
         vertices = np.array(mesh.triangles, dtype=np.float32).reshape(-1, 3)
         vertices = vertices.reshape((-1))
 
-        normals = np.repeat(mesh.face_normals, 3, axis=0).astype(np.float32)
+        if smooth:
+            normals = mesh.vertex_normals[mesh.faces.reshape(-1)].astype(np.float32) * -1
+        else:
+            normals = np.repeat(mesh.face_normals, 3, axis=0).astype(np.float32)
         
         self._update_buffers(vertices, normals)
-        self.model_size = 1.3
-
+        self.model_size = 1.35
 
     def _poll_mouse(self):
         left_mouse, _, right_mouse = pygame.mouse.get_pressed()
