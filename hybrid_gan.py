@@ -10,6 +10,7 @@ import time
 import sys
 
 from model import SDFNet, Discriminator, standard_normal_distribution, LATENT_CODE_SIZE
+from util import create_text_slice
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -95,8 +96,10 @@ def train():
                 latent_codes = sample_latent_codes(current_batch_size)                
                 fake_sample = generator.forward(batch_grid_points, latent_codes)
                 fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
-                if show_viewer:
+                if batch_index % 20 == 0 and show_viewer:
                     viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
+                if batch_index % 20 == 0 and "show_slice" in sys.argv:
+                    print(create_text_slice(fake_sample[0, :, :, :] / SDF_CLIPPING))
                 
                 fake_discriminator_output = discriminator.forward(fake_sample)
                 fake_loss = torch.mean(-torch.log(fake_discriminator_output))
