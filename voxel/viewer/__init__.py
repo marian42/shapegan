@@ -252,7 +252,7 @@ class VoxelViewer():
 
     def _initialize_opengl(self):
         pygame.init()
-        pygame.display.set_caption('Voxel Viewer')
+        pygame.display.set_caption('Model Viewer')
         pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
         pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 4)
         self.window = pygame.display.set_mode(self.size, pygame.OPENGLBLIT)
