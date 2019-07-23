@@ -93,7 +93,7 @@ def train():
                 # train generator
                 generator_optimizer.zero_grad()
                 
-                latent_codes = sample_latent_codes(current_batch_size)                
+                latent_codes = sample_latent_codes(current_batch_size)
                 fake_sample = generator.forward(batch_grid_points, latent_codes)
                 fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
                 if batch_index % 20 == 0 and show_viewer:
@@ -145,8 +145,10 @@ def train():
         discriminator.save()
 
         if "show_slice" in sys.argv:
-            voxels = generator.generate(device).squeeze()
-            print(create_text_slice(voxels))
+            latent_code = sample_latent_codes(1)
+            voxels = generator.forward(grid_points, latent_code)
+            voxels = voxels.reshape(VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+            print(create_text_slice(voxels / SDF_CLIPPING))
 
         score = 0
         print('Epoch {:d} ({:.1f}s), inception score: {:.4f}'.format(epoch, time.time() - epoch_start_time, score))
