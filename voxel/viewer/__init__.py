@@ -135,15 +135,18 @@ class VoxelViewer():
                     normals = np.cross(vertices[:, 1, :] - vertices[:, 0, :], vertices[:, 2, :] - vertices[:, 0, :])
                     normals = np.repeat(normals, 3, axis=0)
 
-                self._update_buffers(vertices.reshape((-1)), normals.reshape((-1)))            
+                self._update_buffers(vertices.reshape((-1)), normals.reshape((-1)))
                 self.model_size = 0.75
             except ValueError:
                 pass # Voxel array contains no sign change
         else:
             vertices, normals = create_vertices(voxels)
             vertices -= (voxels.shape[0] + 1) / 2
+            vertices /= voxels.shape[0] + 1
             self._update_buffers(vertices, normals)         
             self.model_size = max([voxels.shape[0] + 1, voxels.shape[1] + 1, voxels.shape[2] + 1])
+            self.model_size = 0.75
+            self.ground_level = np.min(vertices[1::3]).item()
 
     def set_mesh(self, mesh, smooth=False):
         vertices = np.array(mesh.triangles, dtype=np.float32).reshape(-1, 3)
