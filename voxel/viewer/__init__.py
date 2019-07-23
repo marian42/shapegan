@@ -16,13 +16,62 @@ import skimage
 
 from threading import Thread
 import torch
+import trimesh
+
+from scipy.spatial.transform import Rotation
+
+CLAMP_TO_EDGE = 33071
+SHADOW_TEXTURE_SIZE = 1024
+
+projection_matrix = np.array(
+    [[ 1.73205081, 0,           0,           0,         ],
+     [ 0,          1.73205081,  0,           0,         ],
+     [ 0,          0,          -1.02020202, -0.2020202, ],
+     [ 0,          0,          -1,           0,         ]], dtype=float)
+
+def get_rotation_matrix(angle, axis='y'):
+    rotation = Rotation.from_euler(axis, angle, degrees=True)
+    matrix = np.identity(4)
+    matrix[:3, :3] = rotation.as_dcm()
+    return matrix
+
+def get_camera_transform(camera_distance, rotation_y, rotation_x):
+    camera_pose = np.identity(4)
+    camera_pose[2, 3] = -camera_distance
+    camera_pose = np.matmul(camera_pose, get_rotation_matrix(rotation_x, axis='x'))
+    camera_pose = np.matmul(camera_pose, get_rotation_matrix(rotation_y, axis='y'))
+
+    camera_pose = np.matmul(projection_matrix, camera_pose)
+    return camera_pose
+
+def create_shadow_texture():
+    texture_id = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texture_id)
+
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_TEXTURE_SIZE, SHADOW_TEXTURE_SIZE, 0, GL_DEPTH_COMPONENT,
+        GL_FLOAT, None
+    )
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, CLAMP_TO_EDGE)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, CLAMP_TO_EDGE)
+    glTexParameterfv(
+        GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR,
+        np.ones(4).astype(np.float32)
+    )
+
+    glBindTexture(GL_TEXTURE_2D, 0)
+    return texture_id
 
 class VoxelViewer():
     def __init__(self, size = (800, 800), start_thread = True, background_color = (1, 1, 1, 1)):
         self.size = size
         
         self.mouse = None
-        self.rotation = [147, 30]
+        self.rotation = [147, 20]
 
         self.vertex_buffer = None
         self.normal_buffer = None
@@ -37,11 +86,20 @@ class VoxelViewer():
 
         self.background_color = background_color
 
+        self.shadow_framebuffer = None
+        self.shadow_texture = None
+
         if start_thread:
             thread = Thread(target = self._run)
             thread.start()
         else:
             self._initialize_opengl()
+
+
+        self.floor_vertices = None
+        self.floor_normals = None
+
+        self.ground_level = -1
 
     def _update_buffers(self, vertices, normals):
         if self.vertex_buffer is None:
@@ -67,6 +125,7 @@ class VoxelViewer():
             try:
                 vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(1.0 / voxel_size, 1.0 / voxel_size, 1.0 / voxel_size))
                 vertices = vertices[faces, :].astype(np.float32) - 0.5
+                self.ground_level = np.min(vertices[:, 1]).item()         
 
                 if shade_smooth:
                     normals = normals[faces, :].astype(np.float32)
@@ -75,7 +134,7 @@ class VoxelViewer():
                     normals = np.repeat(normals, 3, axis=0)
 
                 self._update_buffers(vertices.reshape((-1)), normals.reshape((-1)))            
-                self.model_size = 1
+                self.model_size = 0.8
             except ValueError:
                 pass # Voxel array contains no sign change
         else:
@@ -86,6 +145,7 @@ class VoxelViewer():
 
     def set_mesh(self, mesh, smooth=False):
         vertices = np.array(mesh.triangles, dtype=np.float32).reshape(-1, 3)
+        self.ground_level = np.min(vertices[:, 1]).item()
         vertices = vertices.reshape((-1))
 
         if smooth:
@@ -106,33 +166,89 @@ class VoxelViewer():
         self.mouse = current_mouse
         return pressed
 
-    def _render(self):
-        self.request_render = False
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        gluPerspective(45.0, float(self.size[0]) / float(self.size[1]), 0.1, self.model_size * 4)
-        
-        glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()
-        glTranslatef(0.0, 0.0, -self.model_size * 2)
-        glRotatef(self.rotation[1], 1.0, 0, 0)
-        glRotatef(self.rotation[0], 0, 1.0, 0)
-        
-        glClearColor(*self.background_color)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        
-        if self.vertex_buffer is not None and self.normal_buffer is not None:
-            self.shader.use()
+    def _render_shadow_texture(self, light_vp_matrix):
+        glBindFramebuffer(GL_FRAMEBUFFER, self.shadow_framebuffer)
+        glBindTexture(GL_TEXTURE_2D, self.shadow_texture)
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, self.shadow_texture, 0)
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, self.shadow_texture)
+        glDrawBuffer(GL_NONE)
+        glReadBuffer(GL_NONE)
 
-            glEnableClientState(GL_VERTEX_ARRAY)
-            self.vertex_buffer.bind()
-            glVertexPointer(3, GL_FLOAT, 0, self.vertex_buffer)
+        glClear(GL_DEPTH_BUFFER_BIT)
+        glViewport(0, 0, SHADOW_TEXTURE_SIZE, SHADOW_TEXTURE_SIZE)
+        glEnable(GL_DEPTH_TEST)
+        glDepthMask(GL_TRUE)
+        glDepthFunc(GL_LESS)
+        glDepthRange(0.0, 1.0)
+        glDisable(GL_CULL_FACE)
+        glDisable(GL_BLEND)
 
+        self.depth_shader.use()
+        self.depth_shader.set_vp_matrix(light_vp_matrix)
+        self._draw_mesh(use_normals=False)
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+
+    def _draw_mesh(self, use_normals=True):
+        if self.vertex_buffer is None or self.normal_buffer is None:
+            return
+        
+        glEnableClientState(GL_VERTEX_ARRAY)
+        self.vertex_buffer.bind()
+        glVertexPointer(3, GL_FLOAT, 0, self.vertex_buffer)
+
+        if use_normals:
             glEnableClientState(GL_NORMAL_ARRAY)
             self.normal_buffer.bind()
             glNormalPointer(GL_FLOAT, 0, self.normal_buffer)
 
-            glDrawArrays(GL_TRIANGLES, 0, self.vertex_buffer_size)
+        glDrawArrays(GL_TRIANGLES, 0, self.vertex_buffer_size)
+
+    def _draw_floor(self):
+        self.shader.set_y_offset(self.ground_level)
+
+        glEnableClientState(GL_VERTEX_ARRAY)
+        self.floor_vertices.bind()
+        glVertexPointer(3, GL_FLOAT, 0, self.floor_vertices)
+
+        glEnableClientState(GL_NORMAL_ARRAY)
+        self.floor_normals.bind()
+        glNormalPointer(GL_FLOAT, 0, self.floor_normals)
+
+        glDrawArrays(GL_TRIANGLES, 0, 6)
+    
+    def _render(self):
+        self.request_render = False
+
+        light_vp_matrix = get_camera_transform(6, 164, 50)
+        self._render_shadow_texture(light_vp_matrix)
+        
+        self.shader.use()
+        self.shader.set_floor(False)
+        self.shader.set_y_offset(0)
+        camera_vp_matrix = get_camera_transform(self.model_size * 2, self.rotation[0], self.rotation[1])
+        self.shader.set_vp_matrix(camera_vp_matrix)
+        self.shader.set_light_vp_matrix(light_vp_matrix)
+        
+        glClearColor(*self.background_color)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        
+        glClearDepth(1.0)
+        glDepthMask(GL_TRUE)
+        glDepthFunc(GL_LESS)
+        glDepthRange(0.0, 1.0)
+        glEnable(GL_CULL_FACE)
+        glEnable(GL_DEPTH_TEST)
+        glViewport(0, 0, self.size[0], self.size[1])
+
+        glActiveTexture(GL_TEXTURE1)
+        glBindTexture(GL_TEXTURE_2D, self.shadow_texture)
+        self.shader.set_shadow_texture(1)
+        
+        self._draw_mesh()
+        self.shader.set_floor(True)
+        self._draw_floor()
 
     def _initialize_opengl(self):
         pygame.init()
@@ -141,14 +257,34 @@ class VoxelViewer():
         pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 4)
         self.window = pygame.display.set_mode(self.size, pygame.OPENGLBLIT)
 
-        glEnable(GL_CULL_FACE)
-        glClearColor(*self.background_color)
-        glClearDepth(1.0)
-        glDepthFunc(GL_LESS)
-        glEnable(GL_DEPTH_TEST)
-
         self.shader = Shader()
         self.shader.initShader(open('voxel/viewer/vertex.glsl').read(), open('voxel/viewer/fragment.glsl').read())
+
+        self.shadow_framebuffer = glGenFramebuffers(1)
+        self.shadow_texture = create_shadow_texture()
+
+        self.depth_shader = Shader()
+        self.depth_shader.initShader(open('voxel/viewer/depth_vertex.glsl').read(), open('voxel/viewer/depth_fragment.glsl').read())
+
+        self.prepare_floor()
+
+    def prepare_floor(self):
+        size = 6
+        mesh = trimesh.Trimesh([
+            [-size, 0, -size],
+            [-size, 0, +size],
+            [+size, 0, +size],
+            [-size, 0, -size],
+            [+size, 0, +size],
+            [+size, 0, -size]
+            ], faces=[[0, 1, 2], [3, 4, 5]])
+
+        vertices = np.array(mesh.triangles, dtype=np.float32).reshape(-1, 3)
+        vertices = vertices.reshape((-1))
+        normals = np.repeat(mesh.face_normals, 3, axis=0).astype(np.float32)
+        
+        self.floor_vertices = vbo.VBO(vertices)
+        self.floor_normals = vbo.VBO(normals)
 
     def _run(self):
         self._initialize_opengl()
