@@ -148,8 +148,13 @@ class VoxelViewer():
             self.model_size = 0.75
             self.ground_level = np.min(vertices[1::3]).item()
 
-    def set_mesh(self, mesh, smooth=False):
+    def set_mesh(self, mesh, smooth=False, center_and_scale=False):
         vertices = np.array(mesh.triangles, dtype=np.float32).reshape(-1, 3)
+        
+        if center_and_scale:
+            vertices -= mesh.bounding_box.centroid[np.newaxis, :]
+            vertices /= np.max(vertices)
+        
         self.ground_level = np.min(vertices[:, 1]).item()
         vertices = vertices.reshape((-1))
 
@@ -159,7 +164,7 @@ class VoxelViewer():
             normals = np.repeat(mesh.face_normals, 3, axis=0).astype(np.float32)
         
         self._update_buffers(vertices, normals)
-        self.model_size = 1.35
+        self.model_size = 1.5
 
     def _poll_mouse(self):
         left_mouse, _, right_mouse = pygame.mouse.get_pressed()
