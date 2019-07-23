@@ -67,7 +67,7 @@ def create_shadow_texture():
     return texture_id
 
 class VoxelViewer():
-    def __init__(self, size = (800, 800), start_thread = True, background_color = (1, 1, 1, 1)):
+    def __init__(self, size = 800, start_thread = True, background_color = (1, 1, 1, 1)):
         self.size = size
         
         self.mouse = None
@@ -240,7 +240,7 @@ class VoxelViewer():
         glDepthRange(0.0, 1.0)
         glEnable(GL_CULL_FACE)
         glEnable(GL_DEPTH_TEST)
-        glViewport(0, 0, self.size[0], self.size[1])
+        glViewport(0, 0, self.size, self.size)
 
         glActiveTexture(GL_TEXTURE1)
         glBindTexture(GL_TEXTURE_2D, self.shadow_texture)
@@ -255,7 +255,7 @@ class VoxelViewer():
         pygame.display.set_caption('Model Viewer')
         pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
         pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 4)
-        self.window = pygame.display.set_mode(self.size, pygame.OPENGLBLIT)
+        self.window = pygame.display.set_mode((self.size, self.size), pygame.OPENGLBLIT)
 
         self.shader = Shader()
         self.shader.initShader(open('voxel/viewer/vertex.glsl').read(), open('voxel/viewer/fragment.glsl').read())
@@ -298,7 +298,7 @@ class VoxelViewer():
 
             if self._poll_mouse() or self.request_render:
                 self._render()
-            pygame.display.flip()
+                pygame.display.flip()
             
             pygame.time.wait(10)
         
@@ -317,7 +317,7 @@ class VoxelViewer():
             self._render()
 
         string_image = pygame.image.tostring(self.window, 'RGB')
-        image = pygame.image.fromstring(string_image, self.size, 'RGB')
+        image = pygame.image.fromstring(string_image, (self.size, self.size), 'RGB')
         array = np.transpose(pygame.surfarray.array3d(image)[:, :, 0])
 
         if crop:
@@ -338,7 +338,7 @@ class VoxelViewer():
             if half_size > 100:
                 array = array[center[0] - half_size : center[0] + half_size, center[1] - half_size : center[1] + half_size]
 
-        if output_size != self.size[0] or output_size != self.size[1]:
+        if output_size != self.size:
             array = cv2.resize(array, dsize=(output_size, output_size), interpolation=cv2.INTER_CUBIC)
 
         return array        
