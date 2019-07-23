@@ -19,6 +19,8 @@ import torch
 import trimesh
 
 from scipy.spatial.transform import Rotation
+import os
+import cv2
 
 CLAMP_TO_EDGE = 33071
 SHADOW_TEXTURE_SIZE = 1024
@@ -134,7 +136,7 @@ class VoxelViewer():
                     normals = np.repeat(normals, 3, axis=0)
 
                 self._update_buffers(vertices.reshape((-1)), normals.reshape((-1)))            
-                self.model_size = 0.8
+                self.model_size = 0.75
             except ValueError:
                 pass # Voxel array contains no sign change
         else:
@@ -295,6 +297,10 @@ class VoxelViewer():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     return
+                
+                if event.type == pygame.KEYDOWN:
+                    if pygame.key.get_pressed()[pygame.K_F12]:
+                        self.save_screenshot()
 
             if self._poll_mouse() or self.request_render:
                 self._render()
@@ -341,4 +347,15 @@ class VoxelViewer():
         if output_size != self.size:
             array = cv2.resize(array, dsize=(output_size, output_size), interpolation=cv2.INTER_CUBIC)
 
-        return array        
+        return array
+
+    def save_screenshot(self):
+        FILENAME_FORMAT = "screenshots/{:04d}.png"
+
+        index = 0
+        while os.path.isfile(FILENAME_FORMAT.format(index)):
+            index += 1
+        filename = FILENAME_FORMAT.format(index)
+        image = self.get_image(crop=False, output_size=self.size)
+        cv2.imwrite(filename, image)
+        print("Screenshot saved to " + filename + ".")
