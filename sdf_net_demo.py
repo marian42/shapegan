@@ -37,7 +37,7 @@ def save_image(image, frame_index):
 def create_image_sequence():
     previous_model = None
     frame_index = 0
-    viewer = VoxelViewer(start_thread=False)
+    viewer = VoxelViewer(size=1280, start_thread=False)
     progress_bar = tqdm(total=SAMPLE_COUNT * (TRANSITION_FRAMES + 1))
     next_model = start_model
 
@@ -56,12 +56,12 @@ def create_image_sequence():
                 viewer.set_mesh(sdf_net.get_mesh(latent_code, device, voxel_count=140))
             except ValueError:
                 pass
-            image = viewer.get_image(crop = False, output_size = 800)
+            image = viewer.get_image(crop = False, output_size = viewer.size)
             save_image(image, frame_index)
             frame_index += 1
             progress_bar.update()
         
-        image = viewer.get_image(crop = False, output_size = 800)
+        image = viewer.get_image(crop = False, output_size = viewer.size)
         for _ in range(WAIT_FRAMES):
             save_image(image, frame_index)
             frame_index += 1
