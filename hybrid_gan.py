@@ -32,10 +32,10 @@ if "continue" in sys.argv:
 
 log_file = open("plots/hybrid_gan_training.csv", "a" if "continue" in sys.argv else "w")
 
-generator_optimizer = optim.Adam(generator.parameters(), lr=0.0001)
+generator_optimizer = optim.Adam(generator.parameters(), lr=0.001)
 
 discriminator_criterion = torch.nn.functional.binary_cross_entropy
-discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.000001)
+discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00001)
 
 show_viewer = "nogui" not in sys.argv
 
