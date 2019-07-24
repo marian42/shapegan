@@ -91,17 +91,16 @@ class VoxelViewer():
         self.shadow_framebuffer = None
         self.shadow_texture = None
 
+        self.floor_vertices = None
+        self.floor_normals = None
+
+        self.ground_level = -1
+
         if start_thread:
             thread = Thread(target = self._run)
             thread.start()
         else:
             self._initialize_opengl()
-
-
-        self.floor_vertices = None
-        self.floor_normals = None
-
-        self.ground_level = -1
 
     def _update_buffers(self, vertices, normals):
         if self.vertex_buffer is None:
@@ -164,7 +163,7 @@ class VoxelViewer():
             normals = np.repeat(mesh.face_normals, 3, axis=0).astype(np.float32)
         
         self._update_buffers(vertices, normals)
-        self.model_size = 1.5
+        self.model_size = 1.1
 
     def _poll_mouse(self):
         left_mouse, _, right_mouse = pygame.mouse.get_pressed()
