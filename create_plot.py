@@ -1,10 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import torch
 import sys
 from tqdm import tqdm
 from numpy import genfromtxt
+import scipy
 
 from sklearn.manifold import TSNE
 from model import Autoencoder, Generator, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
@@ -71,8 +73,18 @@ if "autoencoder_hist" in sys.argv:
 
 if "autodecoder_hist" in sys.argv:
     latent_codes = torch.load(LATENT_CODES_FILENAME).cpu().detach().flatten().numpy()
-    
-    plt.hist(latent_codes, bins=50, range=(-1, 1), histtype='step')
+    latent_codes = latent_codes.reshape(-1)
+    mean, variance = np.mean(latent_codes), np.var(latent_codes) ** 0.5
+    print("mean: ", mean)
+    print("variance: ", variance)
+
+    x_range = 0.42
+
+    x = np.linspace(-x_range, x_range, 500)
+    y = scipy.stats.norm.pdf(x, mean, variance)
+    plt.plot(x, y, 'r')
+    plt.hist(latent_codes, bins=50, range=(-x_range, x_range), density=1)
+
     plt.savefig("plots/autodecoder-histogram.pdf")
 
 if "autoencoder_examples" in sys.argv:
