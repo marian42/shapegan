@@ -14,7 +14,9 @@ import sys
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-viewer = VoxelViewer()
+if "nogui" not in sys.argv:
+    viewer = VoxelViewer()
+
 data = torch.load("data/dataset-sdf-clouds.to")
 points = data[:, :3]
 points = points.cuda()
@@ -74,7 +76,7 @@ def train():
             latent_code_optimizer.step()
             loss_values.append(loss.item())
 
-            if batch_index % 1000 == 0:
+            if batch_index % 1000 == 0 and "nogui" not in sys.argv:
                 try:
                     viewer.set_mesh(sdf_net.get_mesh(latent_codes[random.randrange(MODEL_COUNT), :], device))
                 except ValueError:
