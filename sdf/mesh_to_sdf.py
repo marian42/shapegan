@@ -9,6 +9,8 @@ from sklearn.neighbors import KDTree
 import skimage
 import logging
 from threading import Lock
+from tqdm import tqdm
+import math
 
 CAMERA_DISTANCE = 2
 VIEWPORT_SIZE = 512
@@ -215,6 +217,14 @@ class MeshSDF:
         if perform_sanity_check:
             self.sanity_check(query_points, distances)
         return distances
+
+    def get_sdf_in_batches(self, points, sample_count=30, batch_size=100000):
+        result = np.zeros(points.shape[0])
+        for i in tqdm(range(int(math.ceil(points.shape[0] / batch_size)))):
+            start = i * batch_size
+            end = min(result.shape[0], (i + 1) * batch_size)
+            result[start:end] = self.get_sdf(points[start:end, :], sample_count=sample_count)
+        return result
 
     def get_pyrender_pointcloud(self):
         return pyrender.Mesh.from_points(self.points, normals=self.normals)

@@ -7,7 +7,10 @@
 
 *.gz
 
-images/**
+screenshots/
+images/
+plots/
+
 *.pdf
 
 *.csv
@@ -17,4 +20,3 @@ images/**
 
 *.mp4
 
-screenshots/

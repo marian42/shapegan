@@ -92,7 +92,7 @@ if "autoencoder_examples" in sys.argv:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer(start_thread=False, background_color = (1.0, 1.0, 1.0, 1.0))
+    viewer = VoxelViewer(start_thread=False)
     
     indices = random.sample(list(range(dataset.size)), 20)
     voxels = dataset.voxels[indices, :, :, :]
@@ -181,3 +181,42 @@ if "wgan_training" in sys.argv:
     plt.xlabel('Epoch')
     plt.title('WGAN Training')
     plt.savefig("plots/wgan-training.pdf")
+
+if "sdf_slice" in sys.argv:
+    from sdf.mesh_to_sdf import MeshSDF, scale_to_unit_sphere
+    import trimesh
+    import cv2
+
+    model_filename = '/home/marian/shapenet/ShapeNetCore.v2/03001627/4c6c364af4b52751ca6910e4922d61aa/models/model_normalized.obj'
+    
+    print("Loading mesh...")
+    mesh = trimesh.load(model_filename)
+    mesh = scale_to_unit_sphere(mesh)
+    mesh_sdf = MeshSDF(mesh)
+
+    resolution = 1280
+    slice_position = 0.4
+    clip = 0.1
+    points = np.meshgrid(
+        np.linspace(slice_position, slice_position, 1),
+        np.linspace(1, -1, resolution),
+        np.linspace(-1, 1, resolution)
+    )
+
+    points = np.stack(points)
+    points = points.reshape(3, -1).transpose()
+
+    print("Calculating SDF values...")
+    sdf = mesh_sdf.get_sdf_in_batches(points)
+    sdf = sdf.reshape(1, resolution, resolution)
+    sdf = sdf[0, :, :]
+    sdf = np.clip(sdf, -clip, clip) / clip
+
+    print("Creating image...")
+    image = np.ones((resolution, resolution, 3))
+    image[:,:,:2][sdf > 0] = (1.0 - sdf[sdf > 0])[:, np.newaxis]
+    image[:,:,1:][sdf < 0] = (1.0 + sdf[sdf < 0])[:, np.newaxis]
+    mask = np.abs(sdf) < 0.03
+    image[mask, :] = 0
+    image *= 255
+    cv2.imwrite("plots/sdf_example.png", image)
