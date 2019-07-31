@@ -123,42 +123,44 @@ class Discriminator(SavableModule):
             parameter.data.clamp_(-value, value)
 
 
+AUTOENCODER_MODEL_COMPLEXITY_MULTIPLIER = 32
+amcm = AUTOENCODER_MODEL_COMPLEXITY_MULTIPLIER
+
 class Autoencoder(SavableModule):
     def __init__(self):
         super(Autoencoder, self).__init__(filename="autoencoder-{:d}.to".format(LATENT_CODE_SIZE))
 
         self.encoder = nn.Sequential(
-            nn.Conv3d(in_channels = 1, out_channels = 16, kernel_size = 4, stride = 2, padding = 1),
-            nn.BatchNorm3d(16),
+            nn.Conv3d(in_channels = 1, out_channels = 1 * amcm, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(1 * amcm),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
             
-            nn.Conv3d(in_channels = 16, out_channels = 32, kernel_size = 4, stride = 2, padding = 1),
-            nn.BatchNorm3d(32),
+            nn.Conv3d(in_channels = 1 * amcm, out_channels = 2 * amcm, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(2 * amcm),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
 
-            nn.Conv3d(in_channels = 32, out_channels = 64, kernel_size = 4, stride = 2, padding = 1),
-            nn.BatchNorm3d(64),
+            nn.Conv3d(in_channels = 2 * amcm, out_channels = 4 * amcm, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(4 * amcm),
             nn.LeakyReLU(negative_slope=0.2, inplace=True)
         )
         
-        self.encode_mean = nn.Conv3d(in_channels = 64, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
-        self.encode_log_variance = nn.Conv3d(in_channels = 64, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
+        self.encode_mean = nn.Conv3d(in_channels = 4 * amcm, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
+        self.encode_log_variance = nn.Conv3d(in_channels = 4 * amcm, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
         
         self.decoder = nn.Sequential(
-            nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 64, kernel_size = 4, stride = 1),
-            nn.BatchNorm3d(64),
+            nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 4 * amcm, kernel_size = 4, stride = 1),
+            nn.BatchNorm3d(4 * amcm),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
             
-            nn.ConvTranspose3d(in_channels = 64, out_channels = 32, kernel_size = 4, stride = 2, padding = 1),
-            nn.BatchNorm3d(32),
+            nn.ConvTranspose3d(in_channels = 4 * amcm, out_channels = 2 * amcm, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(2 * amcm),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
 
-            nn.ConvTranspose3d(in_channels = 32, out_channels = 16, kernel_size = 4, stride = 2, padding = 1),
-            nn.BatchNorm3d(16),
+            nn.ConvTranspose3d(in_channels = 2 * amcm, out_channels = 1 * amcm, kernel_size = 4, stride = 2, padding = 1),
+            nn.BatchNorm3d(1 * amcm),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
 
-            nn.ConvTranspose3d(in_channels = 16, out_channels = 1, kernel_size = 4, stride = 2, padding = 1),
-            Lambda(lambda x: torch.clamp(x, -1, 1))
+            nn.ConvTranspose3d(in_channels = 1 * amcm, out_channels = 1, kernel_size = 4, stride = 2, padding = 1)
         )
         
         self.inception_score_latent_codes = dict()
