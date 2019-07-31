@@ -19,6 +19,7 @@ SURFACE_POINTCLOUDS_FILENAME = "data/dataset-surface-pointclouds.to"
 LABELS_FILENAME = "data/labels-{:d}-{:d}-{:d}.to".format(VOXEL_SIZE, LIMIT_SIZE, MIN_SAMPLES_PER_CLASS)
 
 SDF_CLIPPING = 0.1
+MIN_OCCUPIED_VOXELS = 550
 
 class DataClass():
     def __init__(self, name, id, count):
@@ -188,6 +189,12 @@ class Dataset():
     def load_sdf(self, device):
         print("Loading dataset...")
         self.voxels = torch.load(MODELS_SDF_FILENAME).to(device).float()
+
+        if MIN_OCCUPIED_VOXELS != 0:
+            occupied = torch.sum(self.voxels < 0, dim=[1, 2, 3])
+            mask = occupied > MIN_OCCUPIED_VOXELS
+            self.voxels = self.voxels[mask, :, :, :]
+
         torch.clamp_(self.voxels, -SDF_CLIPPING, SDF_CLIPPING)
         self.voxels /= SDF_CLIPPING
         self.size = self.voxels.shape[0]
