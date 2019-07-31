@@ -59,12 +59,23 @@ def create_batches():
         yield training_indices[i * BATCH_SIZE:(i+1)*BATCH_SIZE]
     yield training_indices[(batch_count - 1) * BATCH_SIZE:]
 
+def get_reconstruction_loss(input, target):
+    difference = input - target
+    wrong_signs = target < 0
+    difference[wrong_signs] *= 32
+
+    return torch.mean(torch.abs(difference))
+
 def test(epoch_index, epoch_time):
     with torch.no_grad():
         autoencoder.eval()
         output, mean, log_variance = autoencoder.forward(test_data, device)
-        reconstruction_loss = criterion(output, test_data).item()
+        
+        reconstruction_loss = get_reconstruction_loss(output, test_data)
         kld = kld_loss(mean, log_variance)
+
+        voxel_diff = voxel_difference(output, test_data)
+        inception_score = autoencoder.get_inception_score(device = device)
 
         if "show_slice" in sys.argv:
             print(create_text_slice(output[0, :, :, :]))
@@ -90,7 +101,7 @@ def train():
                 autoencoder.zero_grad()
                 autoencoder.train()
                 output, mean, log_variance = autoencoder.forward(sample, device)
-                reconstruction_loss = criterion(output, sample)
+                reconstruction_loss = get_reconstruction_loss(output, sample)
                 error_history.append(reconstruction_loss.item())
                 kld = kld_loss(mean, log_variance)
 
