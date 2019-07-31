@@ -19,10 +19,8 @@ voxel_reconstruction_loss = VoxelReconstructionLoss()
 
 
 def voxel_difference(input, target):
-    input_signs = input > 0
-    target_signs = target > 0
-    difference = input_signs != target_signs
-    return torch.sum(difference).item() / reduce(mul, input.shape, 1)
+    wrong_signs = (input * target) < 0
+    return torch.sum(wrong_signs).item() / wrong_signs.nelement()
 
 
 def kld_loss(mean, log_variance):
