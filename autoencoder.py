@@ -36,7 +36,9 @@ test_data = dataset.voxels[test_indices]
 
 VIEWER_UPDATE_STEP = 20
 
-autoencoder = Autoencoder()
+IS_VARIATIONAL = False
+
+autoencoder = Autoencoder(is_variational=IS_VARIATIONAL)
 if "continue" in sys.argv:
     autoencoder.load()
 
@@ -71,11 +73,16 @@ def get_reconstruction_loss(input, target):
 def test(epoch_index, epoch_time):
     with torch.no_grad():
         autoencoder.eval()
-        output, mean, log_variance = autoencoder.forward(test_data, device)
-        
-        reconstruction_loss = get_reconstruction_loss(output, test_data)
-        kld = kld_loss(mean, log_variance)
 
+        if IS_VARIATIONAL:
+            output, mean, log_variance = autoencoder.forward(test_data, device)
+            kld = kld_loss(mean, log_variance)
+        else:
+            output = autoencoder.forward(test_data, device)
+            kld = 0
+
+        reconstruction_loss = get_reconstruction_loss(output, test_data)
+        
         voxel_diff = voxel_difference(output, test_data)
         inception_score = autoencoder.get_inception_score(device = device)
 
@@ -104,10 +111,15 @@ def train():
 
                 autoencoder.zero_grad()
                 autoencoder.train()
-                output, mean, log_variance = autoencoder.forward(sample, device)
+                if IS_VARIATIONAL:
+                    output, mean, log_variance = autoencoder.forward(sample, device)
+                    kld = kld_loss(mean, log_variance)
+                else:
+                    output = autoencoder.forward(sample, device)
+                    kld = 0
+
                 reconstruction_loss = get_reconstruction_loss(output, sample)
                 error_history.append(reconstruction_loss.item())
-                kld = kld_loss(mean, log_variance)
 
                 loss = reconstruction_loss + kld
                 
