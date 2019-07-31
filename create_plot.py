@@ -220,3 +220,12 @@ if "sdf_slice" in sys.argv:
     image[mask, :] = 0
     image *= 255
     cv2.imwrite("plots/sdf_example.png", image)
+
+if "voxel_occupancy" in sys.argv:
+    from dataset import dataset as dataset
+    voxels = dataset.voxels.cpu()
+    mask = voxels < 0
+    occupied = torch.sum(mask, dim=[1, 2, 3]).numpy()
+
+    plt.hist(occupied, bins=100, range=(0, 10000))
+    plt.savefig("plots/voxel-occupancy-histogram.pdf")

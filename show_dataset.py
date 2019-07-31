@@ -28,9 +28,9 @@ if "mesh" in sys.argv:
 else:
     from dataset import dataset as dataset
 
-    for i in tqdm(list(range(dataset.size))):
+    for i in tqdm(list(range(dataset.voxels.shape[0]))):
         try:
-            viewer.set_voxels(dataset.voxels[i, :, :, :].squeeze().detach().cpu().numpy(), use_marching_cubes=False)
+            viewer.set_voxels(dataset.voxels[i, :, :, :].squeeze().detach().cpu().numpy())
             time.sleep(2)
         except KeyboardInterrupt:
             viewer.stop()
