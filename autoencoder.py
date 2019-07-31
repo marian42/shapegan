@@ -34,6 +34,8 @@ test_indices = all_indices[:int(dataset.size * TEST_SPLIT)]
 training_indices = list(all_indices[int(dataset.size * TEST_SPLIT):])
 test_data = dataset.voxels[test_indices]
 
+VIEWER_UPDATE_STEP = 20
+
 autoencoder = Autoencoder()
 if "continue" in sys.argv:
     autoencoder.load()
@@ -97,11 +99,10 @@ def train():
                 loss.backward()
                 optimizer.step()        
 
-                if show_viewer:
-                    viewer.set_voxels(output[0, :, :, :].squeeze().detach().cpu().numpy())
                 error = loss.item()
 
-                if show_viewer:
+                if show_viewer and batch_index % VIEWER_UPDATE_STEP == 0:
+                    viewer.set_voxels(output[0, :, :, :].squeeze().detach().cpu().numpy())
                     print("epoch " + str(epoch) + ", batch " + str(batch_index) \
                         + ', reconstruction loss: {0:.4f}'.format(reconstruction_loss.item()) \
                         + ' (average: {0:.4f}), '.format(sum(error_history) / len(error_history)) \
