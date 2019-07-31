@@ -123,8 +123,9 @@ class Discriminator(SavableModule):
             parameter.data.clamp_(-value, value)
 
 
-AUTOENCODER_MODEL_COMPLEXITY_MULTIPLIER = 32
+AUTOENCODER_MODEL_COMPLEXITY_MULTIPLIER = 16
 amcm = AUTOENCODER_MODEL_COMPLEXITY_MULTIPLIER
+
 
 class Autoencoder(SavableModule):
     def __init__(self):
@@ -138,20 +139,36 @@ class Autoencoder(SavableModule):
             nn.Conv3d(in_channels = 1 * amcm, out_channels = 2 * amcm, kernel_size = 4, stride = 2, padding = 1),
             nn.BatchNorm3d(2 * amcm),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
-
+            
             nn.Conv3d(in_channels = 2 * amcm, out_channels = 4 * amcm, kernel_size = 4, stride = 2, padding = 1),
-            nn.BatchNorm3d(4 * amcm),
-            nn.LeakyReLU(negative_slope=0.2, inplace=True)
-        )
-        
-        self.encode_mean = nn.Conv3d(in_channels = 4 * amcm, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
-        self.encode_log_variance = nn.Conv3d(in_channels = 4 * amcm, out_channels = LATENT_CODE_SIZE, kernel_size = 4, stride = 1)
-        
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE, out_channels = 4 * amcm, kernel_size = 4, stride = 1),
             nn.BatchNorm3d(4 * amcm),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
             
+            nn.Conv3d(in_channels = 4 * amcm, out_channels = LATENT_CODE_SIZE * 2, kernel_size = 4, stride = 1),
+            nn.BatchNorm3d(LATENT_CODE_SIZE * 2),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+            
+            Lambda(lambda x: x.reshape(x.shape[0], -1)),
+
+            nn.Linear(in_features = LATENT_CODE_SIZE * 2, out_features=LATENT_CODE_SIZE),
+            nn.BatchNorm1d(LATENT_CODE_SIZE),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True)
+        )
+        
+        self.encode_mean = nn.Linear(in_features=LATENT_CODE_SIZE, out_features=LATENT_CODE_SIZE)
+        self.encode_log_variance = nn.Linear(in_features=LATENT_CODE_SIZE, out_features=LATENT_CODE_SIZE)
+        
+        self.decoder = nn.Sequential(            
+            nn.Linear(in_features = LATENT_CODE_SIZE, out_features=LATENT_CODE_SIZE * 2),
+            nn.BatchNorm1d(LATENT_CODE_SIZE * 2),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+            
+            Lambda(lambda x: x.reshape(-1, LATENT_CODE_SIZE * 2, 1, 1, 1)),
+
+            nn.ConvTranspose3d(in_channels = LATENT_CODE_SIZE * 2, out_channels = 4 * amcm, kernel_size = 4, stride = 1),
+            nn.BatchNorm3d(4 * amcm),
+            nn.LeakyReLU(negative_slope=0.2, inplace=True),
+
             nn.ConvTranspose3d(in_channels = 4 * amcm, out_channels = 2 * amcm, kernel_size = 4, stride = 2, padding = 1),
             nn.BatchNorm3d(2 * amcm),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
@@ -193,9 +210,6 @@ class Autoencoder(SavableModule):
     def decode(self, x):
         if len(x.shape) == 1:
             x = x.unsqueeze(dim = 0)  # add dimension for channels
-        while len(x.shape) < 5: 
-            x = x.unsqueeze(dim = len(x.shape)) # add 3 voxel dimensions
-        
         x = self.decoder.forward(x)
         return x.squeeze()
 

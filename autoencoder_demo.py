@@ -31,11 +31,8 @@ SHAPE = (LATENT_CODE_SIZE, )
 TRANSITION_TIME = 0.8
 WAIT_TIME = 0.8
 
-def get_random_():
-    return standard_normal_distribution.sample(sample_shape=SHAPE).to(device)
-
-
 def get_random():
+    #return standard_normal_distribution.sample(sample_shape=SHAPE).to(device)
     index = random.randint(0, dataset.size -1)
     return autoencoder.encode(dataset.voxels[index, :, :, :], device)
 
