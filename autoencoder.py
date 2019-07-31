@@ -52,6 +52,8 @@ error_history = deque(maxlen = BATCH_SIZE)
 
 criterion = nn.functional.mse_loss
 
+log_file = open("plots/autoencoder_training.csv", "a" if "continue" in sys.argv else "w")
+
 def create_batches():
     batch_count = int(len(training_indices) / BATCH_SIZE)
     random.shuffle(training_indices)
@@ -82,12 +84,14 @@ def test(epoch_index, epoch_time):
 
         print("Epoch {:d} ({:.1f}s): ".format(epoch_index, epoch_time) +
             "Reconstruction loss: {:.4f}, ".format(reconstruction_loss) +
-            "Voxel diff: {:.4f}, ".format(voxel_difference(output, test_data)) + 
+            "Voxel diff: {:.4f}, ".format(voxel_diff) + 
             "KLD loss: {:4f}, ".format(kld) + 
             "training loss: {:4f}, ".format(sum(error_history) / len(error_history)) +
-            "inception score: {:4f}".format(autoencoder.get_inception_score(device = device))
+            "inception score: {:4f}".format(inception_score)
         )
 
+        log_file.write('{:d} {:.1f} {:.6f} {:.6f} {:.6f} {:.6f}\n'.format(epoch_index, epoch_time, reconstruction_loss, kld, voxel_diff, inception_score))
+        log_file.flush()
 
 def train():    
     for epoch in count():
@@ -112,7 +116,10 @@ def train():
 
                 error = loss.item()
 
-                if show_viewer and batch_index % VIEWER_UPDATE_STEP == 0:
+                if show_viewer and batch_index == 0:
+                    viewer.set_voxels(output[0, :, :, :].squeeze().detach().cpu().numpy())
+
+                if show_viewer and (batch_index + 1) % VIEWER_UPDATE_STEP == 0 and 'verbose' in sys.argv:
                     viewer.set_voxels(output[0, :, :, :].squeeze().detach().cpu().numpy())
                     print("epoch " + str(epoch) + ", batch " + str(batch_index) \
                         + ', reconstruction loss: {0:.4f}'.format(reconstruction_loss.item()) \

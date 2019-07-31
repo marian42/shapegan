@@ -55,7 +55,7 @@ if "autoencoder_hist" in sys.argv:
     from dataset import dataset as dataset
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    indices = random.sample(list(range(dataset.size)), 5000)
+    indices = random.sample(list(range(dataset.size)), min(5000, dataset.size))
     voxels = dataset.voxels[indices, :, :, :]
     autoencoder = Autoencoder()
     autoencoder.load()
@@ -181,6 +181,22 @@ if "wgan_training" in sys.argv:
     plt.xlabel('Epoch')
     plt.title('WGAN Training')
     plt.savefig("plots/wgan-training.pdf")
+
+if "autoencoder_training" in sys.argv:
+    data = genfromtxt('plots/autoencoder_training.csv', delimiter=' ')
+    
+    plt.axhline(y=data[-1, 2], color='black', linewidth=1)
+    plt.plot(data[:, 2], label='Reconstruction loss ({:.4f})'.format(data[-1, 2]))
+    plt.plot(*get_moving_average(data[:, 2], 10), label='Reconstruction loss (Moving average)')
+    plt.plot(data[:, 3], label='KLD loss ({:.4f})'.format(data[-1, 3]))
+    voxel_error = np.array(data[:, 4])
+    voxel_error *= data[0, 2] / voxel_error[0]
+    plt.plot(voxel_error, label='Voxel error ({:.4f})'.format(data[-1, 4]))
+
+    plt.xlabel('Epoch')
+    plt.title('Autoencoder Training')
+    plt.legend()
+    plt.savefig("plots/autoencoder-training.pdf")
 
 if "sdf_slice" in sys.argv:
     from sdf.mesh_to_sdf import MeshSDF, scale_to_unit_sphere
