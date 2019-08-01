@@ -16,7 +16,7 @@ from torch_geometric.nn import PointConv, fps as sample_farthest_points, radius 
 
 MODEL_PATH = "models"
 LATENT_CODES_FILENAME = os.path.join(MODEL_PATH, "sdf_net_latent_codes.to")
-LATENT_CODE_SIZE = 32
+LATENT_CODE_SIZE = 64
 
 standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
 
@@ -123,7 +123,7 @@ class Discriminator(SavableModule):
             parameter.data.clamp_(-value, value)
 
 
-AUTOENCODER_MODEL_COMPLEXITY_MULTIPLIER = 16
+AUTOENCODER_MODEL_COMPLEXITY_MULTIPLIER = 24
 amcm = AUTOENCODER_MODEL_COMPLEXITY_MULTIPLIER
 
 
