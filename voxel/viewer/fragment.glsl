@@ -9,7 +9,7 @@ sampler2D shadow_map;
 const float ambient = 0.5;
 const float diffuse = 0.5;
 const float specular = 0.3;
-const vec3 albedo = vec3(0.8);
+const vec3 albedo = vec3(0.8, 0.1, 0.1);
 
 uniform float isFloor;
 
