@@ -57,6 +57,8 @@ if "autoencoder_hist" in sys.argv:
     is_variational = 'classic' not in sys.argv
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    x_range = 3
+
     indices = random.sample(list(range(dataset.size)), min(5000, dataset.size))
     voxels = dataset.voxels[indices, :, :, :]
     autoencoder = Autoencoder(is_variational=is_variational)
@@ -67,11 +69,14 @@ if "autoencoder_hist" in sys.argv:
         codes = autoencoder.encode(voxels, device).cpu().numpy()
     
     print("Plotting...")
-    plt.hist(codes, bins=50, range=(-3, 3), histtype='step')
+    plt.hist(codes, bins=50, range=(-x_range, x_range), histtype='step', density=1)
     plt.savefig("plots/{:s}autoencoder-histogram.pdf".format('variational-' if is_variational else ''))
     codes = codes.flatten()
     plt.clf()
-    plt.hist(codes, bins=100, range=(-3, 3))
+    x = np.linspace(-x_range, x_range, 500)
+    y = scipy.stats.norm.pdf(x, 0, 1)
+    plt.plot(x, y, color='green')
+    plt.hist(codes, bins=100, range=(-x_range, x_range), density=1)
     plt.savefig("plots/{:s}autoencoder-histogram-combined.pdf".format('variational-' if is_variational else ''))
 
 if "autodecoder_hist" in sys.argv:
