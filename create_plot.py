@@ -4,6 +4,7 @@ import matplotlib
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import torch
 import sys
+import os
 from tqdm import tqdm
 from numpy import genfromtxt
 import scipy
@@ -53,23 +54,25 @@ if "autoencoder" in sys.argv:
 
 if "autoencoder_hist" in sys.argv:
     from dataset import dataset as dataset
+    is_variational = 'classic' not in sys.argv
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     indices = random.sample(list(range(dataset.size)), min(5000, dataset.size))
     voxels = dataset.voxels[indices, :, :, :]
-    autoencoder = Autoencoder()
+    autoencoder = Autoencoder(is_variational=is_variational)
     autoencoder.load()
+    autoencoder.eval()
     print("Generating codes...")
     with torch.no_grad():
         codes = autoencoder.encode(voxels, device).cpu().numpy()
     
     print("Plotting...")
     plt.hist(codes, bins=50, range=(-3, 3), histtype='step')
-    plt.savefig("plots/autoencoder-histogram.pdf")
+    plt.savefig("plots/{:s}autoencoder-histogram.pdf".format('variational-' if is_variational else ''))
     codes = codes.flatten()
     plt.clf()
     plt.hist(codes, bins=100, range=(-3, 3))
-    plt.savefig("plots/autoencoder-histogram-combined.pdf")
+    plt.savefig("plots/{:s}autoencoder-histogram-combined.pdf".format('variational-' if is_variational else ''))
 
 if "autodecoder_hist" in sys.argv:
     latent_codes = torch.load(LATENT_CODES_FILENAME).cpu().detach().flatten().numpy()
@@ -182,9 +185,14 @@ if "wgan_training" in sys.argv:
     plt.title('WGAN Training')
     plt.savefig("plots/wgan-training.pdf")
 
-if "autoencoder_training" in sys.argv:
-    data = genfromtxt('plots/autoencoder_training.csv', delimiter=' ')
+
+def create_autoencoder_training_plot(data_file, title, plot_file):
+    if not os.path.isfile(data_file):
+        return
+
+    data = genfromtxt(data_file, delimiter=' ')
     
+    #plt.yscale('log')
     plt.axhline(y=data[-1, 2], color='black', linewidth=1)
     plt.plot(data[:, 2], label='Reconstruction loss ({:.4f})'.format(data[-1, 2]))
     plt.plot(*get_moving_average(data[:, 2], 10), label='Reconstruction loss (Moving average)')
@@ -194,9 +202,14 @@ if "autoencoder_training" in sys.argv:
     plt.plot(voxel_error, label='Voxel error ({:.4f})'.format(data[-1, 4]))
 
     plt.xlabel('Epoch')
-    plt.title('Autoencoder Training')
+    plt.title(title)
     plt.legend()
-    plt.savefig("plots/autoencoder-training.pdf")
+    plt.savefig(plot_file)
+    plt.clf()
+
+if "autoencoder_training" in sys.argv:
+    create_autoencoder_training_plot('plots/autoencoder_training.csv', 'Autoencoder Training', 'plots/autoencoder-training.pdf')
+    create_autoencoder_training_plot('plots/variational_autoencoder_training.csv', 'Variational Autoencoder Training', 'plots/variational-autoencoder-training.pdf')
 
 if "sdf_slice" in sys.argv:
     from sdf.mesh_to_sdf import MeshSDF, scale_to_unit_sphere

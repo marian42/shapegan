@@ -5,20 +5,16 @@ import torch.nn as nn
 import torch.optim as optim
 
 import time
-
 import random
-
 import numpy as np
+import sys
 
 from voxel.viewer import VoxelViewer
-
-from model import Autoencoder, LATENT_CODE_SIZE, standard_normal_distribution
-
+from model import Autoencoder, LATENT_CODE_SIZE
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 from dataset import dataset as dataset
 
-autoencoder = Autoencoder()
+autoencoder = Autoencoder(is_variational='classic' not in sys.argv)
 autoencoder.load()
 autoencoder.eval()
 
@@ -31,10 +27,28 @@ SHAPE = (LATENT_CODE_SIZE, )
 TRANSITION_TIME = 0.8
 WAIT_TIME = 0.8
 
+SAMPLE_FROM_LATENT_DISTRIBUTION = 'sample' in sys.argv
+
+def get_latent_distribution():
+    print("Calculating latent distribution...")
+    indices = random.sample(list(range(dataset.size)), 1000)
+    voxels = dataset.voxels[indices, :, :, :]
+    with torch.no_grad():
+        codes = autoencoder.encode(voxels, device)
+    latent_codes_flattened = codes.detach().cpu().numpy().reshape(-1)
+    mean = np.mean(latent_codes_flattened)
+    variance = np.var(latent_codes_flattened) ** 0.5
+    print('Latent distribution: µ = {:.3f}, σ = {:.3f}'.format(mean, variance))
+    return torch.distributions.normal.Normal(mean, variance)
+
+latent_distribution = get_latent_distribution()
+
 def get_random():
-    #return standard_normal_distribution.sample(sample_shape=SHAPE).to(device)
-    index = random.randint(0, dataset.size -1)
-    return autoencoder.encode(dataset.voxels[index, :, :, :], device)
+    if SAMPLE_FROM_LATENT_DISTRIBUTION:
+        return latent_distribution.sample(sample_shape=SHAPE).to(device)
+    else:
+        index = random.randint(0, dataset.size -1)
+        return autoencoder.encode(dataset.voxels[index, :, :, :], device)
 
 
 previous_model = None

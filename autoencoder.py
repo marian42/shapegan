@@ -36,7 +36,7 @@ test_data = dataset.voxels[test_indices]
 
 VIEWER_UPDATE_STEP = 20
 
-IS_VARIATIONAL = False
+IS_VARIATIONAL = 'classic' not in sys.argv
 
 autoencoder = Autoencoder(is_variational=IS_VARIATIONAL)
 if "continue" in sys.argv:
@@ -54,7 +54,7 @@ error_history = deque(maxlen = BATCH_SIZE)
 
 criterion = nn.functional.mse_loss
 
-log_file = open("plots/autoencoder_training.csv", "a" if "continue" in sys.argv else "w")
+log_file = open("plots/{:s}autoencoder_training.csv".format('variational_' if autoencoder.is_variational else ''), "a" if "continue" in sys.argv else "w")
 
 def create_batches():
     batch_count = int(len(training_indices) / BATCH_SIZE)
@@ -124,9 +124,7 @@ def train():
                 loss = reconstruction_loss + kld
                 
                 loss.backward()
-                optimizer.step()        
-
-                error = loss.item()
+                optimizer.step()
 
                 if show_viewer and batch_index == 0:
                     viewer.set_voxels(output[0, :, :, :].squeeze().detach().cpu().numpy())
@@ -146,4 +144,3 @@ def train():
         test(epoch, time.time() - epoch_start_time)
 
 train()
-exit()
