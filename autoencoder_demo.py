@@ -11,8 +11,8 @@ import sys
 
 from voxel.viewer import VoxelViewer
 from model import Autoencoder, LATENT_CODE_SIZE
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 from dataset import dataset as dataset
+from util import device
 
 autoencoder = Autoencoder(is_variational='classic' not in sys.argv)
 autoencoder.load()
@@ -34,7 +34,7 @@ def get_latent_distribution():
     indices = random.sample(list(range(dataset.size)), 1000)
     voxels = dataset.voxels[indices, :, :, :]
     with torch.no_grad():
-        codes = autoencoder.encode(voxels, device)
+        codes = autoencoder.encode(voxels)
     latent_codes_flattened = codes.detach().cpu().numpy().reshape(-1)
     mean = np.mean(latent_codes_flattened)
     variance = np.var(latent_codes_flattened) ** 0.5
@@ -48,7 +48,7 @@ def get_random():
         return latent_distribution.sample(sample_shape=SHAPE).to(device)
     else:
         index = random.randint(0, dataset.size -1)
-        return autoencoder.encode(dataset.voxels[index, :, :, :], device)
+        return autoencoder.encode(dataset.voxels[index, :, :, :])
 
 
 previous_model = None

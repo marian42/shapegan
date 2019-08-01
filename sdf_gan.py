@@ -5,8 +5,7 @@ import random
 from collections import deque
 import numpy as np
 from voxel.viewer import VoxelViewer
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from util import device
 
 data = torch.load("data/dataset-sdf-clouds.to")
 points = data[:, :3]
@@ -97,7 +96,7 @@ for step in count():
     if step % 50 == 0 and step != 0:
         print("Prediction on fake samples: {:.3f}, on real samples: {:.3f}".format(np.mean(history_fake), np.mean(history_real)))
         try:
-            viewer.set_mesh(generator.get_mesh(create_latent_code(repeat=1), device))
+            viewer.set_mesh(generator.get_mesh(create_latent_code(repeat=1)))
         except ValueError:
             print("(Voxel volume contains no sign changes)")
         print(generator.forward(debug_points, debug_latent_codes).detach())

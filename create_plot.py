@@ -12,6 +12,7 @@ import scipy
 from sklearn.manifold import TSNE
 from model import Autoencoder, Generator, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 import random
+from util import device
 
 
 def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf"):
@@ -39,15 +40,14 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
 
 if "autoencoder" in sys.argv:
     from dataset import dataset as dataset
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    
     indices = random.sample(list(range(dataset.size)), 1000)
     voxels = dataset.voxels[indices, :, :, :]
     autoencoder = Autoencoder()
     autoencoder.load()
     print("Generating codes...")
     with torch.no_grad():
-        codes = autoencoder.encode(voxels, device).cpu().numpy()
+        codes = autoencoder.encode(voxels).cpu().numpy()
     labels = dataset.label_indices[indices].cpu().numpy()
     create_tsne_plot(codes, voxels, labels, "plots/autoencoder-images.pdf")
     #create_tsne_plot(codes, None, labels, "plots/autoencoder-dots.pdf")
@@ -55,7 +55,6 @@ if "autoencoder" in sys.argv:
 if "autoencoder_hist" in sys.argv:
     from dataset import dataset as dataset
     is_variational = 'classic' not in sys.argv
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     x_range = 3
 
@@ -66,7 +65,7 @@ if "autoencoder_hist" in sys.argv:
     autoencoder.eval()
     print("Generating codes...")
     with torch.no_grad():
-        codes = autoencoder.encode(voxels, device).cpu().numpy()
+        codes = autoencoder.encode(voxels).cpu().numpy()
     
     print("Plotting...")
     plt.hist(codes, bins=50, range=(-x_range, x_range), histtype='step', density=1)
@@ -97,7 +96,6 @@ if "autodecoder_hist" in sys.argv:
 
 if "autoencoder_examples" in sys.argv:
     from dataset import dataset as dataset
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     from voxel.viewer import VoxelViewer
     viewer = VoxelViewer(start_thread=False)
@@ -108,7 +106,7 @@ if "autoencoder_examples" in sys.argv:
     autoencoder.load()
     print("Generating codes...")
     with torch.no_grad():
-        codes = autoencoder.encode(voxels, device)
+        codes = autoencoder.encode(voxels)
         reconstructed = autoencoder.decode(codes).cpu().numpy()
         codes = codes.cpu().numpy()
 
@@ -130,9 +128,7 @@ if "autoencoder_examples" in sys.argv:
     plt.savefig("plots/autoencoder-examples.pdf", bbox_inches='tight', dpi=400)
     
 
-if "gan" in sys.argv:
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
+if "gan" in sys.argv:    
     generator = Generator()
     generator.load()
     standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
@@ -146,8 +142,6 @@ if "gan" in sys.argv:
     create_tsne_plot(codes, voxels, labels = None, filename = "plots/gan-images.pdf")
 
 if "wgan" in sys.argv:
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
     generator = Generator()
     generator.filename = "wgan-generator.to"
     generator.load()

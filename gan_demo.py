@@ -6,8 +6,7 @@ import sys
 
 from voxel.viewer import VoxelViewer
 from model import Generator, standard_normal_distribution, LATENT_CODE_SIZE
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from util import device
 
 generator = Generator()
 if "wgan" in sys.argv:

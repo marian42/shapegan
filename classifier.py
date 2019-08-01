@@ -16,8 +16,7 @@ torch.manual_seed(0)
 from model import Classifier
 from loss import voxel_difference, kld_loss
 from dataset import dataset as dataset
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from util import device
 
 BATCH_SIZE = 32
 TEST_SPLIT = 0.1

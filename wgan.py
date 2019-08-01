@@ -9,8 +9,7 @@ import time
 import sys
 
 from model import Generator, Discriminator, Autoencoder
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from util import device
 
 from dataset import dataset as dataset
 from loss import inception_score
@@ -48,7 +47,7 @@ generator_optimizer = optim.RMSprop(generator.parameters(), lr=LEARN_RATE)
 critic_optimizer = optim.RMSprop(critic.parameters(), lr=LEARN_RATE)
 
 print('Inception score of the dataset: {:.4f}'.format(inception_score(dataset.voxels[:1400, :, :, :])))
-print('Inception score at start: {:.4f}'.format(generator.get_inception_score(device)))
+print('Inception score at start: {:.4f}'.format(generator.get_inception_score()))
 
 log_file = open("plots/wgan_training.csv", "a" if "continue" in sys.argv else "w")
 
@@ -77,7 +76,7 @@ def train():
                 critic.zero_grad()
 
                 valid_sample = dataset.voxels[indices, :, :, :]                
-                fake_sample = generator.generate(device, sample_size = current_batch_size).detach()
+                fake_sample = generator.generate(sample_size = current_batch_size).detach()
                 fake_critic_output = critic.forward(fake_sample)
                 valid_critic_output = critic.forward(valid_sample)
                 critic_loss = -(torch.mean(valid_critic_output) - torch.mean(fake_critic_output))
@@ -90,7 +89,7 @@ def train():
                     generator.zero_grad()
                     critic.zero_grad()
                        
-                    fake_sample = generator.generate(device, sample_size = BATCH_SIZE)
+                    fake_sample = generator.generate(sample_size = BATCH_SIZE)
                     if show_viewer:
                         viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                     fake_critic_output = critic.forward(fake_sample)
@@ -115,10 +114,10 @@ def train():
         critic.save()
 
         if "show_slice" in sys.argv:
-            voxels = generator.generate(device).squeeze()
+            voxels = generator.generate().squeeze()
             print(create_text_slice(voxels))
 
-        score = generator.get_inception_score(device, sample_size=800)
+        score = generator.get_inception_score(sample_size=800)
         epoch_duration = time.time() - epoch_start_time
         print('Epoch {:d} ({:.1f}s), inception score: {:.4f}, critic values: {:.2f}, {:.2f}'.format(
             epoch, epoch_duration, score, fake_sample_prediction, valid_sample_prediction))

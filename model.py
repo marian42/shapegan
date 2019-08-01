@@ -42,7 +42,8 @@ class SavableModule(nn.Module):
     def save(self):
         torch.save(self.state_dict(), self.get_filename())
 
-    def get_device(self):
+    @property
+    def device(self):
         return next(self.parameters()).device
 
 # Based on http://3dgan.csail.mit.edu/papers/3dgan_nips.pdf
@@ -73,9 +74,9 @@ class Generator(SavableModule):
     def forward(self, x):
         return self.layers.forward(x)
 
-    def generate(self, device, sample_size = 1):
+    def generate(self, sample_size = 1):
         shape = torch.Size([sample_size, LATENT_CODE_SIZE, 1, 1, 1])
-        x = standard_normal_distribution.sample(shape).to(device)
+        x = standard_normal_distribution.sample(shape).to(self.device)
         return self.forward(x)
 
     def copy_autoencoder_weights(self, autoencoder):
@@ -84,11 +85,11 @@ class Generator(SavableModule):
 
         raise Exception("Not implemented.")        
 
-    def get_inception_score(self, device, sample_size = 1000):
+    def get_inception_score(self, sample_size = 1000):
         with torch.no_grad():
             if sample_size not in self.inception_score_latent_codes:
                 shape = torch.Size([sample_size, LATENT_CODE_SIZE, 1, 1, 1])
-                self.inception_score_latent_codes[sample_size] = standard_normal_distribution.sample(shape).to(device)
+                self.inception_score_latent_codes[sample_size] = standard_normal_distribution.sample(shape).to(self.device)
 
             sample = self.forward(self.inception_score_latent_codes[sample_size])
             return inception_score(sample)
@@ -189,7 +190,7 @@ class Autoencoder(SavableModule):
         self.inception_score_latent_codes = dict()
         self.cuda()
 
-    def encode(self, x, device, return_mean_and_log_variance = False):
+    def encode(self, x, return_mean_and_log_variance = False):
         if len(x.shape) == 3:
             x = x.unsqueeze(dim = 0)  # add dimension for batch
         if len(x.shape) == 4:
@@ -205,7 +206,7 @@ class Autoencoder(SavableModule):
         if self.training or return_mean_and_log_variance:
             log_variance = self.encode_log_variance(x).squeeze()
             standard_deviation = torch.exp(log_variance * 0.5)
-            eps = standard_normal_distribution.sample(mean.shape).to(device)
+            eps = standard_normal_distribution.sample(mean.shape).to(x.device)
         
         if self.training:
             x = mean + standard_deviation * eps
@@ -223,21 +224,21 @@ class Autoencoder(SavableModule):
         x = self.decoder.forward(x)
         return x.squeeze()
 
-    def forward(self, x, device):
+    def forward(self, x):
         if not self.is_variational:
-            z = self.encode(x, device)
+            z = self.encode(x)
             x = self.decode(z)
             return x
 
-        z, mean, log_variance = self.encode(x, device, return_mean_and_log_variance = True)
+        z, mean, log_variance = self.encode(x, return_mean_and_log_variance = True)
         x = self.decode(z)
         return x, mean, log_variance
 
-    def get_inception_score(self, device, sample_size = 1000):
+    def get_inception_score(self, sample_size = 1000):
         with torch.no_grad():
             if sample_size not in self.inception_score_latent_codes:
                 shape = torch.Size([sample_size, LATENT_CODE_SIZE])
-                self.inception_score_latent_codes[sample_size] = standard_normal_distribution.sample(shape).to(device)
+                self.inception_score_latent_codes[sample_size] = standard_normal_distribution.sample(shape).to(self.device)
 
             sample = self.decode(self.inception_score_latent_codes[sample_size])
             return inception_score(sample)
@@ -335,9 +336,9 @@ class SDFNet(SavableModule):
         x = self.layers2.forward(x)
         return x.squeeze()
 
-    def get_mesh(self, latent_code, device, voxel_count = 64):
+    def get_mesh(self, latent_code, voxel_count = 64):
         if not voxel_count in sdf_voxelization_helper:
-            sdf_voxelization_helper[voxel_count] = SDFVoxelizationHelperData(device, voxel_count)
+            sdf_voxelization_helper[voxel_count] = SDFVoxelizationHelperData(self.device, voxel_count)
        
         helper_data = sdf_voxelization_helper[voxel_count]
 
@@ -354,13 +355,13 @@ class SDFNet(SavableModule):
         return mesh
 
     def get_surface_points(self, latent_code, sample_size=100000, sdf_cutoff=0.1, return_normals=False):
-        points = get_points_in_unit_sphere(n=sample_size, device=self.get_device())
+        points = get_points_in_unit_sphere(n=sample_size, device=self.device)
         points.requires_grad = True
         latent_codes = latent_code.repeat(points.shape[0], 1)
     
         sdf = self.forward(points, latent_codes)
 
-        sdf.backward(torch.ones((sdf.shape[0]), device=self.get_device()))
+        sdf.backward(torch.ones((sdf.shape[0]), device=self.device))
         normals = points.grad
         normals /= torch.norm(normals, dim=1).unsqueeze(dim=1)
         points.requires_grad = False

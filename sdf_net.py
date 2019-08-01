@@ -9,10 +9,10 @@ import time
 import random
 from voxel.viewer import VoxelViewer
 from tqdm import tqdm
-from model import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 import sys
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from model import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
+from util import device
 
 if "nogui" not in sys.argv:
     viewer = VoxelViewer()
@@ -80,7 +80,7 @@ def train():
 
             if batch_index % 1000 == 0 and "nogui" not in sys.argv:
                 try:
-                    viewer.set_mesh(sdf_net.get_mesh(latent_codes[random.randrange(MODEL_COUNT), :], device))
+                    viewer.set_mesh(sdf_net.get_mesh(latent_codes[random.randrange(MODEL_COUNT), :]))
                 except ValueError:
                     pass
 

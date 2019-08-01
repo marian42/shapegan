@@ -10,9 +10,7 @@ import time
 import sys
 
 from model import SDFNet, Discriminator, standard_normal_distribution, LATENT_CODE_SIZE
-from util import create_text_slice
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from util import create_text_slice, device
 
 from dataset import dataset as dataset, VOXEL_SIZE, SDF_CLIPPING
 from loss import inception_score

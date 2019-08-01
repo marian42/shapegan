@@ -10,11 +10,9 @@ import sys
 
 from model import Generator, Discriminator, Autoencoder
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 from dataset import dataset as dataset
 from loss import inception_score
-from util import create_text_slice
+from util import create_text_slice, device
 
 generator = Generator()
 discriminator = Discriminator()
@@ -32,7 +30,7 @@ if "copy_autoencoder_weights" in sys.argv:
 log_file = open("plots/gan_training.csv", "a" if "continue" in sys.argv else "w")
 
 print('Inception score of the dataset: {:.4f}'.format(inception_score(dataset.voxels[:1400, :, :, :])))
-print('Inception score at start: {:.4f}'.format(generator.get_inception_score(device)))
+print('Inception score at start: {:.4f}'.format(generator.get_inception_score()))
 
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025)
 
@@ -71,7 +69,7 @@ def train():
                 # train generator
                 generator_optimizer.zero_grad()
                     
-                fake_sample = generator.generate(device, sample_size = BATCH_SIZE)
+                fake_sample = generator.generate(sample_size = BATCH_SIZE)
                 if show_viewer:
                     viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                 
@@ -88,7 +86,7 @@ def train():
                 valid_target = valid_target_default if current_batch_size == BATCH_SIZE else torch.ones(current_batch_size, requires_grad=False).to(device)
 
                 discriminator_optimizer.zero_grad()
-                fake_sample = generator.generate(device, sample_size = current_batch_size).detach()
+                fake_sample = generator.generate(sample_size = current_batch_size).detach()
                 discriminator_output_fake = discriminator.forward(fake_sample)
                 fake_loss = discriminator_criterion(discriminator_output_fake, fake_target)
                 fake_loss.backward()
@@ -118,10 +116,10 @@ def train():
         discriminator.save()
 
         if "show_slice" in sys.argv:
-            voxels = generator.generate(device).squeeze()
+            voxels = generator.generate().squeeze()
             print(create_text_slice(voxels))
 
-        score = generator.get_inception_score(device, sample_size=800)
+        score = generator.get_inception_score(sample_size=800)
         print('Epoch {:d} ({:.1f}s), inception score: {:.4f}'.format(epoch, time.time() - epoch_start_time, score))
         log_file.write('{:d} {:.1f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score))
         log_file.flush()

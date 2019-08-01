@@ -205,9 +205,9 @@ class Dataset():
 
 
 dataset = Dataset()
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
     dataset.prepare_sdf_clouds()
 else:
+    from util import device
     dataset.load_sdf(device)

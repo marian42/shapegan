@@ -10,8 +10,7 @@ import pyrender
 
 from voxel.viewer import VoxelViewer
 from model import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from util import device
 
 sdf_net = SDFNet()
 sdf_net.load()
@@ -68,7 +67,7 @@ def create_image_sequence():
             latent_code = previous_model * (1 - progress) + next_model * progress
             
             try:
-                viewer.set_mesh(sdf_net.get_mesh(latent_code, device, voxel_count=140))
+                viewer.set_mesh(sdf_net.get_mesh(latent_code, voxel_count=140))
             except ValueError:
                 pass
             image = viewer.get_image(crop = False, output_size = viewer.size)
@@ -109,7 +108,7 @@ def show_models():
                 model = previous_model * (1 - progress) + next_model * progress
                 
                 try:
-                    viewer.set_mesh(sdf_net.get_mesh(model, device, voxel_count=64))
+                    viewer.set_mesh(sdf_net.get_mesh(model, voxel_count=64))
                 except ValueError:
                     pass
 

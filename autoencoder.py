@@ -20,9 +20,7 @@ from loss import voxel_difference, kld_loss
 from collections import deque
 
 from dataset import dataset as dataset
-from util import create_text_slice
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from util import create_text_slice, device
 
 
 BATCH_SIZE = 32
@@ -75,16 +73,16 @@ def test(epoch_index, epoch_time):
         autoencoder.eval()
 
         if IS_VARIATIONAL:
-            output, mean, log_variance = autoencoder.forward(test_data, device)
+            output, mean, log_variance = autoencoder.forward(test_data)
             kld = kld_loss(mean, log_variance)
         else:
-            output = autoencoder.forward(test_data, device)
+            output = autoencoder.forward(test_data)
             kld = 0
 
         reconstruction_loss = get_reconstruction_loss(output, test_data)
         
         voxel_diff = voxel_difference(output, test_data)
-        inception_score = autoencoder.get_inception_score(device = device)
+        inception_score = autoencoder.get_inception_score()
 
         if "show_slice" in sys.argv:
             print(create_text_slice(output[0, :, :, :]))
@@ -106,16 +104,16 @@ def train():
         epoch_start_time = time.time()
         for batch in create_batches():
             try:
-                indices = torch.tensor(batch, device = device)
+                indices = torch.tensor(batch, device=device)
                 sample = dataset.voxels[indices, :, :, :]
 
                 autoencoder.zero_grad()
                 autoencoder.train()
                 if IS_VARIATIONAL:
-                    output, mean, log_variance = autoencoder.forward(sample, device)
+                    output, mean, log_variance = autoencoder.forward(sample)
                     kld = kld_loss(mean, log_variance)
                 else:
-                    output = autoencoder.forward(sample, device)
+                    output = autoencoder.forward(sample)
                     kld = 0
 
                 reconstruction_loss = get_reconstruction_loss(output, sample)
