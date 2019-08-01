@@ -25,6 +25,8 @@ import cv2
 CLAMP_TO_EDGE = 33071
 SHADOW_TEXTURE_SIZE = 1024
 
+DEFAULT_ROTATION = (147, 20)
+
 projection_matrix = np.array(
     [[ 1.73205081, 0,           0,           0,         ],
      [ 0,          1.73205081,  0,           0,         ],
@@ -73,7 +75,7 @@ class VoxelViewer():
         self.size = size
         
         self.mouse = None
-        self.rotation = [147, 20]
+        self.rotation = list(DEFAULT_ROTATION)
 
         self.vertex_buffer = None
         self.normal_buffer = None
@@ -308,6 +310,9 @@ class VoxelViewer():
                 if event.type == pygame.KEYDOWN:
                     if pygame.key.get_pressed()[pygame.K_F12]:
                         self.save_screenshot()
+                    if pygame.key.get_pressed()[pygame.K_r]:
+                        self.rotation = list(DEFAULT_ROTATION)
+                        self.request_render = True
 
             if self._poll_mouse() or self.request_render:
                 self._render()
