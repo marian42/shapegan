@@ -302,7 +302,9 @@ class SDFNet(SavableModule):
     def __init__(self):
         super(SDFNet, self).__init__(filename="sdf_net.to")
 
-        self.layers = nn.Sequential(
+        # DeepSDF paper has one additional FC layer in the first and second part each
+        
+        self.layers1 = nn.Sequential(
             nn.Linear(in_features = 3 + LATENT_CODE_SIZE, out_features = SDF_NET_BREADTH),
             nn.ReLU(inplace=True),
 
@@ -310,9 +312,11 @@ class SDFNet(SavableModule):
             nn.ReLU(inplace=True),
 
             nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
-            nn.ReLU(inplace=True),
+            nn.ReLU(inplace=True)
+        )
 
-            nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
+        self.layers2 = nn.Sequential(
+            nn.Linear(in_features = SDF_NET_BREADTH + LATENT_CODE_SIZE + 3, out_features = SDF_NET_BREADTH),
             nn.ReLU(inplace=True),
 
             nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
@@ -325,8 +329,11 @@ class SDFNet(SavableModule):
         self.cuda()
 
     def forward(self, points, latent_codes):
-        x = torch.cat((points, latent_codes), dim=1)
-        return self.layers.forward(x).squeeze()
+        input = torch.cat((points, latent_codes), dim=1)
+        x = self.layers1.forward(input)
+        x = torch.cat((x, input), dim=1)
+        x = self.layers2.forward(x)
+        return x.squeeze()
 
     def get_mesh(self, latent_code, device, voxel_count = 64):
         if not voxel_count in sdf_voxelization_helper:
