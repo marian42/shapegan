@@ -63,13 +63,13 @@ void main() {
     float shadow = getShadow(shadowPosition, lightDotNormal);
     float rimLight = pow(1.0 - clamp(-normal.z, 0.0, 1.0), 4) * 0.5;
     
-    vec3 color = albedo * (ambient
-        + diffuse * lightDotNormal * (1.0 - shadow)
-        + specular * pow(max(0.0, dot(reflectDirection, viewDirection)), 20) * (1.0 - shadow)
-        + rimLight * albedo);
+    vec3 color = albedo * ambient
+        + albedo * diffuse * lightDotNormal * (1.0 - shadow)
+        + vec3(1.0) * specular * pow(max(0.0, dot(reflectDirection, viewDirection)), 20) * (1.0 - shadow)
+        + vec3(1.0) * rimLight;
     
     if (isFloor == 1.0) {
-        color = mix(vec3(1.0), albedo * ambient, shadow);
+        color = mix(vec3(1.0), vec3(0.8) * ambient, shadow);
     }
     
     gl_FragColor = vec4(color.rgb, 1.0);
