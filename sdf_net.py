@@ -17,13 +17,15 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 if "nogui" not in sys.argv:
     viewer = VoxelViewer()
 
+POINTCLOUD_SIZE = 100000
+LIMIT_MODEL_COUNT = 2000
+
 data = torch.load("data/dataset-sdf-clouds.to")
-points = data[:, :3]
+points = data[LIMIT_MODEL_COUNT * POINTCLOUD_SIZE:, :3]
 points = points.cuda()
-sdf = data[:, 3].to(device)
+sdf = data[LIMIT_MODEL_COUNT * POINTCLOUD_SIZE:, 3].to(device)
 del data
 
-POINTCLOUD_SIZE = 100000
 MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
 BATCH_SIZE = 2048
 SDF_CUTOFF = 0.1
