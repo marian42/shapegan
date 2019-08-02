@@ -24,8 +24,8 @@ STEPS = 40
 
 SHAPE = (LATENT_CODE_SIZE, )
 
-TRANSITION_TIME = 0.8
-WAIT_TIME = 0.8
+TRANSITION_TIME = 1.2
+WAIT_TIME = 1.2
 
 SAMPLE_FROM_LATENT_DISTRIBUTION = 'sample' in sys.argv
 
@@ -59,17 +59,13 @@ for epoch in count():
         previous_model = next_model
         next_model = get_random()
 
-        for step in range(STEPS + 1):
-            progress = step / STEPS
-            model = None
-            if step < STEPS:
-                model = previous_model * (1 - progress) + next_model * progress
-            else:
-                model = next_model
+        start = time.perf_counter()
+        end = start + TRANSITION_TIME
+        while time.perf_counter() < end:
+            progress = min((time.perf_counter() - start) / TRANSITION_TIME, 1.0)
+            model = previous_model * (1 - progress) + next_model * progress
             voxels = autoencoder.decode(model).detach().cpu()
             viewer.set_voxels(voxels)
-
-            time.sleep(TRANSITION_TIME / STEPS)
 
         time.sleep(WAIT_TIME)
         

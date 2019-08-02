@@ -35,7 +35,8 @@ TRANSITION_FRAMES = 40
 WAIT_FRAMES = 10
 SAMPLE_COUNT = 40
 
-WAIT_TIME = 0.8
+TRANSITION_TIME = 2
+WAIT_TIME = 1.2
 
 def get_random_latent_code():
     if SAMPLE_FROM_LATENT_DISTRIBUTION:
@@ -98,13 +99,15 @@ def show_models():
     viewer = VoxelViewer()
     next_model = start_model
 
-    for epoch in count():
+    for _ in count():
         try:
             previous_model = next_model
             next_model = get_random_latent_code()
 
-            for step in range(TRANSITION_FRAMES + 1):
-                progress = step / TRANSITION_FRAMES
+            start = time.perf_counter()
+            end = start + TRANSITION_TIME
+            while time.perf_counter() < end:
+                progress = min((time.perf_counter() - start) / TRANSITION_TIME, 1.0)
                 model = previous_model * (1 - progress) + next_model * progress
                 
                 try:

@@ -14,7 +14,7 @@ from voxel.viewer.shader import Shader
 import cv2
 import skimage
 
-from threading import Thread
+from threading import Thread, Lock
 import torch
 import trimesh
 
@@ -98,6 +98,8 @@ class VoxelViewer():
 
         self.ground_level = -1
 
+        self.render_lock = Lock()
+
         if start_thread:
             thread = Thread(target = self._run)
             thread.start()
@@ -105,6 +107,7 @@ class VoxelViewer():
             self._initialize_opengl()
 
     def _update_buffers(self, vertices, normals):
+        self.render_lock.acquire()
         if self.vertex_buffer is None:
             self.vertex_buffer = vbo.VBO(vertices)
         else:
@@ -117,6 +120,7 @@ class VoxelViewer():
         
         self.vertex_buffer_size = vertices.shape[0]
         self.request_render = True
+        self.render_lock.release()
 
 
     def set_voxels(self, voxels, use_marching_cubes=True, shade_smooth=False):
@@ -231,6 +235,7 @@ class VoxelViewer():
     
     def _render(self):
         self.request_render = False
+        self.render_lock.acquire()        
 
         light_vp_matrix = get_camera_transform(6, 164, 50)
         self._render_shadow_texture(light_vp_matrix)
@@ -260,6 +265,7 @@ class VoxelViewer():
         self._draw_mesh()
         self.shader.set_floor(True)
         self._draw_floor()
+        self.render_lock.release()        
 
     def _initialize_opengl(self):
         pygame.init()
