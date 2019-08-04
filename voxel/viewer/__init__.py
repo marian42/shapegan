@@ -336,13 +336,17 @@ class VoxelViewer():
     def stop(self):
         self.running = False
 
-    def get_image(self, crop = True, output_size = 128):
+    def get_image(self, crop = True, output_size = 128, greyscale=True):
         if self.request_render:
             self._render()
 
         string_image = pygame.image.tostring(self.window, 'RGB')
         image = pygame.image.fromstring(string_image, (self.size, self.size), 'RGB')
-        array = np.transpose(pygame.surfarray.array3d(image)[:, :, 0])
+        if greyscale:
+            array = np.transpose(pygame.surfarray.array3d(image)[:, :, 0])
+        else:
+            array = np.transpose(pygame.surfarray.array3d(image)[:, :, :], axes=(1, 0, 2))
+            array = array[:, :, [2, 1, 0]]
 
         if crop:
             mask = array[:, :] != int(self.background_color[0] * 255)
@@ -374,6 +378,6 @@ class VoxelViewer():
         while os.path.isfile(FILENAME_FORMAT.format(index)):
             index += 1
         filename = FILENAME_FORMAT.format(index)
-        image = self.get_image(crop=False, output_size=self.size)
+        image = self.get_image(crop=False, output_size=self.size, greyscale=False)
         cv2.imwrite(filename, image)
         print("Screenshot saved to " + filename + ".")
