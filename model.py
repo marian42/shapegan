@@ -354,6 +354,15 @@ class SDFNet(SavableModule):
         mesh = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
         return mesh
 
+    def get_normals(self, latent_code, points):
+        points.requires_grad = True
+        latent_codes = latent_code.repeat(points.shape[0], 1)
+        sdf = self.forward(points, latent_codes)
+        sdf.backward(torch.ones((sdf.shape[0]), device=self.device))
+        normals = points.grad
+        normals /= torch.norm(normals, dim=1).unsqueeze(dim=1)
+        return normals
+
     def get_surface_points(self, latent_code, sample_size=100000, sdf_cutoff=0.1, return_normals=False):
         points = get_points_in_unit_sphere(n=sample_size, device=self.device)
         points.requires_grad = True
