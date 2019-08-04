@@ -28,7 +28,7 @@ def get_camera_transform(camera_distance, rotation_y, rotation_x):
     return camera_pose
 
 
-def get_image(latent_code, camera_position, light_position, resolution = 512, focal_distance = 1.6, threshold = 0.0001, iterations=1000):
+def get_image(latent_code, camera_position, light_position, resolution = 512, focal_distance = 1.6, threshold = 0.0001, iterations=400):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -51,26 +51,30 @@ def get_image(latent_code, camera_position, light_position, resolution = 512, fo
     ray_directions = ray_directions.transpose().astype(np.float32)
     ray_directions /= np.linalg.norm(ray_directions, axis=1)[:, np.newaxis]
 
-    points += ray_directions * (camera_distance - 1.5)
+    points += ray_directions * (camera_distance - 1.0)
+    points = torch.tensor(points, device=device, dtype=torch.float32)
 
-    indices = np.arange(points.shape[0])
+    ray_directions_t = torch.tensor(ray_directions, device=device, dtype=torch.float32)
+    camera_position_t = torch.tensor(camera_position, device=device, dtype=torch.float32).unsqueeze(0)
 
-    model_pixels = np.zeros(points.shape[0], dtype=bool)
+    indices = torch.arange(points.shape[0])
+
+    model_pixels = torch.zeros(points.shape[0], dtype=torch.uint8)
 
     latent_codes = latent_code.repeat(indices.shape[0], 1)
 
     for i in tqdm(range(iterations)):
-        test_points = torch.tensor(points[indices, :]).to(device)
+        test_points = points[indices, :]
         with torch.no_grad():
-            sdf = sdf_net.forward(test_points, latent_codes[:indices.shape[0], :]).detach().cpu().numpy()
-        sdf = np.clip(sdf, -0.1, 0.1)
-        points[indices, :] += ray_directions[indices, :] * sdf[:, np.newaxis]
+            sdf = sdf_net.forward(test_points, latent_codes[:indices.shape[0], :]).detach()
+        sdf = torch.clamp_(sdf, -0.1, 0.1)
+        points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
         
         hits = (sdf > 0) & (sdf < threshold)
         model_pixels[indices[hits]] = 1
         indices = indices[~hits]
         
-        misses = np.linalg.norm(points[indices, :] - camera_position[np.newaxis, :], axis=1) > camera_distance + 1.5
+        misses = torch.norm(points[indices, :] - camera_position_t, dim=1) > camera_distance + 1.5
         indices = indices[~misses]
         
         if indices.shape[0] < 2:
@@ -78,10 +82,11 @@ def get_image(latent_code, camera_position, light_position, resolution = 512, fo
     
     model_pixels[indices] = 1
     model_points = points[model_pixels]
+    model_pixels = model_pixels.cpu().numpy().astype(bool)
 
-    normal = sdf_net.get_normals(latent_code, torch.tensor(model_points, device=device)).detach().cpu().numpy()
+    normal = sdf_net.get_normals(latent_code, model_points).detach().cpu().numpy()
     
-    light_direction = light_position[np.newaxis, :] - model_points
+    light_direction = light_position[np.newaxis, :] - model_points.detach().cpu().numpy()
     light_direction /= np.linalg.norm(light_direction, axis=1)[:, np.newaxis]
 
     diffuse = np.einsum('ij,ij->i', light_direction, normal)
