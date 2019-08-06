@@ -432,7 +432,7 @@ def create_MLP(layer_sizes):
 
 
 class SDFDiscriminator(SavableModule):
-    def __init__(self):
+    def __init__(self, output_size=1):
         super(SDFDiscriminator, self).__init__(filename='sdf_discriminator.to')
 
         self.set_abstraction_1 = SetAbstractionModule(ratio=0.5, radius=0.03, local_nn=create_MLP([1 + 3, 64, 64, 128]))
@@ -441,7 +441,7 @@ class SDFDiscriminator(SavableModule):
 
         self.fully_connected_1 = Linear(1024, 512)
         self.fully_connected_2 = Linear(512, 256)
-        self.fully_connected_3 = Linear(256, 1)
+        self.fully_connected_3 = Linear(256, output_size)
 
     def forward(self, points, features):
         batch = torch.zeros(points.shape[0], device=points.device, dtype=torch.int64)
@@ -458,3 +458,23 @@ class SDFDiscriminator(SavableModule):
         x = self.fully_connected_3(x)
         x = torch.sigmoid(x)
         return x.squeeze()
+
+
+class SDFAutoencoder(SavableModule):
+    def __init__(self):
+        super(SDFAutoencoder, self).__init__(filename='sdf_autoencoder.to')
+
+        self.encoder = SDFDiscriminator(output_size=LATENT_CODE_SIZE)
+        self.decoder = SDFNet()
+
+    def encode(self, points, sdf):
+        return(self.encoder.forward(points, sdf))
+
+    def decode(self, latent_code, points):
+        z = latent_code.repeat(points.shape[0], 1)
+        distances = self.decoder.forward(points, z)
+        return distances
+
+    def forward(self, points, sdf):
+        z = self.encode(points, sdf)
+        return self.decode(z, points)
