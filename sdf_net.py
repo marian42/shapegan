@@ -57,8 +57,8 @@ def create_batches():
     yield indices[(batch_count - 1) * BATCH_SIZE:]
 
 def train():
-    loss_values = []
     for epoch in count():
+        loss_values = []
         batch_index = 0
         epoch_start_time = time.time()
         for batch in tqdm(list(create_batches())):
