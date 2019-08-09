@@ -18,7 +18,7 @@ if "nogui" not in sys.argv:
     viewer = VoxelViewer()
 
 POINTCLOUD_SIZE = 100000
-LIMIT_MODEL_COUNT = 20
+LIMIT_MODEL_COUNT = 100
 
 data = torch.load("data/dataset-sdf-clouds.to")
 points = data[:LIMIT_MODEL_COUNT * POINTCLOUD_SIZE, :3]
@@ -27,10 +27,9 @@ sdf = data[:LIMIT_MODEL_COUNT * POINTCLOUD_SIZE, 3].to(device)
 del data
 
 MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
-BATCH_SIZE = 4000
+BATCH_SIZE = 5000
+ENCODER_BATCH_FRACTION = 0.2 # If this is < 1.0, only some of the samples will be used for the encoder
 SDF_CUTOFF = 0.1
-
-SIGMA = 0.01
 
 torch.clamp_(sdf, -SDF_CUTOFF, SDF_CUTOFF)
 
@@ -40,7 +39,7 @@ sdf_autoencoder.to(device)
 if "continue" in sys.argv:
     sdf_autoencoder.load()
 
-optimizer = optim.Adam(sdf_autoencoder.parameters(), lr=1e-5)
+optimizer = optim.Adam(sdf_autoencoder.parameters(), lr=2e-5)
 criterion = nn.MSELoss()
 
 def create_batches():
@@ -62,19 +61,18 @@ def train():
         for batch in tqdm(create_batches()):
             indices = torch.tensor(batch, device = device)
             
-            indices_encoder = indices[:BATCH_SIZE // 2]
-            indices_decoder = indices[BATCH_SIZE // 2:]
+            indices_encoder = indices[:int(BATCH_SIZE * ENCODER_BATCH_FRACTION)]
             
             sdf_autoencoder.zero_grad()
             latent_code = sdf_autoencoder.encode(points[indices_encoder], sdf[indices_encoder])
-            output = sdf_autoencoder.decode(latent_code, points[indices_decoder])
+            output = sdf_autoencoder.decode(latent_code, points[indices])
             output = output.clamp(-SDF_CUTOFF, SDF_CUTOFF)
-            loss = torch.mean(torch.abs(output - sdf[indices_decoder])) + SIGMA * torch.mean(torch.pow(latent_code, 2))
+            loss = torch.mean(torch.abs(output - sdf[indices]))
             loss.backward()
             loss_values.append(loss.item())
             optimizer.step()
 
-            if batch_index % 200 == 0 and "nogui" not in sys.argv:
+            if batch_index % 20 == 0 and "nogui" not in sys.argv:
                 try:
                     viewer.set_mesh(sdf_autoencoder.decoder.get_mesh(latent_code))
                 except ValueError:
