@@ -48,7 +48,7 @@ def get_normals(points, latent_code):
     result[BATCH_SIZE * batch_count:, :] = sdf_net.get_normals(latent_code, points[BATCH_SIZE * batch_count:, :])
     return result
 
-def get_image(latent_code, camera_position, light_position, resolution = 800, focal_distance = 1.6, threshold = 0.0001, iterations=400, ssaa=2):
+def get_image(latent_code, camera_position, light_position, resolution = 800, focal_distance = 1.6, threshold = 0.0005, iterations=1000, ssaa=1):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -86,7 +86,7 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
     for i in tqdm(range(iterations)):
         test_points = points[indices, :]
         sdf = get_sdf(test_points, latent_codes)
-        sdf = torch.clamp_(sdf, -0.1, 0.1)
+        sdf = torch.clamp_(sdf, -0.02, 0.02)
         points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
         
         hits = (sdf > 0) & (sdf < threshold)
