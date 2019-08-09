@@ -48,7 +48,7 @@ def get_normals(points, latent_code):
     result[BATCH_SIZE * batch_count:, :] = sdf_net.get_normals(latent_code, points[BATCH_SIZE * batch_count:, :])
     return result
 
-def get_image(latent_code, camera_position, light_position, resolution = 800, focal_distance = 1.85, threshold = 0.0005, iterations=1000, ssaa=2):
+def get_image(latent_code, camera_position, light_position, resolution = 800, focal_distance = 1.8, threshold = 0.0005, iterations=1000, ssaa=2):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -117,13 +117,18 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
 
     reflect = light_direction - np.einsum('ij,ij->i', light_direction, normal)[:, np.newaxis] * normal * 2
     reflect /= np.linalg.norm(reflect, axis=1)[:, np.newaxis]
-    reflect *= -1
     specular = np.einsum('ij,ij->i', reflect, ray_directions[model_pixels, :])
     specular = np.clip(specular, 0.0, 1.0)
-    specular = np.power(specular, 0.5)
+    specular = np.power(specular, 20)
+    rim_light = -np.einsum('ij,ij->i', normal, ray_directions[model_pixels, :])
+    rim_light = 1.0 - np.clip(rim_light, 0, 1)
+    rim_light = np.power(rim_light, 4) * 0.3
+
 
     color = np.array([0.8, 0.1, 0.1])[np.newaxis, :] * (diffuse * 0.5 + 0.5)[:, np.newaxis]
-    color += (specular * 0.3)[:, np.newaxis]
+    color += (specular * 0.3 + rim_light)[:, np.newaxis]
+
+    color = np.clip(color, 0, 1)
 
     pixels = np.ones((points.shape[0], 3))
     pixels[model_pixels] = color
@@ -140,7 +145,7 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
 codes = list(range(latent_codes.shape[0]))
 random.shuffle(codes)
 
-for i in codes:
+for i in [364]:
     camera_pose = get_camera_transform(2.2, 147, 20)
     camera_position = np.matmul(np.linalg.inv(camera_pose), np.array([0, 0, 0, 1]))[:3]
     light_matrix = get_camera_transform(6, 164, 50)

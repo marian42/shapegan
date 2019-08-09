@@ -61,7 +61,7 @@ void main() {
     vec3 lightDotNormal = clamp(dot(normal, lightDirection), 0.0, 1.0);
 
     float shadow = getShadow(shadowPosition, lightDotNormal);
-    float rimLight = pow(1.0 - clamp(-normal.z, 0.0, 1.0), 4) * 0.5;
+    float rimLight = pow(1.0 - clamp(-normal.z, 0.0, 1.0), 4) * 0.3;
     
     vec3 color = albedo * ambient
         + albedo * diffuse * lightDotNormal * (1.0 - shadow)
