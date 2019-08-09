@@ -48,7 +48,7 @@ def get_normals(points, latent_code):
     result[BATCH_SIZE * batch_count:, :] = sdf_net.get_normals(latent_code, points[BATCH_SIZE * batch_count:, :])
     return result
 
-def get_image(latent_code, camera_position, light_position, resolution = 800, focal_distance = 1.6, threshold = 0.0005, iterations=1000, ssaa=1):
+def get_image(latent_code, camera_position, light_position, resolution = 800, focal_distance = 1.85, threshold = 0.0005, iterations=1000, ssaa=2):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -71,14 +71,18 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
     ray_directions = ray_directions.transpose().astype(np.float32)
     ray_directions /= np.linalg.norm(ray_directions, axis=1)[:, np.newaxis]
 
-    points += ray_directions * (camera_distance - 1.0)
-    points = torch.tensor(points, device=device, dtype=torch.float32)
+    b = np.einsum('ij,ij->i', points, ray_directions) * 2
+    c = np.dot(camera_position, camera_position) - 1
+    distance_to_sphere = (-b - np.sqrt(np.power(b, 2) - 4 * c)) / 2
+    indices = np.argwhere(np.isfinite(distance_to_sphere)).reshape(-1)
 
+    points[indices] += ray_directions[indices] * distance_to_sphere[indices, np.newaxis]
+
+    points = torch.tensor(points, device=device, dtype=torch.float32)
     ray_directions_t = torch.tensor(ray_directions, device=device, dtype=torch.float32)
     camera_position_t = torch.tensor(camera_position, device=device, dtype=torch.float32).unsqueeze(0)
 
-    indices = torch.arange(points.shape[0])
-
+    indices = torch.tensor(indices, device=device, dtype=torch.int64)
     model_pixels = torch.zeros(points.shape[0], dtype=torch.uint8)
 
     latent_codes = latent_code.repeat(min(indices.shape[0], BATCH_SIZE), 1)
@@ -93,7 +97,7 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
         model_pixels[indices[hits]] = 1
         indices = indices[~hits]
         
-        misses = torch.norm(points[indices, :] - camera_position_t, dim=1) > camera_distance + 1.5
+        misses = torch.norm(points[indices, :], dim=1) > 1
         indices = indices[~misses]
         
         if indices.shape[0] < 2:
@@ -136,8 +140,7 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
 codes = list(range(latent_codes.shape[0]))
 random.shuffle(codes)
 
-for i in [182]:
-    print(i)
+for i in codes:
     camera_pose = get_camera_transform(2.2, 147, 20)
     camera_position = np.matmul(np.linalg.inv(camera_pose), np.array([0, 0, 0, 1]))[:3]
     light_matrix = get_camera_transform(6, 164, 50)
