@@ -13,7 +13,7 @@ sdf_net.load()
 sdf_net.eval()
 latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
 
-BATCH_SIZE = 500000
+BATCH_SIZE = 100000
 
 def get_rotation_matrix(angle, axis='y'):
     rotation = Rotation.from_euler(axis, angle, degrees=True)
@@ -39,8 +39,16 @@ def get_sdf(points, latent_codes):
         result[BATCH_SIZE * batch_count:] = sdf_net.forward(points[BATCH_SIZE * batch_count:, :], latent_codes[:remainder, :])
     return result
 
+def get_normals(points, latent_code):
+    batch_count = points.shape[0] // BATCH_SIZE
+    result = torch.zeros((points.shape[0], 3), device=points.device)
+    for i in range(batch_count):
+        result[BATCH_SIZE * i:BATCH_SIZE * (i+1), :] = sdf_net.get_normals(latent_code, points[BATCH_SIZE * i:BATCH_SIZE * (i+1), :])
+    remainder = points.shape[0] - BATCH_SIZE * batch_count
+    result[BATCH_SIZE * batch_count:, :] = sdf_net.get_normals(latent_code, points[BATCH_SIZE * batch_count:, :])
+    return result
 
-def get_image(latent_code, camera_position, light_position, resolution = 1024, focal_distance = 1.6, threshold = 0.0001, iterations=400):
+def get_image(latent_code, camera_position, light_position, resolution = 800, focal_distance = 1.6, threshold = 0.0001, iterations=400, ssaa=2):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -95,7 +103,7 @@ def get_image(latent_code, camera_position, light_position, resolution = 1024, f
     model_points = points[model_pixels]
     model_pixels = model_pixels.cpu().numpy().astype(bool)
 
-    normal = sdf_net.get_normals(latent_code, model_points).detach().cpu().numpy()
+    normal = get_normals(model_points, latent_code).detach().cpu().numpy()
     
     light_direction = light_position[np.newaxis, :] - model_points.detach().cpu().numpy()
     light_direction /= np.linalg.norm(light_direction, axis=1)[:, np.newaxis]
