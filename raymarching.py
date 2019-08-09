@@ -48,8 +48,8 @@ def get_image(latent_code, camera_position, light_position, resolution = 1024, f
     camera_up = np.cross(camera_forward, camera_right)
     
     screenspace_points = np.meshgrid(
-        np.linspace(-1, 1, resolution),
-        np.linspace(-1, 1, resolution),
+        np.linspace(-1, 1, resolution * ssaa),
+        np.linspace(-1, 1, resolution * ssaa),
     )
     screenspace_points = np.stack(screenspace_points)
     screenspace_points = screenspace_points.reshape(2, -1).transpose()
@@ -115,8 +115,14 @@ def get_image(latent_code, camera_position, light_position, resolution = 1024, f
 
     pixels = np.ones((points.shape[0], 3))
     pixels[model_pixels] = color
-    pixels = pixels.reshape((resolution, resolution, 3))    
-    return pixels
+    pixels = pixels.reshape((resolution * ssaa, resolution * ssaa, 3))
+
+    image = Image.fromarray(np.uint8(pixels * 255) , 'RGB')
+
+    if ssaa != 1:
+        image = image.resize((resolution, resolution), Image.ANTIALIAS)
+
+    return image
     
    
 codes = list(range(latent_codes.shape[0]))
@@ -128,8 +134,7 @@ for i in [182]:
     camera_position = np.matmul(np.linalg.inv(camera_pose), np.array([0, 0, 0, 1]))[:3]
     light_matrix = get_camera_transform(6, 164, 50)
     light_position = np.matmul(np.linalg.inv(light_matrix), np.array([0, 0, 0, 1]))[:3]
-    pixels = get_image(latent_codes[i], camera_position, light_position)
+    img = get_image(latent_codes[i], camera_position, light_position)
     
-    img = Image.fromarray(np.uint8(pixels * 255) , 'RGB')
-    img.save('screenshots/raymarching.png')
+    img.save('screenshots/raymarching-examples/image-{:d}.png'.format(i))
     img.show()
