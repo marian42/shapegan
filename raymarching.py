@@ -13,6 +13,8 @@ sdf_net.load()
 sdf_net.eval()
 latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
 
+BATCH_SIZE = 500000
+
 def get_rotation_matrix(angle, axis='y'):
     rotation = Rotation.from_euler(axis, angle, degrees=True)
     matrix = np.identity(4)
@@ -27,8 +29,18 @@ def get_camera_transform(camera_distance, rotation_y, rotation_x):
 
     return camera_pose
 
+def get_sdf(points, latent_codes):
+    with torch.no_grad():
+        batch_count = points.shape[0] // BATCH_SIZE
+        result = torch.zeros((points.shape[0]), device=points.device)
+        for i in range(batch_count):
+            result[BATCH_SIZE * i:BATCH_SIZE * (i+1)] = sdf_net.forward(points[BATCH_SIZE * i:BATCH_SIZE * (i+1), :], latent_codes[:BATCH_SIZE, :])
+        remainder = points.shape[0] - BATCH_SIZE * batch_count
+        result[BATCH_SIZE * batch_count:] = sdf_net.forward(points[BATCH_SIZE * batch_count:, :], latent_codes[:remainder, :])
+    return result
 
-def get_image(latent_code, camera_position, light_position, resolution = 512, focal_distance = 1.6, threshold = 0.0001, iterations=400):
+
+def get_image(latent_code, camera_position, light_position, resolution = 1024, focal_distance = 1.6, threshold = 0.0001, iterations=400):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -61,12 +73,11 @@ def get_image(latent_code, camera_position, light_position, resolution = 512, fo
 
     model_pixels = torch.zeros(points.shape[0], dtype=torch.uint8)
 
-    latent_codes = latent_code.repeat(indices.shape[0], 1)
+    latent_codes = latent_code.repeat(min(indices.shape[0], BATCH_SIZE), 1)
 
     for i in tqdm(range(iterations)):
         test_points = points[indices, :]
-        with torch.no_grad():
-            sdf = sdf_net.forward(test_points, latent_codes[:indices.shape[0], :]).detach()
+        sdf = get_sdf(test_points, latent_codes)
         sdf = torch.clamp_(sdf, -0.1, 0.1)
         points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
         
