@@ -128,6 +128,7 @@ class Dataset():
 
     def prepare_sdf_clouds(self):
         filenames, _ = self.find_model_files("sdf-pointcloud.npy")
+        used_filenames = []
         
         POINTCLOUD_SIZE = 100000
 
@@ -141,14 +142,24 @@ class Dataset():
             if cloud.shape[0] != POINTCLOUD_SIZE:
                 print("Bad pointcloud shape: ", cloud.shape)
                 continue
+            
+            model_size = np.count_nonzero(cloud[-20000:, 3] < 0) / 20000
+            if model_size < 0.01:
+                continue
+
             cloud = torch.tensor(cloud)
             result[position * POINTCLOUD_SIZE:(position + 1) * POINTCLOUD_SIZE, :] = cloud
             position += 1
+            used_filenames.append(filename)
         
         print("Saving...")
+        result = result[:position * POINTCLOUD_SIZE, :]
         torch.save(result, CLOUDS_SDF_FILENAME)
+
+        with open('data/sdf-clouds.txt', 'w') as file:
+            file.write('\n'.join(used_filenames))
         
-        print("Done.")
+        print("Used {:d}/{:d} pointclouds.".format(len(used_filenames), len(filenames)))
 
     def prepare_surface_clouds(self, limit_models_number=None):
         filenames, _ = self.find_model_files("surface-pointcloud.npy")
