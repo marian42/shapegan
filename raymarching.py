@@ -55,6 +55,8 @@ def get_shadows(points, light_position, latent_code, threshold = 0.001):
     ray_directions_t = torch.tensor(ray_directions, device=device, dtype=torch.float32)
     points = torch.tensor(points, device=device, dtype=torch.float32)
     
+    points += ray_directions_t * 0.1
+
     indices = torch.arange(points.shape[0])
     shadows = torch.zeros(points.shape[0], dtype=torch.uint8)
 
@@ -114,7 +116,7 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
     ray_directions_t = torch.tensor(ray_directions, device=device, dtype=torch.float32)
 
     indices = torch.tensor(indices, device=device, dtype=torch.int64)
-    model_pixels = torch.zeros(points.shape[0], dtype=torch.uint8)
+    model_mask = torch.zeros(points.shape[0], dtype=torch.uint8)
 
     latent_codes = latent_code.repeat(min(indices.shape[0], BATCH_SIZE), 1)
 
@@ -125,7 +127,7 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
         points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
         
         hits = (sdf > 0) & (sdf < threshold)
-        model_pixels[indices[hits]] = 1
+        model_mask[indices[hits]] = 1
         indices = indices[~hits]
         
         misses = torch.norm(points[indices, :], dim=1) > 1
@@ -133,25 +135,29 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
         
         if indices.shape[0] < 2:
             break
-    
-    model_pixels[indices] = 1
-    model_points = points[model_pixels]
-    model_pixels = model_pixels.cpu().numpy().astype(bool)
+        
+    model_mask[indices] = 1
 
-    normal = get_normals(model_points, latent_code).detach().cpu().numpy()
+    normal = get_normals(points[model_mask], latent_code).cpu().numpy()
+
+    model_mask = model_mask.cpu().numpy().astype(bool)
+    points = points.cpu().numpy()
+    model_points = points[model_mask]
     
-    light_direction = light_position[np.newaxis, :] - model_points.detach().cpu().numpy()
+    seen_by_light = 1.0 - get_shadows(model_points, light_position, latent_code)
+    
+    light_direction = light_position[np.newaxis, :] - model_points
     light_direction /= np.linalg.norm(light_direction, axis=1)[:, np.newaxis]
-
+    
     diffuse = np.einsum('ij,ij->i', light_direction, normal)
-    diffuse = np.clip(diffuse, 0, 1)
+    diffuse = np.clip(diffuse, 0, 1) * seen_by_light
 
     reflect = light_direction - np.einsum('ij,ij->i', light_direction, normal)[:, np.newaxis] * normal * 2
     reflect /= np.linalg.norm(reflect, axis=1)[:, np.newaxis]
-    specular = np.einsum('ij,ij->i', reflect, ray_directions[model_pixels, :])
+    specular = np.einsum('ij,ij->i', reflect, ray_directions[model_mask, :])
     specular = np.clip(specular, 0.0, 1.0)
-    specular = np.power(specular, 20)
-    rim_light = -np.einsum('ij,ij->i', normal, ray_directions[model_pixels, :])
+    specular = np.power(specular, 20) * seen_by_light
+    rim_light = -np.einsum('ij,ij->i', normal, ray_directions[model_mask, :])
     rim_light = 1.0 - np.clip(rim_light, 0, 1)
     rim_light = np.power(rim_light, 4) * 0.3
 
@@ -160,19 +166,18 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
 
     color = np.clip(color, 0, 1)
 
-    points = points.cpu().numpy()
     ground_points = ray_directions[:, 1] < 0
-    ground_points[model_pixels] = 0
+    ground_points[model_mask] = 0
     ground_points = np.argwhere(ground_points).reshape(-1)
-    ground_plane = np.min(points[model_pixels, 1]).item()
+    ground_plane = np.min(model_points[:, 1]).item()
     points[ground_points, :] -= ray_directions[ground_points, :] * ((points[ground_points, 1] - ground_plane) / ray_directions[ground_points, 1])[:, np.newaxis]    
     ground_points = ground_points[np.linalg.norm(points[ground_points, ::2], axis=1) < 3]
 
-    shadows = get_shadows(points[ground_points, :], light_position, latent_code)
+    ground_shadows = get_shadows(points[ground_points, :], light_position, latent_code)
     
     pixels = np.ones((points.shape[0], 3))
-    pixels[model_pixels] = color
-    pixels[ground_points[shadows]] = 0.4
+    pixels[model_mask] = color
+    pixels[ground_points[ground_shadows]] = 0.4
     pixels = pixels.reshape((resolution * ssaa, resolution * ssaa, 3))
 
     image = Image.fromarray(np.uint8(pixels * 255) , 'RGB')
