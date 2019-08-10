@@ -48,7 +48,39 @@ def get_normals(points, latent_code):
     result[BATCH_SIZE * batch_count:, :] = sdf_net.get_normals(latent_code, points[BATCH_SIZE * batch_count:, :])
     return result
 
-def get_image(latent_code, camera_position, light_position, resolution = 800, focal_distance = 1.8, threshold = 0.0005, iterations=1000, ssaa=2):
+
+def get_shadows(points, light_position, latent_code, threshold = 0.001):
+    ray_directions = light_position[np.newaxis, :] - points
+    ray_directions /= np.linalg.norm(ray_directions, axis=1)[:, np.newaxis]
+    ray_directions_t = torch.tensor(ray_directions, device=device, dtype=torch.float32)
+    points = torch.tensor(points, device=device, dtype=torch.float32)
+    
+    indices = torch.arange(points.shape[0])
+    shadows = torch.zeros(points.shape[0], dtype=torch.uint8)
+
+    latent_codes = latent_code.repeat(min(indices.shape[0], BATCH_SIZE), 1)
+
+    for i in tqdm(range(200)):
+        test_points = points[indices, :]
+        sdf = get_sdf(test_points, latent_codes)
+        sdf = torch.clamp_(sdf, -0.1, 0.1)
+        points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
+        
+        hits = (sdf > 0) & (sdf < threshold)
+        shadows[indices[hits]] = 1
+        indices = indices[~hits]
+        
+        misses = points[indices, 1] > 1
+        indices = indices[~misses]
+        
+        if indices.shape[0] < 2:
+            return
+
+    shadows[indices] = 1
+    return shadows.cpu().numpy().astype(bool)
+    
+
+def get_image(latent_code, camera_position, light_position, resolution = 800, focal_distance = 1.75, threshold = 0.0005, iterations=1000, ssaa=2):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -80,7 +112,6 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
 
     points = torch.tensor(points, device=device, dtype=torch.float32)
     ray_directions_t = torch.tensor(ray_directions, device=device, dtype=torch.float32)
-    camera_position_t = torch.tensor(camera_position, device=device, dtype=torch.float32).unsqueeze(0)
 
     indices = torch.tensor(indices, device=device, dtype=torch.int64)
     model_pixels = torch.zeros(points.shape[0], dtype=torch.uint8)
@@ -124,14 +155,24 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
     rim_light = 1.0 - np.clip(rim_light, 0, 1)
     rim_light = np.power(rim_light, 4) * 0.3
 
-
     color = np.array([0.8, 0.1, 0.1])[np.newaxis, :] * (diffuse * 0.5 + 0.5)[:, np.newaxis]
     color += (specular * 0.3 + rim_light)[:, np.newaxis]
 
     color = np.clip(color, 0, 1)
 
+    points = points.cpu().numpy()
+    ground_points = ray_directions[:, 1] < 0
+    ground_points[model_pixels] = 0
+    ground_points = np.argwhere(ground_points).reshape(-1)
+    ground_plane = np.min(points[model_pixels, 1]).item()
+    points[ground_points, :] -= ray_directions[ground_points, :] * ((points[ground_points, 1] - ground_plane) / ray_directions[ground_points, 1])[:, np.newaxis]    
+    ground_points = ground_points[np.linalg.norm(points[ground_points, ::2], axis=1) < 3]
+
+    shadows = get_shadows(points[ground_points, :], light_position, latent_code)
+    
     pixels = np.ones((points.shape[0], 3))
     pixels[model_pixels] = color
+    pixels[ground_points[shadows]] = 0.4
     pixels = pixels.reshape((resolution * ssaa, resolution * ssaa, 3))
 
     image = Image.fromarray(np.uint8(pixels * 255) , 'RGB')
@@ -145,7 +186,7 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
 codes = list(range(latent_codes.shape[0]))
 random.shuffle(codes)
 
-for i in [364]:
+for i in codes:
     camera_pose = get_camera_transform(2.2, 147, 20)
     camera_position = np.matmul(np.linalg.inv(camera_pose), np.array([0, 0, 0, 1]))[:3]
     light_matrix = get_camera_transform(6, 164, 50)
