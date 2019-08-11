@@ -18,7 +18,7 @@ if "nogui" not in sys.argv:
     viewer = VoxelViewer()
 
 POINTCLOUD_SIZE = 100000
-LIMIT_MODEL_COUNT = 2000
+LIMIT_MODEL_COUNT = 4000
 
 data = torch.load("data/dataset-sdf-clouds.to")
 
