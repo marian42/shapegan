@@ -144,7 +144,7 @@ class Dataset():
                 continue
             
             model_size = np.count_nonzero(cloud[-20000:, 3] < 0) / 20000
-            if model_size < 0.01:
+            if model_size < 0.015:
                 continue
 
             cloud = torch.tensor(cloud)
