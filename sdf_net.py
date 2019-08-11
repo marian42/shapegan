@@ -29,7 +29,7 @@ sdf = data[:LIMIT_MODEL_COUNT * POINTCLOUD_SIZE, 3].to(device)
 del data
 
 MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
-BATCH_SIZE = 2048
+BATCH_SIZE = 20000
 SDF_CUTOFF = 0.1
 
 SIGMA = 0.01
