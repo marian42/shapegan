@@ -10,7 +10,7 @@ import numpy as np
 import sys
 
 from voxel.viewer import VoxelViewer
-from model import Autoencoder, LATENT_CODE_SIZE
+from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
 from dataset import dataset as dataset
 from util import device
 

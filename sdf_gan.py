@@ -1,11 +1,12 @@
-from model import SDFNet, SDFDiscriminator, LATENT_CODE_SIZE, standard_normal_distribution
+from model.sdf_net import SDFNet
+from model.sdf_autoencoder import SDFDiscriminator, LATENT_CODE_SIZE
 from itertools import count
 import torch
 import random
 from collections import deque
 import numpy as np
 from voxel.viewer import VoxelViewer
-from util import device
+from util import device, standard_normal_distribution
 
 data = torch.load("data/dataset-sdf-clouds.to")
 points = data[:, :3]

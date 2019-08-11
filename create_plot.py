@@ -10,7 +10,8 @@ from numpy import genfromtxt
 import scipy
 
 from sklearn.manifold import TSNE
-from model import Autoencoder, Generator, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
+from model.autodecoder import Autoencoder
+from model.gan import Generator, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 import random
 from util import device
 
@@ -131,7 +132,8 @@ if "autoencoder_examples" in sys.argv:
 if "gan" in sys.argv:    
     generator = Generator()
     generator.load()
-    standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
+    from util import standard_normal_distribution
+
     shape = torch.Size([500, LATENT_CODE_SIZE, 1, 1, 1])
     x = standard_normal_distribution.sample(shape).to(device)
     with torch.no_grad():
@@ -145,7 +147,7 @@ if "wgan" in sys.argv:
     generator = Generator()
     generator.filename = "wgan-generator.to"
     generator.load()
-    standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
+    from util import standard_normal_distribution
     shape = torch.Size([500, LATENT_CODE_SIZE, 1, 1, 1])
     x = standard_normal_distribution.sample(shape).to(device)
     with torch.no_grad():

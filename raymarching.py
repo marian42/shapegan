@@ -4,7 +4,7 @@ import random
 from tqdm import tqdm
 from PIL import Image
 
-from model import SDFNet, LATENT_CODES_FILENAME
+from model.sdf_net import SDFNet, LATENT_CODES_FILENAME
 from util import device
 from scipy.spatial.transform import Rotation
 

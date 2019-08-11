@@ -5,8 +5,8 @@ import numpy as np
 import sys
 
 from voxel.viewer import VoxelViewer
-from model import Generator, standard_normal_distribution, LATENT_CODE_SIZE
-from util import device
+from model.gan import Generator, LATENT_CODE_SIZE
+from util import device, standard_normal_distribution
 
 generator = Generator()
 if "wgan" in sys.argv:

@@ -1,5 +1,6 @@
 import torch
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
 
 CHARACTERS = '      `.-:/+osyhdmm###############'
 

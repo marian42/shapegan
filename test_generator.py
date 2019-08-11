@@ -7,7 +7,7 @@ import random
 import numpy as np
 
 from voxel.viewer import VoxelViewer
-from model import Generator, Discriminator
+from model.gan import Generator
 from util import device
 
 generator = Generator()

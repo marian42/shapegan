@@ -9,8 +9,9 @@ import random
 import time
 import sys
 
-from model import SDFNet, Discriminator, standard_normal_distribution, LATENT_CODE_SIZE
-from util import create_text_slice, device
+from model.sdf_net import SDFNet
+from model.gan import Discriminator, LATENT_CODE_SIZE
+from util import create_text_slice, device, standard_normal_distribution
 
 from dataset import dataset as dataset, VOXEL_SIZE, SDF_CLIPPING
 from loss import inception_score

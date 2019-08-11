@@ -13,7 +13,7 @@ import numpy as np
 import sys
 import time
 
-from model import Autoencoder
+from model.autoencoder import Autoencoder
 
 from loss import voxel_difference, kld_loss
 

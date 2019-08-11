@@ -8,7 +8,7 @@ import random
 import time
 import sys
 
-from model import Generator, Discriminator, Autoencoder
+from model.gan import Generator, Discriminator
 
 from dataset import dataset as dataset
 from loss import inception_score
@@ -17,15 +17,9 @@ from util import create_text_slice, device
 generator = Generator()
 discriminator = Discriminator()
 
-
 if "continue" in sys.argv:
     generator.load()
     discriminator.load()
-
-if "copy_autoencoder_weights" in sys.argv:
-    autoencoder = Autoencoder()
-    autoencoder.load()
-    generator.copy_autoencoder_weights(autoencoder)
 
 log_file = open("plots/gan_training.csv", "a" if "continue" in sys.argv else "w")
 

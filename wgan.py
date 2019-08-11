@@ -8,7 +8,7 @@ import random
 import time
 import sys
 
-from model import Generator, Discriminator, Autoencoder
+from model.gan import Generator, Discriminator
 from util import device
 
 from dataset import dataset as dataset
@@ -31,12 +31,6 @@ critic.use_sigmoid = False
 if "continue" in sys.argv:
     generator.load()
     critic.load()
-
-if "copy_autoencoder_weights" in sys.argv:
-    autoencoder = Autoencoder()
-    autoencoder.load()
-    generator.copy_autoencoder_weights(autoencoder)
-
 
 LEARN_RATE = 0.00005
 BATCH_SIZE = 64

@@ -9,7 +9,7 @@ import cv2
 import pyrender
 
 from voxel.viewer import VoxelViewer
-from model import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
+from model.sdf_net import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 from util import device
 
 sdf_net = SDFNet()

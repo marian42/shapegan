@@ -11,7 +11,7 @@ from voxel.viewer import VoxelViewer
 from tqdm import tqdm
 import sys
 
-from model import SDFAutoencoder, LATENT_CODE_SIZE
+from model.sdf_autoencoder import SDFAutoencoder, LATENT_CODE_SIZE
 from util import device
 
 if "nogui" not in sys.argv:

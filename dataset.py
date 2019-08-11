@@ -5,9 +5,6 @@ from tqdm import tqdm
 import torch
 import random
 
-from voxel.binvox_rw import read_as_3d_array
-from scipy.ndimage import zoom
-
 DATASET_DIRECTORY = "data/shapenet/"
 MIN_SAMPLES_PER_CLASS = 500
 VOXEL_SIZE = 32
@@ -81,6 +78,8 @@ class Dataset():
         return filenames, labels
 
     def prepare_binary(self):
+        from voxel.binvox_rw import read_as_3d_array
+
         filenames, labels = self.find_model_files("model_normalized.solid.binvox")        
         
         indices = list(range(len(filenames)))

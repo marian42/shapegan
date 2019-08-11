@@ -10,7 +10,7 @@ import random
 from tqdm import tqdm
 import sys
 
-from model import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
+from model.sdf_net import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 from util import device
 
 if "nogui" not in sys.argv:
@@ -21,8 +21,7 @@ POINTCLOUD_SIZE = 100000
 LIMIT_MODEL_COUNT = 2000
 
 data = torch.load("data/dataset-sdf-clouds.to")
-points = data[:LIMIT_MODEL_COUNT * POINTCLOUD_SIZE, :3]
-points = points.cuda()
+points = data[:LIMIT_MODEL_COUNT * POINTCLOUD_SIZE, :3].to(device)
 sdf = data[:LIMIT_MODEL_COUNT * POINTCLOUD_SIZE, 3].to(device)
 del data
 
