@@ -235,6 +235,7 @@ class Autoencoder(SavableModule):
         return x, mean, log_variance
 
     def get_inception_score(self, sample_size = 1000):
+        return 0
         with torch.no_grad():
             if sample_size not in self.inception_score_latent_codes:
                 shape = torch.Size([sample_size, LATENT_CODE_SIZE])
