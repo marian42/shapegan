@@ -257,3 +257,27 @@ if "voxel_occupancy" in sys.argv:
 
     plt.hist(occupied, bins=100, range=(0, 10000))
     plt.savefig("plots/voxel-occupancy-histogram.pdf")
+
+if "model_images" in sys.argv:
+    from voxel.viewer import VoxelViewer
+    viewer = VoxelViewer(start_thread=False)
+    import trimesh
+    import cv2
+    import logging
+
+    logging.getLogger('trimesh').setLevel(1000000)
+
+    filenames = open('data/sdf-clouds.txt', 'r').read().split("\n")
+    index = 0
+
+    for filename in tqdm(filenames):
+        model_filename = filename.replace('sdf-pointcloud.npy', 'model_normalized.obj')
+        image_filename = 'screenshots/sdf_meshes/{:d}.png'.format(index)
+        index += 1
+        if os.path.isfile(image_filename):
+            continue
+
+        mesh = trimesh.load(model_filename)
+        viewer.set_mesh(mesh, center_and_scale=True)
+        image = viewer.get_image(crop=False, output_size=viewer.size, greyscale=False)
+        cv2.imwrite(image_filename, image)        
