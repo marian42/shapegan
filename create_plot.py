@@ -10,7 +10,6 @@ from numpy import genfromtxt
 import scipy
 
 from sklearn.manifold import TSNE
-from model.autodecoder import Autoencoder
 from model.gan import Generator, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 import random
 from util import device
@@ -40,6 +39,7 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
     plt.savefig(filename, dpi=200, bbox_inches='tight')
 
 if "autoencoder" in sys.argv:
+    from model.autoencoder import Autoencoder
     from dataset import dataset as dataset
     
     indices = random.sample(list(range(dataset.size)), 1000)
@@ -54,6 +54,7 @@ if "autoencoder" in sys.argv:
     #create_tsne_plot(codes, None, labels, "plots/autoencoder-dots.pdf")
 
 if "autoencoder_hist" in sys.argv:
+    from model.autoencoder import Autoencoder
     from dataset import dataset as dataset
     is_variational = 'classic' not in sys.argv
 
@@ -96,6 +97,7 @@ if "autodecoder_hist" in sys.argv:
     plt.savefig("plots/autodecoder-histogram.pdf")
 
 if "autoencoder_examples" in sys.argv:
+    from model.autoencoder import Autoencoder
     from dataset import dataset as dataset
 
     from voxel.viewer import VoxelViewer
