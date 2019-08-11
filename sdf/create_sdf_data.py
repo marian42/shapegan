@@ -5,7 +5,7 @@ from queue import Queue
 from threading import Thread
 import time
 
-PATH = '/home/marian/shapenet/ShapeNetCore.v2/03001627/'
+PATH = 'data/shapenet/03001627/'
 
 BAD_MODEL_FILENAME = "bad_model"
 VOXEL_RESOLUTION = 32

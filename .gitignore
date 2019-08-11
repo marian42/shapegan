@@ -10,6 +10,7 @@
 screenshots/
 images/
 plots/
+data/shapenet**
 
 *.pdf
 

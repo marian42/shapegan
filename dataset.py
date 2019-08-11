@@ -8,7 +8,7 @@ import random
 from voxel.binvox_rw import read_as_3d_array
 from scipy.ndimage import zoom
 
-DATASET_DIRECTORY = "/home/marian/shapenet/ShapeNetCore.v2/"
+DATASET_DIRECTORY = "data/shapenet/"
 MIN_SAMPLES_PER_CLASS = 500
 VOXEL_SIZE = 32
 LIMIT_SIZE = 15000

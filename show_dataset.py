@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from voxel.viewer import VoxelViewer
 
-PATH = '/home/marian/shapenet/ShapeNetCore.v2/03001627/'
+PATH = 'data/shapenet/03001627/'
 
 viewer = VoxelViewer()
 
