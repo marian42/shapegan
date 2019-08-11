@@ -129,6 +129,53 @@ if "autoencoder_examples" in sys.argv:
         axs[i, 2].imshow(image, cmap='gray')
         axs[i, 2].axis('off')
     plt.savefig("plots/autoencoder-examples.pdf", bbox_inches='tight', dpi=400)
+
+if "autoencoder_examples_2" in sys.argv:
+    from model.autoencoder import Autoencoder
+    from dataset import dataset as dataset
+
+    from voxel.viewer import VoxelViewer
+    viewer = VoxelViewer(start_thread=False)
+    
+    indices = random.sample(list(range(dataset.size)), 5)
+    voxels = dataset.voxels[indices, :, :, :]
+    ae = Autoencoder()
+    ae.load()
+
+    vae = Autoencoder(is_variational=True)
+    vae.load()
+
+    print("Generating codes...")
+    with torch.no_grad():
+        codes_ae = ae.encode(voxels)
+        reconstructed_ae = ae.decode(codes_ae).cpu().numpy()
+        codes_vae = vae.encode(voxels)
+        reconstructed_vae = vae.decode(codes_vae).cpu().numpy()
+
+    print("Plotting")
+    fig, axs = plt.subplots(3, len(indices), figsize=(3 * len(indices), 3 * 3), gridspec_kw={'left': 0, 'right': 1, 'top': 1, 'bottom': 0, 'wspace': 0.2, 'hspace': 0.2})
+    fig.patch.set_visible(False)
+    for i in range(len(indices)):
+        viewer.set_voxels(voxels[i, :, :, :].cpu().numpy())
+        image = viewer.get_image(crop=True)
+        axs[0, i].imshow(image)
+        axs[0, i].axis('off')
+        axs[0, i].patch.set_visible(False)
+
+        viewer.set_voxels(reconstructed_ae[i, :, :, :])
+        image = viewer.get_image(crop=True)
+        axs[1, i].imshow(image)
+        axs[1, i].axis('off')
+
+        viewer.set_voxels(reconstructed_vae[i, :, :, :])
+        image = viewer.get_image(crop=True)
+        axs[2, i].imshow(image)
+        axs[2, i].axis('off')
+
+    plt.axis('off')
+    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    
+    plt.savefig("plots/ae-vae-examples.pdf", bbox_inches=extent, dpi=400)
     
 
 if "gan" in sys.argv:    

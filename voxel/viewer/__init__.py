@@ -336,9 +336,11 @@ class VoxelViewer():
     def stop(self):
         self.running = False
 
-    def get_image(self, crop = True, output_size = 128, greyscale=True):
+    def get_image(self, crop=False, output_size=None, greyscale=False):
         if self.request_render:
             self._render()
+        if output_size is None:
+            output_size = self.size
 
         string_image = pygame.image.tostring(self.window, 'RGB')
         image = pygame.image.fromstring(string_image, (self.size, self.size), 'RGB')
@@ -346,7 +348,6 @@ class VoxelViewer():
             array = np.transpose(pygame.surfarray.array3d(image)[:, :, 0])
         else:
             array = np.transpose(pygame.surfarray.array3d(image)[:, :, :], axes=(1, 0, 2))
-            array = array[:, :, [2, 1, 0]]
 
         if crop:
             mask = array[:, :] != int(self.background_color[0] * 255)
