@@ -152,7 +152,7 @@ class Dataset():
             used_filenames.append(filename)
         
         print("Saving...")
-        result = result[:position * POINTCLOUD_SIZE, :]
+        result = result[:position * POINTCLOUD_SIZE, :].clone()
         torch.save(result, CLOUDS_SDF_FILENAME)
 
         with open('data/sdf-clouds.txt', 'w') as file:

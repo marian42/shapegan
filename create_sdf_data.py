@@ -9,7 +9,7 @@ import logging
 import random
 
 
-PATH = 'data/shapenet//03001627/' # chairs
+PATH = 'data/shapenet/03001627/' # chairs
 
 def get_voxel_coordinates(centroid, size, voxel_count):
     points = np.meshgrid(
