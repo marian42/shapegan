@@ -7,7 +7,6 @@ import numpy as np
 from itertools import count
 import time
 import random
-from voxel.viewer import VoxelViewer
 from tqdm import tqdm
 import sys
 
@@ -15,6 +14,7 @@ from model import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 from util import device
 
 if "nogui" not in sys.argv:
+    from voxel.viewer import VoxelViewer
     viewer = VoxelViewer()
 
 POINTCLOUD_SIZE = 100000
