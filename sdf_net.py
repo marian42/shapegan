@@ -21,6 +21,9 @@ POINTCLOUD_SIZE = 100000
 LIMIT_MODEL_COUNT = 2000
 
 data = torch.load("data/dataset-sdf-clouds.to")
+
+print("{:d} models available, using up to {:d}.".format(data.shape[0] // POINTCLOUD_SIZE, LIMIT_MODEL_COUNT))
+
 points = data[:LIMIT_MODEL_COUNT * POINTCLOUD_SIZE, :3].to(device)
 sdf = data[:LIMIT_MODEL_COUNT * POINTCLOUD_SIZE, 3].to(device)
 del data
