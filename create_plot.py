@@ -181,6 +181,87 @@ if "autoencoder_examples_2" in sys.argv:
     extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())    
     plt.savefig("plots/ae-vae-examples.pdf", bbox_inches=extent, dpi=400)
 
+if "autoencoder_generate" in sys.argv:
+    from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
+    from dataset import dataset as dataset
+    from sklearn.metrics import pairwise_distances
+
+    SAMPLES = 5
+
+    voxels = dataset.voxels
+    ae = Autoencoder(is_variational=False)
+    ae.load()
+    vae = Autoencoder(is_variational=True)
+    vae.load()
+    print("Generating codes...")
+    with torch.no_grad():
+        codes_ae = ae.encode(voxels).cpu().numpy()
+        codes_vae = vae.encode(voxels).cpu().numpy()
+    codes_ae_flattented = codes_ae.reshape(-1)
+    codes_vae_flattented = codes_vae.reshape(-1)
+    
+    ae_distribution = torch.distributions.normal.Normal(
+        np.mean(codes_ae_flattented),
+        np.var(codes_ae_flattented) ** 0.5
+    )
+    vae_distribution = torch.distributions.normal.Normal(
+        np.mean(codes_vae_flattented),
+        np.var(codes_vae_flattented) ** 0.5
+    )
+
+    samples_ae = ae_distribution.sample([SAMPLES, LATENT_CODE_SIZE]).to(device)
+    samples_vae = vae_distribution.sample([SAMPLES, LATENT_CODE_SIZE]).to(device)
+    with torch.no_grad():
+        reconstructed_ae = ae.decode(samples_ae).cpu().numpy()
+        reconstructed_vae = vae.decode(samples_vae).cpu().numpy()
+
+    distances_ae = pairwise_distances(codes_ae, samples_ae.cpu().numpy(), metric='cosine')
+    indices_ae = np.argmin(distances_ae, axis=0)
+    reference_codes_ae = torch.tensor(codes_ae[indices_ae, :], device=device)
+    with torch.no_grad():
+        reconstructed_references_ae = ae.decode(reference_codes_ae).cpu().numpy()
+
+    distances_vae = pairwise_distances(codes_vae, samples_vae.cpu().numpy(), metric='cosine')
+    indices_vae = np.argmin(distances_vae, axis=0)
+    reference_codes_vae = torch.tensor(codes_vae[indices_vae, :], device=device)
+    with torch.no_grad():
+        reconstructed_references_vae = vae.decode(reference_codes_vae).cpu().numpy()
+
+    print("Plotting")
+    from voxel.viewer import VoxelViewer
+    viewer = VoxelViewer(start_thread=False)
+    
+    fig, axs = plt.subplots(4, SAMPLES, figsize=(3 * SAMPLES, 4 * 3), gridspec_kw={'left': 0, 'right': 1, 'top': 1, 'bottom': 0, 'wspace': 0.2, 'hspace': 0.2})
+    fig.patch.set_visible(False)
+    for i in range(SAMPLES):
+        viewer.set_voxels(reconstructed_ae[i, :, :, :])
+        image = viewer.get_image(crop=True)
+        axs[0, i].imshow(image)
+        axs[0, i].axis('off')
+        axs[0, i].patch.set_visible(False)
+
+        viewer.set_voxels(reconstructed_references_ae[i, :, :, :])
+        image = viewer.get_image(crop=True)
+        axs[1, i].imshow(image)
+        axs[1, i].axis('off')
+        axs[1, i].patch.set_visible(False)
+
+        viewer.set_voxels(reconstructed_vae[i, :, :, :])
+        image = viewer.get_image(crop=True)
+        axs[2, i].imshow(image)
+        axs[2, i].axis('off')
+        axs[2, i].patch.set_visible(False)
+
+        viewer.set_voxels(reconstructed_references_vae[i, :, :, :])
+        image = viewer.get_image(crop=True)
+        axs[3, i].imshow(image)
+        axs[3, i].axis('off')
+        axs[3, i].patch.set_visible(False)
+
+    plt.axis('off')
+    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())    
+    plt.savefig("plots/ae-vae-samples.pdf", bbox_inches=extent, dpi=400)
+
 if "autoencoder_interpolation" in sys.argv:
     from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
     from dataset import dataset as dataset
