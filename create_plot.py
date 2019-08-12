@@ -139,11 +139,13 @@ if "autoencoder_examples_2" in sys.argv:
     
     indices = random.sample(list(range(dataset.size)), 5)
     voxels = dataset.voxels[indices, :, :, :]
-    ae = Autoencoder()
+    ae = Autoencoder(is_variational=False)
     ae.load()
+    ae.eval()
 
     vae = Autoencoder(is_variational=True)
     vae.load()
+    vae.eval()
 
     print("Generating codes...")
     with torch.no_grad():
@@ -173,9 +175,66 @@ if "autoencoder_examples_2" in sys.argv:
         axs[2, i].axis('off')
 
     plt.axis('off')
-    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-    
+    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())    
     plt.savefig("plots/ae-vae-examples.pdf", bbox_inches=extent, dpi=400)
+
+if "autoencoder_interpolation" in sys.argv:
+    from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
+    from dataset import dataset as dataset
+    voxels = dataset.voxels
+
+    from voxel.viewer import VoxelViewer
+    viewer = VoxelViewer(start_thread=False)
+
+    STEPS = 6
+    
+    indices = random.sample(list(range(dataset.size)), 2)
+    print(indices)
+    
+    ae = Autoencoder(is_variational=False)
+    ae.load()
+    ae.eval()
+    vae = Autoencoder(is_variational=True)
+    vae.load()
+    vae.eval()
+
+    print("Generating codes...")
+    with torch.no_grad():
+        codes_ae = torch.zeros([STEPS, LATENT_CODE_SIZE], device=device)
+        codes_start_end = ae.encode(voxels[indices, :, :, :])
+        code_start = codes_start_end[0, :]
+        code_end = codes_start_end[1, :]
+        for i in range(STEPS):
+            codes_ae[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
+        reconstructed_ae = ae.decode(codes_ae)
+        
+        codes_vae = torch.zeros([STEPS, LATENT_CODE_SIZE], device=device)
+        codes_start_end = vae.encode(voxels[indices, :, :, :])
+        code_start = codes_start_end[0, :]
+        code_end = codes_start_end[1, :]
+        for i in range(STEPS):
+            codes_vae[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
+        reconstructed_vae = vae.decode(codes_vae)
+
+    print("Plotting")
+    fig, axs = plt.subplots(2, STEPS, figsize=(3 * STEPS, 3 * 2), gridspec_kw={'left': 0, 'right': 1, 'top': 1, 'bottom': 0, 'wspace': 0.2, 'hspace': 0.2})
+    fig.patch.set_visible(False)
+    for i in range(STEPS):
+        viewer.set_voxels(reconstructed_ae[i, :, :, :].cpu().numpy())
+        image = viewer.get_image(crop=True)
+        axs[0, i].imshow(image)
+        axs[0, i].axis('off')
+        axs[0, i].patch.set_visible(False)
+
+        viewer.set_voxels(reconstructed_vae[i, :, :, :].cpu().numpy())
+        image = viewer.get_image(crop=True)
+        axs[1, i].imshow(image)
+        axs[1, i].axis('off')
+        axs[1, i].patch.set_visible(False)
+
+    plt.axis('off')
+    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())        
+    plt.savefig("plots/ae-vae-interpolation.pdf", bbox_inches=extent, dpi=400)
     
 
 if "gan" in sys.argv:    
