@@ -58,7 +58,7 @@ if "autoencoder_hist" in sys.argv:
     from dataset import dataset as dataset
     is_variational = 'classic' not in sys.argv
 
-    x_range = 3
+    x_range = 0.11 if is_variational else 1
 
     indices = random.sample(list(range(dataset.size)), min(5000, dataset.size))
     voxels = dataset.voxels[indices, :, :, :]
@@ -70,15 +70,19 @@ if "autoencoder_hist" in sys.argv:
         codes = autoencoder.encode(voxels).cpu().numpy()
     
     print("Plotting...")
-    plt.hist(codes, bins=50, range=(-x_range, x_range), histtype='step', density=1)
-    plt.savefig("plots/{:s}autoencoder-histogram.pdf".format('variational-' if is_variational else ''))
+    plt.hist(codes[:, ::4], bins=100, range=(-x_range, x_range), histtype='step', density=1)
+    plt.xlabel("$\mathbf{z}^{(i)}$")
+    plt.ylabel("relative abundance")
+    plt.savefig("plots/{:s}autoencoder-histogram.pdf".format('variational-' if is_variational else ''), bbox_inches='tight')
     codes = codes.flatten()
     plt.clf()
     x = np.linspace(-x_range, x_range, 500)
     y = scipy.stats.norm.pdf(x, 0, 1)
-    plt.plot(x, y, color='green')
+    #plt.plot(x, y, color='green')
     plt.hist(codes, bins=100, range=(-x_range, x_range), density=1)
-    plt.savefig("plots/{:s}autoencoder-histogram-combined.pdf".format('variational-' if is_variational else ''))
+    plt.xlabel("$\mathbf{z}$")
+    plt.ylabel("relative abundance")
+    plt.savefig("plots/{:s}autoencoder-histogram-combined.pdf".format('variational-' if is_variational else ''), bbox_inches='tight')
 
 if "autodecoder_hist" in sys.argv:
     latent_codes = torch.load(LATENT_CODES_FILENAME).cpu().detach().flatten().numpy()
