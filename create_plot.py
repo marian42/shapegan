@@ -31,7 +31,7 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
         viewer = VoxelViewer(start_thread=False, background_color = (1.0, 1.0, 1.0, 1.0))
         for i in tqdm(range(voxels.shape[0])):
             viewer.set_voxels(voxels[i, :, :, :].cpu().numpy())
-            image = viewer.get_image()
+            image = viewer.get_image(crop=True, output_size=128)
             box = AnnotationBbox(OffsetImage(image, zoom = 0.5, cmap='gray'), embedded[i, :], frameon=True)
             ax.add_artist(box)
         
@@ -44,14 +44,13 @@ if "autoencoder" in sys.argv:
     
     indices = random.sample(list(range(dataset.size)), 1000)
     voxels = dataset.voxels[indices, :, :, :]
-    autoencoder = Autoencoder()
+    autoencoder = Autoencoder(is_variational='clasic' not in sys.argv)
     autoencoder.load()
     print("Generating codes...")
     with torch.no_grad():
         codes = autoencoder.encode(voxels).cpu().numpy()
     labels = dataset.label_indices[indices].cpu().numpy()
-    create_tsne_plot(codes, voxels, labels, "plots/autoencoder-images.pdf")
-    #create_tsne_plot(codes, None, labels, "plots/autoencoder-dots.pdf")
+    create_tsne_plot(codes, voxels, labels, "plots/{:s}autoencoder-images.pdf".format('' if 'classic' in sys.argv else 'variational-'))
 
 if "autoencoder_hist" in sys.argv:
     from model.autoencoder import Autoencoder
