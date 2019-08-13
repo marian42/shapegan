@@ -11,6 +11,7 @@ import logging
 from threading import Lock
 from tqdm import tqdm
 import math
+import random
 
 CAMERA_DISTANCE = 2
 VIEWPORT_SIZE = 512
@@ -134,7 +135,7 @@ def create_scans(mesh, camera_count = 20):
     scans.append(Scan(mesh, get_camera_transform(0, -90)))
 
     for i in range(camera_count):
-        camera_pose = get_camera_transform(360.0 * i / camera_count, 45 if i % 2 == 0 else -45)
+        camera_pose = get_camera_transform(360.0 * i / camera_count, random.uniform(-60, 60))
         scans.append(Scan(mesh, camera_pose))
 
     render_lock.release()
