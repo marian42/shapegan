@@ -409,7 +409,7 @@ if "sdf_slice" in sys.argv:
     import trimesh
     import cv2
 
-    model_filename = 'data/shapenet/03001627/4c6c364af4b52751ca6910e4922d61aa/models/model_normalized.obj'
+    model_filename = 'data/shapenet/03001627/6ae8076b0f9c74199c2009e4fd70d135/models/model_normalized.obj'
     
     print("Loading mesh...")
     mesh = trimesh.load(model_filename)
@@ -417,7 +417,7 @@ if "sdf_slice" in sys.argv:
     mesh_sdf = MeshSDF(mesh)
 
     resolution = 1280
-    slice_position = 0.4
+    slice_position = 0.0
     clip = 0.1
     points = np.meshgrid(
         np.linspace(slice_position, slice_position, 1),
