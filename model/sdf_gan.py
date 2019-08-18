@@ -1,6 +1,7 @@
 from model import *
 
 from torch_geometric.nn import PointConv, fps as sample_farthest_points, radius as find_neighbors_in_range, global_max_pool
+import torch.nn.functional as F
 
 class SetAbstractionModule(torch.nn.Module):
     def __init__(self, ratio, radius, local_nn):
