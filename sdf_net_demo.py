@@ -15,9 +15,12 @@ from util import device
 sdf_net = SDFNet()
 sdf_net.load()
 sdf_net.eval()
-latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
 
-SAMPLE_FROM_LATENT_DISTRIBUTION = 'sample' in sys.argv
+SAMPLE_FROM_LATENT_DISTRIBUTION = 'sample_latent' in sys.argv
+SAMPLE_FROM_NORMAL_DISTRIBUTION = 'sample_normal' in sys.argv
+
+if not SAMPLE_FROM_NORMAL_DISTRIBUTION:
+    latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
 
 def get_sdf_latent_distribution():
     print("Calculating latent distribution...")
@@ -29,8 +32,9 @@ def get_sdf_latent_distribution():
 
 if SAMPLE_FROM_LATENT_DISTRIBUTION:
     latent_code_distribution = get_sdf_latent_distribution()
-
-MODEL_COUNT = latent_codes.shape[0]
+if SAMPLE_FROM_NORMAL_DISTRIBUTION:
+    latent_code_distribution = torch.distributions.normal.Normal(0, 1)
+    
 TRANSITION_FRAMES = 40
 WAIT_FRAMES = 10
 SAMPLE_COUNT = 40
@@ -39,10 +43,10 @@ TRANSITION_TIME = 2
 WAIT_TIME = 1.2
 
 def get_random_latent_code():
-    if SAMPLE_FROM_LATENT_DISTRIBUTION:
+    if SAMPLE_FROM_LATENT_DISTRIBUTION or SAMPLE_FROM_NORMAL_DISTRIBUTION:
         return latent_code_distribution.sample((LATENT_CODE_SIZE,)).to(device)
     else:
-        return latent_codes[random.randrange(MODEL_COUNT), :]
+        return latent_codes[random.randrange(latent_codes.shape[0]), :]
 
 start_model = get_random_latent_code()
 
