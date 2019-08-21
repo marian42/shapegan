@@ -8,6 +8,7 @@ import numpy as np
 import random
 import time
 import sys
+from collections import deque
 
 from model.sdf_net import SDFNet
 from model.gan import Discriminator, LATENT_CODE_SIZE
@@ -75,11 +76,10 @@ def sample_latent_codes(current_batch_size):
                 
 
 grid_points = create_grid_points()
+history_fake = deque(maxlen=50)
+history_real = deque(maxlen=50)
 
 def train():
-    fake_sample_prediction = 0.5
-    valid_sample_prediction = 0.5
-
     for epoch in count():
         batch_index = 0
         epoch_start_time = time.time()
@@ -127,14 +127,14 @@ def train():
                 valid_loss.backward()
                 discriminator_optimizer.step()
                 
-                fake_sample_prediction = torch.mean(discriminator_output_fake).item()
-                valid_sample_prediction = torch.mean(discriminator_output_valid).item()
+                history_fake.append(torch.mean(discriminator_output_fake).item())
+                history_fake.append(torch.mean(discriminator_output_valid).item())
                 batch_index += 1
 
                 if "verbose" in sys.argv:
                     print("Epoch " + str(epoch) + ", batch " + str(batch_index) +
-                        ": prediction on fake samples: " + '{0:.4f}'.format(fake_sample_prediction) +
-                        ", prediction on valid samples: " + '{0:.4f}'.format(valid_sample_prediction))
+                        ": prediction on fake samples: " + '{0:.4f}'.format(history_fake[-1]) +
+                        ", prediction on valid samples: " + '{0:.4f}'.format(history_real[-1]))
             except KeyboardInterrupt:
                 if show_viewer:
                     viewer.stop()
@@ -150,8 +150,10 @@ def train():
             print(create_text_slice(voxels / SDF_CLIPPING))
 
         score = 0
-        print('Epoch {:d} ({:.1f}s), inception score: {:.4f}'.format(epoch, time.time() - epoch_start_time, score))
-        log_file.write('{:d} {:.1f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score))
+        prediction_real = np.mean(history_real)
+        prediction_fake = np.mean(history_fake)
+        print('Epoch {:d} ({:.1f}s), inception score: {:.4f}, prediction on fake: {:.4f}, prediction on real: {:.4f}'.format(epoch, time.time() - epoch_start_time, score), prediction_fake, prediction_real)
+        log_file.write('{:d} {:.1f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
         log_file.flush()
 
 
