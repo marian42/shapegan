@@ -128,7 +128,7 @@ def train():
                 discriminator_optimizer.step()
                 
                 history_fake.append(torch.mean(discriminator_output_fake).item())
-                history_fake.append(torch.mean(discriminator_output_valid).item())
+                history_real.append(torch.mean(discriminator_output_valid).item())
                 batch_index += 1
 
                 if "verbose" in sys.argv:
@@ -150,8 +150,8 @@ def train():
             print(create_text_slice(voxels / SDF_CLIPPING))
 
         score = 0
-        prediction_real = np.mean(history_real)
         prediction_fake = np.mean(history_fake)
+        prediction_real = np.mean(history_real)
         print('Epoch {:d} ({:.1f}s), inception score: {:.4f}, prediction on fake: {:.4f}, prediction on real: {:.4f}'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
         log_file.write('{:d} {:.1f} {:.4f} {:.4f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
         log_file.flush()
