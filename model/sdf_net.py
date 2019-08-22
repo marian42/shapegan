@@ -5,7 +5,7 @@ from util import get_points_in_unit_sphere
 import numpy as np
 
 class SDFVoxelizationHelperData():
-    def __init__(self, device, voxel_count):
+    def __init__(self, device, voxel_count, sphere_only=True):
         sample_points = np.meshgrid(
             np.linspace(-1, 1, voxel_count),
             np.linspace(-1, 1, voxel_count),
@@ -14,12 +14,14 @@ class SDFVoxelizationHelperData():
         sample_points = np.stack(sample_points).astype(np.float32)
         sample_points = np.swapaxes(sample_points, 1, 2)
         sample_points = sample_points.reshape(3, -1).transpose()
-        unit_sphere_mask = np.linalg.norm(sample_points, axis=1) < 1
-        sample_points = sample_points[unit_sphere_mask, :]
 
-        self.unit_sphere_mask = unit_sphere_mask.reshape(voxel_count, voxel_count, voxel_count)
-        self.sphere_sample_points = torch.tensor(sample_points, device=device)
-        self.point_count = self.sphere_sample_points.shape[0]
+        if sphere_only:
+            unit_sphere_mask = np.linalg.norm(sample_points, axis=1) < 1
+            sample_points = sample_points[unit_sphere_mask, :]
+            self.unit_sphere_mask = unit_sphere_mask.reshape(voxel_count, voxel_count, voxel_count)
+        
+        self.sample_points = torch.tensor(sample_points, device=device)
+        self.point_count = self.sample_points.shape[0]
 
 sdf_voxelization_helper = dict()
 
@@ -62,21 +64,35 @@ class SDFNet(SavableModule):
         x = self.layers2.forward(x)
         return x.squeeze()
 
-    def get_mesh(self, latent_code, voxel_count = 64):
-        if not voxel_count in sdf_voxelization_helper:
-            sdf_voxelization_helper[voxel_count] = SDFVoxelizationHelperData(self.device, voxel_count)
-       
-        helper_data = sdf_voxelization_helper[voxel_count]
+    def get_mesh(self, latent_code, voxel_count = 64, sphere_only = True, raise_on_empty=False):
+        if not (voxel_count, sphere_only) in sdf_voxelization_helper:
+            helper_data = SDFVoxelizationHelperData(self.device, voxel_count, sphere_only)
+            sdf_voxelization_helper[(voxel_count, sphere_only)] = helper_data
+        else:
+            helper_data = sdf_voxelization_helper[(voxel_count, sphere_only)]
 
         with torch.no_grad():
             latent_codes = latent_code.repeat(helper_data.point_count, 1)
-            distances = self.forward(helper_data.sphere_sample_points, latent_codes).cpu().numpy()
+            distances = self.forward(helper_data.sample_points, latent_codes).cpu().numpy()
         
-        voxels = np.ones((voxel_count, voxel_count, voxel_count))
-        voxels[helper_data.unit_sphere_mask] = distances
+        if sphere_only:
+            voxels = np.ones((voxel_count, voxel_count, voxel_count))
+            voxels[helper_data.unit_sphere_mask] = distances
+            size = 2
+        else:
+            voxels = np.ones((voxel_count + 2, voxel_count + 2, voxel_count + 2))
+            voxels[1:-1, 1:-1, 1:-1] = distances.reshape(32, 32, 32)
+            size = 1.41421
         
-        vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(2.0 / voxel_count, 2.0 / voxel_count, 2.0 / voxel_count))
-        vertices -= 1
+        try:
+            vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(size / voxel_count, size / voxel_count, size / voxel_count))
+        except ValueError as value_error:
+            if raise_on_empty:
+                raise value_error
+            else:
+                return None
+        
+        vertices -= size / 2
         mesh = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
         return mesh
 

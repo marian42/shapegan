@@ -12,7 +12,11 @@ from voxel.viewer import VoxelViewer
 from model.sdf_net import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 from util import device
 
+USE_HYBRID_GAN = 'hybrid_gan' in sys.argv
+
 sdf_net = SDFNet()
+if USE_HYBRID_GAN:
+    sdf_net.filename = 'hybrid_gan_generator.to'
 sdf_net.load()
 sdf_net.eval()
 
@@ -71,10 +75,8 @@ def create_image_sequence():
             progress = step / TRANSITION_FRAMES
             latent_code = previous_model * (1 - progress) + next_model * progress
             
-            try:
-                viewer.set_mesh(sdf_net.get_mesh(latent_code, voxel_count=140))
-            except ValueError:
-                pass
+            viewer.set_mesh(sdf_net.get_mesh(latent_code, voxel_count=140, sphere_only=not USE_HYBRID_GAN))
+            
             image = viewer.get_image(crop = False, output_size = viewer.size)
             save_image(image, frame_index)
             frame_index += 1
@@ -114,10 +116,7 @@ def show_models():
                 progress = min((time.perf_counter() - start) / TRANSITION_TIME, 1.0)
                 model = previous_model * (1 - progress) + next_model * progress
                 
-                try:
-                    viewer.set_mesh(sdf_net.get_mesh(model, voxel_count=64))
-                except ValueError:
-                    pass
+                viewer.set_mesh(sdf_net.get_mesh(model, voxel_count=32, sphere_only=not USE_HYBRID_GAN))
 
             time.sleep(WAIT_TIME)
             

@@ -154,6 +154,9 @@ class VoxelViewer():
             self.ground_level = np.min(vertices[1::3]).item()
 
     def set_mesh(self, mesh, smooth=False, center_and_scale=False):
+        if mesh is None:
+            return
+
         vertices = np.array(mesh.triangles, dtype=np.float32).reshape(-1, 3)
         
         if center_and_scale:

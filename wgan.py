@@ -69,7 +69,7 @@ def train():
                 generator.zero_grad()
                 critic.zero_grad()
 
-                valid_sample = dataset.voxels[indices, :, :, :]                
+                valid_sample = dataset.voxels[indices, :, :, :]
                 fake_sample = generator.generate(sample_size = current_batch_size).detach()
                 fake_critic_output = critic.forward(fake_sample)
                 valid_critic_output = critic.forward(valid_sample)
