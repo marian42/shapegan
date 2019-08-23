@@ -28,7 +28,7 @@ log_file = open("plots/gan_training.csv", "a" if "continue" in sys.argv else "w"
 print('Inception score of the dataset: {:.4f}'.format(inception_score(dataset.voxels[:1400, :, :, :])))
 print('Inception score at start: {:.4f}'.format(generator.get_inception_score()))
 
-generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025)
+generator_optimizer = optim.Adam(generator.parameters(), lr=0.001)
 
 discriminator_criterion = torch.nn.functional.binary_cross_entropy
 discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00001)
