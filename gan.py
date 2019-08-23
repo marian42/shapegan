@@ -3,10 +3,12 @@ from itertools import count
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import numpy as np
 
 import random
 import time
 import sys
+from collections import deque
 
 from model.gan import Generator, Discriminator
 
@@ -52,8 +54,8 @@ def create_batches(sample_count, batch_size):
     yield indices[(batch_count - 1) * batch_size:]
 
 def train():
-    fake_sample_prediction = 0.5
-    valid_sample_prediction = 0.5
+    history_fake = deque(maxlen=50)
+    history_real = deque(maxlen=50)
 
     for epoch in count():
         batch_index = 0
@@ -68,7 +70,7 @@ def train():
                     viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                 
                 fake_discriminator_output = discriminator.forward(fake_sample)
-                fake_loss = torch.mean(-torch.log(fake_discriminator_output))
+                fake_loss = -torch.mean(torch.log(fake_discriminator_output))
                 fake_loss.backward()
                 generator_optimizer.step()
                     
@@ -93,14 +95,14 @@ def train():
                 valid_loss.backward()
                 discriminator_optimizer.step()
                 
-                fake_sample_prediction = torch.mean(discriminator_output_fake).item()
-                valid_sample_prediction = torch.mean(discriminator_output_valid).item()
+                history_fake.append(torch.mean(discriminator_output_fake).item())
+                history_real.append(torch.mean(discriminator_output_valid).item())
                 batch_index += 1
 
                 if "verbose" in sys.argv:
                     print("Epoch " + str(epoch) + ", batch " + str(batch_index) +
-                        ": prediction on fake samples: " + '{0:.4f}'.format(fake_sample_prediction) +
-                        ", prediction on valid samples: " + '{0:.4f}'.format(valid_sample_prediction))
+                        ": prediction on fake samples: " + '{0:.4f}'.format(history_fake[-1]) +
+                        ", prediction on valid samples: " + '{0:.4f}'.format(history_real[-1]))
             except KeyboardInterrupt:
                 if show_viewer:
                     viewer.stop()
@@ -114,8 +116,10 @@ def train():
             print(create_text_slice(voxels))
 
         score = generator.get_inception_score(sample_size=800)
-        print('Epoch {:d} ({:.1f}s), inception score: {:.4f}'.format(epoch, time.time() - epoch_start_time, score))
-        log_file.write('{:d} {:.1f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score))
+        prediction_fake = np.mean(history_fake)
+        prediction_real = np.mean(history_real)
+        print('Epoch {:d} ({:.1f}s), inception score: {:.4f}, prediction on fake: {:.4f}, prediction on real: {:.4f}'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
+        log_file.write('{:d} {:.1f} {:.4f} {:.4f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
         log_file.flush()
 
 
