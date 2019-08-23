@@ -317,7 +317,7 @@ if "autoencoder_interpolation" in sys.argv:
         axs[1, i].patch.set_visible(False)
 
     plt.axis('off')
-    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())        
+    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
     plt.savefig("plots/ae-vae-interpolation.pdf", bbox_inches=extent, dpi=400)
     
 
@@ -376,6 +376,46 @@ if "gan_examples" in sys.argv:
     plt.axis('off')
     extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
     filename = "plots/wgan-examples.pdf" if 'wgan' in sys.argv else "plots/gan-examples.pdf"
+    plt.savefig(filename, bbox_inches=extent, dpi=400)
+
+if "gan_interpolation" in sys.argv:
+    from model.gan import Generator
+    from util import standard_normal_distribution
+    from voxel.viewer import VoxelViewer
+    viewer = VoxelViewer(start_thread=False)
+
+    STEPS = 6
+
+    generator = Generator()
+    if 'wgan' in sys.argv:
+        generator.filename = "wgan-generator.to"
+    generator.load()
+
+    print("Generating codes...")
+    with torch.no_grad():
+        codes = torch.zeros([STEPS, LATENT_CODE_SIZE], device=device)
+        codes_start_end = standard_normal_distribution.sample((2, LATENT_CODE_SIZE))
+        code_start = codes_start_end[0, :]
+        code_end = codes_start_end[1, :]
+        for i in range(STEPS):
+            codes[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
+        for i in range(3):
+            codes = codes.unsqueeze(dim=i+2)
+        voxels = generator.forward(codes)
+
+    print("Plotting")
+    fig, axs = plt.subplots(1, STEPS, figsize=(3 * STEPS, 3), gridspec_kw={'left': 0, 'right': 1, 'top': 1, 'bottom': 0, 'wspace': 0.2, 'hspace': 0.2})
+    fig.patch.set_visible(False)
+    for i in range(STEPS):
+        viewer.set_voxels(voxels[i, :, :, :].squeeze().cpu().numpy())
+        image = viewer.get_image(crop=True)
+        axs[i].imshow(image)
+        axs[i].axis('off')
+        axs[i].patch.set_visible(False)
+
+    plt.axis('off')
+    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    filename = "plots/wgan-interpolation.pdf" if 'wgan' in sys.argv else "plots/gan-interpolation.pdf"
     plt.savefig(filename, bbox_inches=extent, dpi=400)
 
 def get_moving_average(data, window_size):
