@@ -321,7 +321,7 @@ if "autoencoder_interpolation" in sys.argv:
     plt.savefig("plots/ae-vae-interpolation.pdf", bbox_inches=extent, dpi=400)
     
 
-if "gan" in sys.argv:    
+if "gan_tsne" in sys.argv:    
     generator = Generator()
     generator.load()
     from util import standard_normal_distribution
@@ -335,7 +335,7 @@ if "gan" in sys.argv:
     print(voxels.shape)
     create_tsne_plot(codes, voxels, labels = None, filename = "plots/gan-images.pdf")
 
-if "wgan" in sys.argv:
+if "wgan_tsne" in sys.argv:
     generator = Generator()
     generator.filename = "wgan-generator.to"
     generator.load()
@@ -348,6 +348,35 @@ if "wgan" in sys.argv:
     print(codes.shape)
     print(voxels.shape)
     create_tsne_plot(codes, voxels, labels = None, filename = "plots/wgan-images.pdf")
+
+if "gan_examples" in sys.argv:
+    from model.gan import Generator
+
+    from voxel.viewer import VoxelViewer
+    viewer = VoxelViewer(start_thread=False)
+    
+    COUNT = 5
+
+    generator = Generator()
+    if 'wgan' in sys.argv:
+        generator.filename = "wgan-generator.to"
+    generator.load()
+    with torch.no_grad():
+        voxels = generator.generate(sample_size=COUNT)
+
+    fig, axs = plt.subplots(1, COUNT, figsize=(3 * COUNT, 3), gridspec_kw={'left': 0, 'right': 1, 'top': 1, 'bottom': 0, 'wspace': 0.2, 'hspace': 0.2})
+    fig.patch.set_visible(False)
+    for i in range(COUNT):
+        viewer.set_voxels(voxels[i, :, :, :].squeeze().cpu().numpy())
+        image = viewer.get_image(crop=True)
+        axs[i].imshow(image)
+        axs[i].axis('off')
+        axs[i].patch.set_visible(False)
+
+    plt.axis('off')
+    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    filename = "plots/wgan-examples.pdf" if 'wgan' in sys.argv else "plots/gan-examples.pdf"
+    plt.savefig(filename, bbox_inches=extent, dpi=400)
 
 def get_moving_average(data, window_size):
     moving_average = []
