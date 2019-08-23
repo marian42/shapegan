@@ -73,7 +73,7 @@ def train():
                 fake_sample = generator.generate(sample_size = current_batch_size).detach()
                 fake_critic_output = critic.forward(fake_sample)
                 valid_critic_output = critic.forward(valid_sample)
-                critic_loss = -(torch.mean(valid_critic_output) - torch.mean(fake_critic_output))
+                critic_loss = torch.mean(fake_critic_output) - torch.mean(valid_critic_output)
                 critic_loss.backward()
                 critic_optimizer.step()
                 critic.clip_weights(CRITIC_WEIGHT_LIMIT)
