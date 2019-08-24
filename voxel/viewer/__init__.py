@@ -126,6 +126,8 @@ class VoxelViewer():
     def set_voxels(self, voxels, use_marching_cubes=True, shade_smooth=False):
         if use_marching_cubes:
             if type(voxels) is torch.Tensor:
+                if len(voxels.shape) > 3:
+                    voxels = voxels.squeeze()
                 voxels = voxels.cpu().numpy()
             voxels = np.pad(voxels, 1, mode='constant', constant_values=1)
             voxel_size = voxels.shape[1]

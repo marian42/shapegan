@@ -15,6 +15,40 @@ import random
 from util import device
 
 
+class ImageGrid():
+    def __init__(self, width, height=1, cell_width = 3, cell_height = None, margin=0.2, create_viewer=True, crop=True):
+        print("Plotting...")
+        self.width = width
+        self.height = height
+        cell_height = cell_height if cell_height is not None else cell_width
+
+        self.figure, self.axes = plt.subplots(height, width,
+            figsize=(width * cell_width, height * cell_height),
+            gridspec_kw={'left': 0, 'right': 1, 'top': 1, 'bottom': 0, 'wspace': margin, 'hspace': margin})
+        self.figure.patch.set_visible(False)
+
+        self.crop = crop
+        if create_viewer:
+            from voxel.viewer import VoxelViewer
+            self.viewer = VoxelViewer(start_thread=False)
+
+    def set_image(self, image, x = 0, y = 0):
+        cell = self.axes[y, x] if self.height > 1 and self.width > 1 else self.axes[x + y]
+        cell.imshow(image)
+        cell.axis('off')
+        cell.patch.set_visible(False)
+
+    def set_voxels(self, voxels, x = 0, y = 0):
+        self.viewer.set_voxels(voxels)
+        image = self.viewer.get_image(crop=self.crop)
+        self.set_image(image, x, y)
+
+    def save(self, filename):
+        plt.axis('off')
+        extent = self.figure.get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())    
+        plt.savefig(filename, bbox_inches=extent, dpi=400)
+
+
 def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf"):
     print("Calculating t-sne embedding...")
     tsne = TSNE(n_components=2)
@@ -116,7 +150,7 @@ if "autoencoder_examples" in sys.argv:
         reconstructed = autoencoder.decode(codes).cpu().numpy()
         codes = codes.cpu().numpy()
 
-    print("Plotting")
+    print("Plotting...")
     fig, axs = plt.subplots(len(indices), 3, figsize=(10, 32))
     for i in range(len(indices)):
         viewer.set_voxels(voxels[i, :, :, :].cpu().numpy())
@@ -137,9 +171,6 @@ if "autoencoder_examples_2" in sys.argv:
     from model.autoencoder import Autoencoder
     from dataset import dataset as dataset
 
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer(start_thread=False)
-    
     indices = random.sample(list(range(dataset.size)), 5)
     voxels = dataset.voxels[indices, :, :, :]
     ae = Autoencoder(is_variational=False)
@@ -156,30 +187,15 @@ if "autoencoder_examples_2" in sys.argv:
         reconstructed_ae = ae.decode(codes_ae).cpu().numpy()
         codes_vae = vae.encode(voxels)
         reconstructed_vae = vae.decode(codes_vae).cpu().numpy()
+    
+    plot = ImageGrid(len(indices), 3)
 
-    print("Plotting")
-    fig, axs = plt.subplots(3, len(indices), figsize=(3 * len(indices), 3 * 3), gridspec_kw={'left': 0, 'right': 1, 'top': 1, 'bottom': 0, 'wspace': 0.2, 'hspace': 0.2})
-    fig.patch.set_visible(False)
     for i in range(len(indices)):
-        viewer.set_voxels(voxels[i, :, :, :].cpu().numpy())
-        image = viewer.get_image(crop=True)
-        axs[0, i].imshow(image)
-        axs[0, i].axis('off')
-        axs[0, i].patch.set_visible(False)
+        plot.set_voxels(voxels[i, :, :, :], i, 0)
+        plot.set_voxels(reconstructed_ae[i, :, :, :], i, 1)
+        plot.set_voxels(reconstructed_vae[i, :, :, :], i, 2)
 
-        viewer.set_voxels(reconstructed_ae[i, :, :, :])
-        image = viewer.get_image(crop=True)
-        axs[1, i].imshow(image)
-        axs[1, i].axis('off')
-
-        viewer.set_voxels(reconstructed_vae[i, :, :, :])
-        image = viewer.get_image(crop=True)
-        axs[2, i].imshow(image)
-        axs[2, i].axis('off')
-
-    plt.axis('off')
-    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())    
-    plt.savefig("plots/ae-vae-examples.pdf", bbox_inches=extent, dpi=400)
+    plot.save("plots/ae-vae-examples.pdf")
 
 if "autoencoder_generate" in sys.argv:
     from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
@@ -227,48 +243,20 @@ if "autoencoder_generate" in sys.argv:
     with torch.no_grad():
         reconstructed_references_vae = vae.decode(reference_codes_vae).cpu().numpy()
 
-    print("Plotting")
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer(start_thread=False)
+    plot = ImageGrid(SAMPLES, 4)
     
-    fig, axs = plt.subplots(4, SAMPLES, figsize=(3 * SAMPLES, 4 * 3), gridspec_kw={'left': 0, 'right': 1, 'top': 1, 'bottom': 0, 'wspace': 0.2, 'hspace': 0.2})
-    fig.patch.set_visible(False)
     for i in range(SAMPLES):
-        viewer.set_voxels(reconstructed_ae[i, :, :, :])
-        image = viewer.get_image(crop=True)
-        axs[0, i].imshow(image)
-        axs[0, i].axis('off')
-        axs[0, i].patch.set_visible(False)
+        plot.set_voxels(reconstructed_ae[i, :, :, :], i, 0)
+        plot.set_voxels(reconstructed_references_ae[i, :, :, :], i, 1)
+        plot.set_voxels(reconstructed_vae[i, :, :, :], i, 2)
+        plot.set_voxels(reconstructed_references_vae[i, :, :, :], i, 3)
 
-        viewer.set_voxels(reconstructed_references_ae[i, :, :, :])
-        image = viewer.get_image(crop=True)
-        axs[1, i].imshow(image)
-        axs[1, i].axis('off')
-        axs[1, i].patch.set_visible(False)
-
-        viewer.set_voxels(reconstructed_vae[i, :, :, :])
-        image = viewer.get_image(crop=True)
-        axs[2, i].imshow(image)
-        axs[2, i].axis('off')
-        axs[2, i].patch.set_visible(False)
-
-        viewer.set_voxels(reconstructed_references_vae[i, :, :, :])
-        image = viewer.get_image(crop=True)
-        axs[3, i].imshow(image)
-        axs[3, i].axis('off')
-        axs[3, i].patch.set_visible(False)
-
-    plt.axis('off')
-    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())    
-    plt.savefig("plots/ae-vae-samples.pdf", bbox_inches=extent, dpi=400)
+    plot.save("plots/ae-vae-samples.pdf")
 
 if "autoencoder_interpolation" in sys.argv:
     from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
     from dataset import dataset as dataset
     voxels = dataset.voxels
-
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer(start_thread=False)
 
     STEPS = 6
     
@@ -300,26 +288,13 @@ if "autoencoder_interpolation" in sys.argv:
             codes_vae[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
         reconstructed_vae = vae.decode(codes_vae)
 
-    print("Plotting")
-    fig, axs = plt.subplots(2, STEPS, figsize=(3 * STEPS, 3 * 2), gridspec_kw={'left': 0, 'right': 1, 'top': 1, 'bottom': 0, 'wspace': 0.2, 'hspace': 0.2})
-    fig.patch.set_visible(False)
-    for i in range(STEPS):
-        viewer.set_voxels(reconstructed_ae[i, :, :, :].cpu().numpy())
-        image = viewer.get_image(crop=True)
-        axs[0, i].imshow(image)
-        axs[0, i].axis('off')
-        axs[0, i].patch.set_visible(False)
-
-        viewer.set_voxels(reconstructed_vae[i, :, :, :].cpu().numpy())
-        image = viewer.get_image(crop=True)
-        axs[1, i].imshow(image)
-        axs[1, i].axis('off')
-        axs[1, i].patch.set_visible(False)
-
-    plt.axis('off')
-    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
-    plt.savefig("plots/ae-vae-interpolation.pdf", bbox_inches=extent, dpi=400)
+    plot = ImageGrid(STEPS, 2)
     
+    for i in range(STEPS):
+        plot.set_voxels(reconstructed_ae[i, :, :, :], i, 0)
+        plot.set_voxels(reconstructed_vae[i, :, :, :], i, 1)
+
+    plot.save("plots/ae-vae-interpolation.pdf")    
 
 if "gan_tsne" in sys.argv:    
     generator = Generator()
@@ -331,8 +306,6 @@ if "gan_tsne" in sys.argv:
     with torch.no_grad():
         voxels = generator.forward(x).squeeze()
     codes = x.squeeze().cpu().numpy()
-    print(codes.shape)
-    print(voxels.shape)
     create_tsne_plot(codes, voxels, labels = None, filename = "plots/gan-images.pdf")
 
 if "wgan_tsne" in sys.argv:
@@ -345,15 +318,10 @@ if "wgan_tsne" in sys.argv:
     with torch.no_grad():
         voxels = generator.forward(x).squeeze()
     codes = x.squeeze().cpu().numpy()
-    print(codes.shape)
-    print(voxels.shape)
     create_tsne_plot(codes, voxels, labels = None, filename = "plots/wgan-images.pdf")
 
 if "gan_examples" in sys.argv:
     from model.gan import Generator
-
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer(start_thread=False)
     
     COUNT = 5
 
@@ -364,19 +332,12 @@ if "gan_examples" in sys.argv:
     with torch.no_grad():
         voxels = generator.generate(sample_size=COUNT)
 
-    fig, axs = plt.subplots(1, COUNT, figsize=(3 * COUNT, 3), gridspec_kw={'left': 0, 'right': 1, 'top': 1, 'bottom': 0, 'wspace': 0.2, 'hspace': 0.2})
-    fig.patch.set_visible(False)
+    plot = ImageGrid(COUNT)
     for i in range(COUNT):
-        viewer.set_voxels(voxels[i, :, :, :].squeeze().cpu().numpy())
-        image = viewer.get_image(crop=True)
-        axs[i].imshow(image)
-        axs[i].axis('off')
-        axs[i].patch.set_visible(False)
-
-    plt.axis('off')
-    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        plot.set_voxels(voxels[i, :, :, :], i)
+    
     filename = "plots/wgan-examples.pdf" if 'wgan' in sys.argv else "plots/gan-examples.pdf"
-    plt.savefig(filename, bbox_inches=extent, dpi=400)
+    plot.save(filename)
 
 if "gan_interpolation" in sys.argv:
     from model.gan import Generator
@@ -403,20 +364,12 @@ if "gan_interpolation" in sys.argv:
             codes = codes.unsqueeze(dim=i+2)
         voxels = generator.forward(codes)
 
-    print("Plotting")
-    fig, axs = plt.subplots(1, STEPS, figsize=(3 * STEPS, 3), gridspec_kw={'left': 0, 'right': 1, 'top': 1, 'bottom': 0, 'wspace': 0.2, 'hspace': 0.2})
-    fig.patch.set_visible(False)
+    plot = ImageGrid(STEPS)
     for i in range(STEPS):
-        viewer.set_voxels(voxels[i, :, :, :].squeeze().cpu().numpy())
-        image = viewer.get_image(crop=True)
-        axs[i].imshow(image)
-        axs[i].axis('off')
-        axs[i].patch.set_visible(False)
-
-    plt.axis('off')
-    extent = fig.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+        plot.set_voxels(voxels[i, :, :, :], i)
+    
     filename = "plots/wgan-interpolation.pdf" if 'wgan' in sys.argv else "plots/gan-interpolation.pdf"
-    plt.savefig(filename, bbox_inches=extent, dpi=400)
+    plot.save(filename)
 
 def get_moving_average(data, window_size):
     moving_average = []
