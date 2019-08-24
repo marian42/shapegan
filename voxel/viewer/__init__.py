@@ -1,3 +1,5 @@
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from pygame.locals import *
 from OpenGL.arrays import vbo
@@ -19,7 +21,6 @@ import torch
 import trimesh
 
 from scipy.spatial.transform import Rotation
-import os
 import cv2
 
 CLAMP_TO_EDGE = 33071
@@ -331,9 +332,9 @@ class VoxelViewer():
             
             pygame.time.wait(10)
         
-        self.__del__()
+        self.delete_buffers()
 
-    def __del__(self):
+    def delete_buffers(self):
         for buffer in [self.normal_buffer, self.vertex_buffer]:
             if buffer is not None:
                 buffer.delete()

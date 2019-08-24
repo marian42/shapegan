@@ -47,7 +47,7 @@ class ImageGrid():
         plt.axis('off')
         extent = self.figure.get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())    
         plt.savefig(filename, bbox_inches=extent, dpi=400)
-
+        self.viewer.delete_buffers()
 
 def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf"):
     print("Calculating t-sne embedding...")
@@ -342,8 +342,6 @@ if "gan_examples" in sys.argv:
 if "gan_interpolation" in sys.argv:
     from model.gan import Generator
     from util import standard_normal_distribution
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer(start_thread=False)
 
     STEPS = 6
 
@@ -496,4 +494,4 @@ if "model_images" in sys.argv:
         mesh = trimesh.load(model_filename)
         viewer.set_mesh(mesh, center_and_scale=True)
         image = viewer.get_image(crop=False, output_size=viewer.size, greyscale=False)
-        cv2.imwrite(image_filename, image)        
+        cv2.imwrite(image_filename, image)
