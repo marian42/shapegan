@@ -1,15 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 import torch
 import sys
 import os
 from tqdm import tqdm
-from numpy import genfromtxt
-import scipy
 
-from sklearn.manifold import TSNE
 from model import LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 import random
 from util import device
@@ -68,6 +63,9 @@ def load_generator(is_wgan=False):
     return generator
 
 def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf"):
+    from sklearn.manifold import TSNE
+    from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+
     print("Calculating t-sne embedding...")
     tsne = TSNE(n_components=2)
     embedded = tsne.fit_transform(codes)
@@ -103,6 +101,7 @@ if "autoencoder" in sys.argv:
     create_tsne_plot(codes, voxels, labels, "plots/{:s}autoencoder-images.pdf".format('' if 'classic' in sys.argv else 'variational-'))
 
 if "autoencoder_hist" in sys.argv:
+    import scipy
     from dataset import dataset as dataset
     is_variational = 'classic' not in sys.argv
 
@@ -131,6 +130,7 @@ if "autoencoder_hist" in sys.argv:
     plt.savefig("plots/{:s}autoencoder-histogram-combined.pdf".format('variational-' if is_variational else ''), bbox_inches='tight')
 
 if "autodecoder_hist" in sys.argv:
+    import scipy
     latent_codes = torch.load(LATENT_CODES_FILENAME).cpu().detach().flatten().numpy()
     latent_codes = latent_codes.reshape(-1)
     mean, variance = np.mean(latent_codes), np.var(latent_codes) ** 0.5
@@ -353,7 +353,7 @@ def get_moving_average(data, window_size):
     return np.arange(window_size / 2, data.shape[0] - window_size / 2, dtype=int), moving_average
 
 if "gan_training" in sys.argv:
-    data = genfromtxt('plots/gan_training.csv', delimiter=' ')
+    data = numpy.genfromtxt('plots/gan_training.csv', delimiter=' ')
         
     plt.plot(data[:, 2])
     plt.plot(*get_moving_average(data[:, 2], 10))
@@ -364,7 +364,7 @@ if "gan_training" in sys.argv:
     plt.savefig("plots/gan-training.pdf")
 
 if "wgan_training" in sys.argv:
-    data = genfromtxt('plots/wgan_training.csv', delimiter=' ')
+    data = numpy.genfromtxt('plots/wgan_training.csv', delimiter=' ')
         
     plt.plot(data[:, 2])
     plt.plot(*get_moving_average(data[:, 2], 10))
@@ -379,7 +379,7 @@ def create_autoencoder_training_plot(data_file, title, plot_file):
     if not os.path.isfile(data_file):
         return
 
-    data = genfromtxt(data_file, delimiter=' ')
+    data = numpy.genfromtxt(data_file, delimiter=' ')
     
     #plt.yscale('log')
     plt.axhline(y=data[-1, 2], color='black', linewidth=1)
