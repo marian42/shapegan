@@ -10,10 +10,9 @@ from numpy import genfromtxt
 import scipy
 
 from sklearn.manifold import TSNE
-from model.gan import Generator, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
+from model import LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 import random
 from util import device
-
 
 class ImageGrid():
     def __init__(self, width, height=1, cell_width = 3, cell_height = None, margin=0.2, create_viewer=True, crop=True):
@@ -31,6 +30,8 @@ class ImageGrid():
         if create_viewer:
             from voxel.viewer import VoxelViewer
             self.viewer = VoxelViewer(start_thread=False)
+        else:
+            self.viewer = None
 
     def set_image(self, image, x = 0, y = 0):
         cell = self.axes[y, x] if self.height > 1 and self.width > 1 else self.axes[x + y]
@@ -47,7 +48,24 @@ class ImageGrid():
         plt.axis('off')
         extent = self.figure.get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())    
         plt.savefig(filename, bbox_inches=extent, dpi=400)
-        self.viewer.delete_buffers()
+        if self.viewer is not None:
+            self.viewer.delete_buffers()
+
+def load_autoencoder(is_variational=False):
+    from model.autoencoder import Autoencoder
+    autoencoder = Autoencoder(is_variational=is_variational)
+    autoencoder.load()
+    autoencoder.eval()
+    return autoencoder
+
+def load_generator(is_wgan=False):
+    from model.gan import Generator
+    generator = Generator()
+    if is_wgan:
+        generator.filename = "wgan-generator.to"
+    generator.load()
+    generator.eval()
+    return generator
 
 def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf"):
     print("Calculating t-sne embedding...")
@@ -73,13 +91,11 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
     plt.savefig(filename, dpi=200, bbox_inches='tight')
 
 if "autoencoder" in sys.argv:
-    from model.autoencoder import Autoencoder
     from dataset import dataset as dataset
     
     indices = random.sample(list(range(dataset.size)), 1000)
     voxels = dataset.voxels[indices, :, :, :]
-    autoencoder = Autoencoder(is_variational='clasic' not in sys.argv)
-    autoencoder.load()
+    autoencoder = load_autoencoder(is_variational='clasic' not in sys.argv)
     print("Generating codes...")
     with torch.no_grad():
         codes = autoencoder.encode(voxels).cpu().numpy()
@@ -87,7 +103,6 @@ if "autoencoder" in sys.argv:
     create_tsne_plot(codes, voxels, labels, "plots/{:s}autoencoder-images.pdf".format('' if 'classic' in sys.argv else 'variational-'))
 
 if "autoencoder_hist" in sys.argv:
-    from model.autoencoder import Autoencoder
     from dataset import dataset as dataset
     is_variational = 'classic' not in sys.argv
 
@@ -95,9 +110,7 @@ if "autoencoder_hist" in sys.argv:
 
     indices = random.sample(list(range(dataset.size)), min(5000, dataset.size))
     voxels = dataset.voxels[indices, :, :, :]
-    autoencoder = Autoencoder(is_variational=is_variational)
-    autoencoder.load()
-    autoencoder.eval()
+    autoencoder = load_autoencoder(is_variational=is_variational)
     print("Generating codes...")
     with torch.no_grad():
         codes = autoencoder.encode(voxels).cpu().numpy()
@@ -134,7 +147,6 @@ if "autodecoder_hist" in sys.argv:
     plt.savefig("plots/autodecoder-histogram.pdf")
 
 if "autoencoder_examples" in sys.argv:
-    from model.autoencoder import Autoencoder
     from dataset import dataset as dataset
 
     from voxel.viewer import VoxelViewer
@@ -142,8 +154,7 @@ if "autoencoder_examples" in sys.argv:
     
     indices = random.sample(list(range(dataset.size)), 20)
     voxels = dataset.voxels[indices, :, :, :]
-    autoencoder = Autoencoder()
-    autoencoder.load()
+    autoencoder = load_autoencoder()
     print("Generating codes...")
     with torch.no_grad():
         codes = autoencoder.encode(voxels)
@@ -168,18 +179,12 @@ if "autoencoder_examples" in sys.argv:
     plt.savefig("plots/autoencoder-examples.pdf", bbox_inches='tight', dpi=400)
 
 if "autoencoder_examples_2" in sys.argv:
-    from model.autoencoder import Autoencoder
     from dataset import dataset as dataset
 
     indices = random.sample(list(range(dataset.size)), 5)
     voxels = dataset.voxels[indices, :, :, :]
-    ae = Autoencoder(is_variational=False)
-    ae.load()
-    ae.eval()
-
-    vae = Autoencoder(is_variational=True)
-    vae.load()
-    vae.eval()
+    ae = load_autoencoder(is_variational=False)
+    vae = load_autoencoder(is_variational=True)
 
     print("Generating codes...")
     with torch.no_grad():
@@ -198,17 +203,14 @@ if "autoencoder_examples_2" in sys.argv:
     plot.save("plots/ae-vae-examples.pdf")
 
 if "autoencoder_generate" in sys.argv:
-    from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
     from dataset import dataset as dataset
     from sklearn.metrics import pairwise_distances
 
     SAMPLES = 5
 
     voxels = dataset.voxels
-    ae = Autoencoder(is_variational=False)
-    ae.load()
-    vae = Autoencoder(is_variational=True)
-    vae.load()
+    ae = load_autoencoder(is_variational=False)
+    vae = load_autoencoder(is_variational=True)
     print("Generating codes...")
     with torch.no_grad():
         codes_ae = ae.encode(voxels).cpu().numpy()
@@ -254,7 +256,6 @@ if "autoencoder_generate" in sys.argv:
     plot.save("plots/ae-vae-samples.pdf")
 
 if "autoencoder_interpolation" in sys.argv:
-    from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
     from dataset import dataset as dataset
     voxels = dataset.voxels
 
@@ -263,12 +264,8 @@ if "autoencoder_interpolation" in sys.argv:
     indices = random.sample(list(range(dataset.size)), 2)
     print(indices)
     
-    ae = Autoencoder(is_variational=False)
-    ae.load()
-    ae.eval()
-    vae = Autoencoder(is_variational=True)
-    vae.load()
-    vae.eval()
+    ae = load_autoencoder(is_variational=False)
+    vae = load_autoencoder(is_variational=True)
 
     print("Generating codes...")
     with torch.no_grad():
@@ -296,9 +293,8 @@ if "autoencoder_interpolation" in sys.argv:
 
     plot.save("plots/ae-vae-interpolation.pdf")    
 
-if "gan_tsne" in sys.argv:    
-    generator = Generator()
-    generator.load()
+if "gan_tsne" in sys.argv:
+    generator = load_generator(is_wgan='wgan' in sys.argv)
     from util import standard_normal_distribution
 
     shape = torch.Size([500, LATENT_CODE_SIZE, 1, 1, 1])
@@ -306,29 +302,13 @@ if "gan_tsne" in sys.argv:
     with torch.no_grad():
         voxels = generator.forward(x).squeeze()
     codes = x.squeeze().cpu().numpy()
-    create_tsne_plot(codes, voxels, labels = None, filename = "plots/gan-images.pdf")
+    filename = "plots/gan-images.pdf" if 'wgan' in sys.argv else "plots/wgan-images.pdf"
+    create_tsne_plot(codes, voxels, labels = None, filename = filename)
 
-if "wgan_tsne" in sys.argv:
-    generator = Generator()
-    generator.filename = "wgan-generator.to"
-    generator.load()
-    from util import standard_normal_distribution
-    shape = torch.Size([500, LATENT_CODE_SIZE, 1, 1, 1])
-    x = standard_normal_distribution.sample(shape).to(device)
-    with torch.no_grad():
-        voxels = generator.forward(x).squeeze()
-    codes = x.squeeze().cpu().numpy()
-    create_tsne_plot(codes, voxels, labels = None, filename = "plots/wgan-images.pdf")
+if "gan_examples" in sys.argv:    
+    generator = load_generator(is_wgan='wgan' in sys.argv)
 
-if "gan_examples" in sys.argv:
-    from model.gan import Generator
-    
     COUNT = 5
-
-    generator = Generator()
-    if 'wgan' in sys.argv:
-        generator.filename = "wgan-generator.to"
-    generator.load()
     with torch.no_grad():
         voxels = generator.generate(sample_size=COUNT)
 
@@ -340,15 +320,11 @@ if "gan_examples" in sys.argv:
     plot.save(filename)
 
 if "gan_interpolation" in sys.argv:
-    from model.gan import Generator
     from util import standard_normal_distribution
 
     STEPS = 6
 
-    generator = Generator()
-    if 'wgan' in sys.argv:
-        generator.filename = "wgan-generator.to"
-    generator.load()
+    generator = load_generator(is_wgan='wgan' in sys.argv)
 
     print("Generating codes...")
     with torch.no_grad():
