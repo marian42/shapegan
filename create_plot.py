@@ -471,3 +471,24 @@ if "model_images" in sys.argv:
         viewer.set_mesh(mesh, center_and_scale=True)
         image = viewer.get_image(crop=False, output_size=viewer.size, greyscale=False)
         cv2.imwrite(image_filename, image)
+
+if 'sdf_net_reconstruction' in sys.argv:
+    from raymarching import latent_codes, get_image_for_index
+    from PIL import Image
+
+    COUNT = 5
+    MESH_FILENAME = 'screenshots/sdf_meshes/{:d}.png'
+
+    indices = random.sample(range(latent_codes.shape[0]), COUNT)
+    print(indices)
+
+    plot = ImageGrid(COUNT, 2, create_viewer=False)
+
+    for i in range(COUNT):
+        mesh = Image.open(MESH_FILENAME.format(indices[i]))
+        plot.set_image(mesh, i, 0)
+
+        image = get_image_for_index(indices[i])
+        plot.set_image(image, i, 1)
+
+    plot.save('plots/deepsdf_reconstruction.pdf')

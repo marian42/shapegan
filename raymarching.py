@@ -3,10 +3,13 @@ import numpy as np
 import random
 from tqdm import tqdm
 from PIL import Image
+import os
 
 from model.sdf_net import SDFNet, LATENT_CODES_FILENAME
 from util import device
 from scipy.spatial.transform import Rotation
+
+FILENAME = 'screenshots/raymarching-examples/image-{:d}.png'
 
 sdf_net = SDFNet()
 sdf_net.load()
@@ -28,6 +31,15 @@ def get_camera_transform(camera_distance, rotation_y, rotation_x):
     camera_pose = np.matmul(camera_pose, get_rotation_matrix(rotation_y, axis='y'))
 
     return camera_pose
+
+def get_default_coordinates():
+    camera_pose = get_camera_transform(2.2, 147, 20)
+    camera_position = np.matmul(np.linalg.inv(camera_pose), np.array([0, 0, 0, 1]))[:3]
+    light_matrix = get_camera_transform(6, 164, 50)
+    light_position = np.matmul(np.linalg.inv(light_matrix), np.array([0, 0, 0, 1]))[:3]
+    return camera_position, light_position
+
+camera_position, light_position = get_default_coordinates()
 
 def get_sdf(points, latent_codes):
     with torch.no_grad():
@@ -82,7 +94,7 @@ def get_shadows(points, light_position, latent_code, threshold = 0.001):
     return shadows.cpu().numpy().astype(bool)
     
 
-def get_image(latent_code, camera_position, light_position, resolution = 800, focal_distance = 1.75, threshold = 0.0005, iterations=1000, ssaa=2):
+def get_image(latent_code, resolution = 800, focal_distance = 1.75, threshold = 0.0005, iterations=1000, ssaa=2):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -186,17 +198,21 @@ def get_image(latent_code, camera_position, light_position, resolution = 800, fo
         image = image.resize((resolution, resolution), Image.ANTIALIAS)
 
     return image
-    
-   
-codes = list(range(latent_codes.shape[0]))
-random.shuffle(codes)
 
-for i in codes:
-    camera_pose = get_camera_transform(2.2, 147, 20)
-    camera_position = np.matmul(np.linalg.inv(camera_pose), np.array([0, 0, 0, 1]))[:3]
-    light_matrix = get_camera_transform(6, 164, 50)
-    light_position = np.matmul(np.linalg.inv(light_matrix), np.array([0, 0, 0, 1]))[:3]
-    img = get_image(latent_codes[i], camera_position, light_position)
+def get_image_for_index(index):
+    filename = FILENAME.format(index)
+
+    if os.path.isfile(filename):
+        return Image.open(filename)
     
-    img.save('screenshots/raymarching-examples/image-{:d}.png'.format(i))
-    img.show()
+    img = get_image(latent_codes[index])
+    img.save(filename)
+    return img
+
+if __name__ == "__main__":
+    codes = list(range(latent_codes.shape[0]))
+    random.shuffle(codes)
+
+    for i in codes:
+        img = get_image_for_index(i)
+        img.show()
