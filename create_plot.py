@@ -519,3 +519,21 @@ if "sdf_net_interpolation" in sys.argv:
         plot.set_image(get_image(codes[i, :]), i)
 
     plot.save("plots/deepsdf-interpolation.pdf")
+
+if "sdf_net_sample" in sys.argv:
+    from raymarching import latent_codes, get_image_for_index, get_image
+    latent_codes_flattened = latent_codes.detach().reshape(-1).cpu().numpy()
+    COUNT = 5
+    
+    mean, variance = np.mean(latent_codes_flattened), np.var(latent_codes_flattened) ** 0.5
+    print("mean: ", mean)
+    print("variance: ", variance)
+    distribution = torch.distributions.normal.Normal(mean, variance)
+    codes = distribution.sample([COUNT, LATENT_CODE_SIZE]).to(device)
+    
+    plot = ImageGrid(COUNT, create_viewer=False)
+
+    for i in range(COUNT):
+        plot.set_image(get_image(codes[i, :]), i)
+
+    plot.save("plots/deepsdf-samples.pdf")
