@@ -77,12 +77,12 @@ def create_image_sequence():
             
             viewer.set_mesh(sdf_net.get_mesh(latent_code, voxel_count=140, sphere_only=not USE_HYBRID_GAN))
             
-            image = viewer.get_image(crop = False, output_size = viewer.size)
+            image = viewer.get_image(flip_red_blue=True)
             save_image(image, frame_index)
             frame_index += 1
             progress_bar.update()
         
-        image = viewer.get_image(crop = False, output_size = viewer.size)
+        image = viewer.get_image(flip_red_blue=True)
         for _ in range(WAIT_FRAMES):
             save_image(image, frame_index)
             frame_index += 1
