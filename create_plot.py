@@ -537,3 +537,13 @@ if "sdf_net_sample" in sys.argv:
         plot.set_image(get_image(codes[i, :]), i)
 
     plot.save("plots/deepsdf-samples.pdf")
+
+if "shapenet-errors" in sys.argv:
+    from PIL import Image
+    plot = ImageGrid(5, create_viewer=False)
+
+    for i in range(5):
+        image = Image.open('screenshots/errors/error-{:d}.png'.format(i+1))        
+        plot.set_image(image, i)
+
+    plot.save("plots/errors.pdf")
