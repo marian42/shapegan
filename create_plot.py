@@ -540,9 +540,9 @@ if "sdf_net_sample" in sys.argv:
 
 if "shapenet-errors" in sys.argv:
     from PIL import Image
-    plot = ImageGrid(5, create_viewer=False)
+    plot = ImageGrid(6, create_viewer=False)
 
-    for i in range(5):
+    for i in range(6):
         image = Image.open('screenshots/errors/error-{:d}.png'.format(i+1))        
         plot.set_image(image, i)
 
