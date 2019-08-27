@@ -35,7 +35,7 @@ def process_directory(directory):
     mesh_sdf = MeshSDF(mesh)
 
     if not os.path.isfile(surface_cloud_filename):
-        pointcloud = mesh_sdf.get_points_and_normals()
+        pointcloud = mesh_sdf.get_surface_points_and_normals()
         np.save(surface_cloud_filename, pointcloud)
 
     if not os.path.isfile(voxels_filename):

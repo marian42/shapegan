@@ -91,28 +91,6 @@ class Scan():
         pixels = np.clip(pixels, 0, VIEWPORT_SIZE - 1)
         return viewport_points[:, 2] < self.depth[pixels[:, 1], pixels[:, 0]]
 
-    def remove_thin_geometry(self, other_scans):
-        thin_points = np.zeros(self.points.shape[0], dtype=np.uint8)
-        for scan in other_scans:
-            if np.dot(self.camera_direction, scan.camera_direction) > 0.2:
-                continue
-
-            viewport_points = self.convert_world_space_to_viewport(self.points)            
-
-            pixels = viewport_points[:, :2].astype(int)
-            current_depth = viewport_points[:, 2]
-            scan_depth = scan.depth[pixels[:, 1], pixels[:, 0]]
-            
-            # Points that are seen by two cameras pointing in opposing directions
-            candidates = current_depth < scan_depth + 0.007
-            
-            camera_to_points = scan.camera_position - self.points 
-            candidates = np.logical_and(candidates, np.einsum('ij,ij->i', camera_to_points, self.normals) < -0.5)            
-
-            thin_points = np.logical_or(thin_points, candidates)
-        self.points = self.points[~thin_points]
-        self.normals = self.normals[~thin_points]
-
 
 def get_rotation_matrix(angle, axis='y'):
     rotation = Rotation.from_euler(axis, angle, degrees=True)
@@ -141,42 +119,6 @@ def create_scans(mesh, camera_count = 20):
     render_lock.release()
     return scans
 
-
-def get_thin_triangles(mesh):
-    EPSILON = 0.005
-
-    scans = create_scans(mesh, camera_count=20)
-
-    triangle_positions = mesh.triangles_center
-    triangle_normals = mesh.triangles_cross
-    
-    triangle_normals /= np.linalg.norm(triangle_normals, axis=1)[:, np.newaxis]
-    
-    points_a = triangle_positions + triangle_normals * EPSILON
-    points_b = triangle_positions - triangle_normals * EPSILON
-
-    outside_a = np.zeros(points_a.shape[0], dtype=np.uint8)
-    outside_b = np.zeros(points_a.shape[0], dtype=np.uint8)
-
-    for scan in scans:
-        outside_a = np.logical_or(outside_a, scan.is_visible(points_a))
-        outside_b = np.logical_or(outside_b, scan.is_visible(points_b))
-
-    return outside_a & outside_b
-
-
-def remove_thin_triangles(mesh, max_iter = 4):
-    mesh.remove_degenerate_faces()
-    
-    iterations = 0
-    while iterations < max_iter:
-        iterations += 1
-        thin_triangles = get_thin_triangles(mesh)
-        if np.count_nonzero(thin_triangles) == 0:
-            return
-        mesh.update_faces(~thin_triangles)
-
-
 def scale_to_unit_sphere(mesh):
     origin = mesh.bounding_box.centroid
     vertices = mesh.vertices - origin
@@ -184,12 +126,6 @@ def scale_to_unit_sphere(mesh):
     size = np.max(distances)
     vertices /= size
     return trimesh.base.Trimesh(vertices=vertices, faces=mesh.faces)
-
-
-def count_thin_triangles(mesh):
-    thin_triangles = get_thin_triangles(mesh)
-    return np.count_nonzero(thin_triangles) / thin_triangles.shape[0]
-
 
 class MeshSDF:
     def __init__(self, mesh):
@@ -264,7 +200,7 @@ class MeshSDF:
 
         return points, self.get_sdf(points)
 
-    def get_points_and_normals(self, number_of_points = 50000):
+    def get_surface_points_and_normals(self, number_of_points = 50000):
         count = self.points.shape[0]
         if count < number_of_points:
             print("Warning: Less than {:d} points sampled.".format(number_of_points))
@@ -320,9 +256,6 @@ if __name__ == "__main__":
     mesh = trimesh.load(PATH)
     mesh = scale_to_unit_sphere(mesh)
 
-    print("{:.2f}% thin triangles".format(count_thin_triangles(mesh) * 100))
-
-    remove_thin_triangles(mesh)
     show_mesh(mesh)
     mesh_sdf = MeshSDF(mesh)
 
