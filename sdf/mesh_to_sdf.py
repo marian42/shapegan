@@ -101,8 +101,8 @@ def get_rotation_matrix(angle, axis='y'):
 def get_camera_transform(rotation_y, rotation_x = 0):
     camera_pose = np.identity(4)
     camera_pose[2, 3] = CAMERA_DISTANCE
-    camera_pose = np.matmul(get_rotation_matrix(rotation_y, axis='y'), camera_pose)
     camera_pose = np.matmul(get_rotation_matrix(rotation_x, axis='x'), camera_pose)
+    camera_pose = np.matmul(get_rotation_matrix(rotation_y, axis='y'), camera_pose)
     return camera_pose
 
 def create_scans(mesh, camera_count = 20):
