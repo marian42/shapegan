@@ -217,6 +217,7 @@ class MeshSDF:
     def show_reconstructed_mesh(self, voxel_size=64):
         scene = pyrender.Scene()
         voxels = self.get_voxel_sdf(voxel_count=voxel_size)
+        voxels = np.pad(voxels, 1, mode='constant', constant_values=1)
         vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(voxel_size, voxel_size, voxel_size))
         reconstructed = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
         reconstructed_pyrender = pyrender.Mesh.from_trimesh(reconstructed, smooth=False)
