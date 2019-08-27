@@ -251,7 +251,8 @@ class MeshSDF:
         points = []
 
         surface_sample_count = int(number_of_points * 0.4)
-        surface_points = self.mesh.sample(surface_sample_count)
+        surface_indices = np.random.choice(self.points.shape[0], surface_sample_count)
+        surface_points = self.points[surface_indices, :]
         points.append(surface_points + np.random.normal(scale=0.0025, size=(surface_sample_count, 3)))
         points.append(surface_points + np.random.normal(scale=0.00025, size=(surface_sample_count, 3)))
 
