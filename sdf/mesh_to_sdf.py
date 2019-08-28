@@ -138,29 +138,21 @@ class MeshSDF:
 
         self.kd_tree = KDTree(self.points)
 
-    def get_sdf(self, query_points, sample_count = 30, perform_sanity_check=True):
+    def get_sdf(self, query_points):
         start = time.time()
-        distances, indices = self.kd_tree.query(query_points, k=sample_count)
-        distances = distances.astype(np.float32)
+        distances, _ = self.kd_tree.query(query_points)
+        distances = distances.astype(np.float32).reshape(-1) * -1
         end = time.time()
-        #print('Time for KD-Tree query: {:.1f}s'.format(end - start))
-
-        closest_points = self.points[indices]
-        direction_to_surface = query_points[:, np.newaxis, :] - closest_points
-        inside = np.einsum('ijk,ijk->ij', direction_to_surface, self.normals[indices]) < 0
-        inside = np.sum(inside, axis=1) > sample_count * 0.5
-        distances = distances[:, 0]
-        distances[inside] *= -1
-        if perform_sanity_check:
-            self.sanity_check(query_points, distances)
+        print('Time for KD-Tree query: {:.1f}s'.format(end - start))        
+        distances[self.is_outside(query_points)] *= -1
         return distances
 
-    def get_sdf_in_batches(self, points, sample_count=30, batch_size=100000):
+    def get_sdf_in_batches(self, points, batch_size=100000):
         result = np.zeros(points.shape[0])
         for i in tqdm(range(int(math.ceil(points.shape[0] / batch_size)))):
             start = i * batch_size
             end = min(result.shape[0], (i + 1) * batch_size)
-            result[start:end] = self.get_sdf(points[start:end, :], sample_count=sample_count)
+            result[start:end] = self.get_sdf(points[start:end, :])
         return result
 
     def get_pyrender_pointcloud(self):
@@ -232,20 +224,6 @@ class MeshSDF:
             else:
                 result = np.logical_or(result, scan.is_visible(points))
         return result
-
-    def sanity_check(self, points, sdf, bad_points_threshold=0.005):
-        high_distance = np.abs(sdf) > 0.02
-        points = points[high_distance]
-        sdf = sdf[high_distance]
-
-        outside_visibility = self.is_outside(points)
-        outside_sdf = sdf > 0
-        bad_points = np.count_nonzero(outside_visibility != outside_sdf) / sdf.shape[0]
-        
-        #print('SDF sanity check with {:d} samples: {:.1f}% inconsistent signs.'.format(sdf.shape[0], bad_points * 100))
-        if bad_points > bad_points_threshold:
-            raise BadMeshException("{:.1f}% of the SDF values have the wrong sign. Make sure the supplied mesh is watertight.".format(bad_points * 100))
-
 
 def show_mesh(mesh):
     scene = pyrender.Scene()
