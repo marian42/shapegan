@@ -47,8 +47,8 @@ class Scan():
         renderer = pyrender.OffscreenRenderer(VIEWPORT_SIZE, VIEWPORT_SIZE)
         renderer._renderer._program_cache = CustomShaderCache()
 
-        self.color, self.depth = renderer.render(scene)
-        self.depth = self.depth * 2 - 1
+        color, depth = renderer.render(scene)
+        self.depth = depth * 2 - 1
         indices = np.argwhere(self.depth != 1)
 
         points = np.ones((indices.shape[0], 4))
@@ -62,7 +62,7 @@ class Scan():
         points /= points[:, 3][:, np.newaxis]
         self.points = points[:, :3]
 
-        normals = self.color[indices[:, 0], indices[:, 1]] / 255 * 2 - 1
+        normals = color[indices[:, 0], indices[:, 1]] / 255 * 2 - 1
         camera_to_points = self.camera_position - self.points
         normal_orientation = np.einsum('ij,ij->i', camera_to_points, normals)
         normals[normal_orientation < 0] *= -1
@@ -139,11 +139,9 @@ class MeshSDF:
         self.kd_tree = KDTree(self.points)
 
     def get_sdf(self, query_points):
-        start = time.time()
         distances, _ = self.kd_tree.query(query_points)
         distances = distances.astype(np.float32).reshape(-1) * -1
         end = time.time()
-        print('Time for KD-Tree query: {:.1f}s'.format(end - start))        
         distances[self.is_outside(query_points)] *= -1
         return distances
 
