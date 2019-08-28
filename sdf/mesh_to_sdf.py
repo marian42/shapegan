@@ -40,7 +40,7 @@ class Scan():
         
         scene = pyrender.Scene()
         scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
-        camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0, znear = 0.5, zfar = 4)
+        camera = pyrender.PerspectiveCamera(yfov=2 * math.asin(1.0 / CAMERA_DISTANCE), aspectRatio=1.0, znear = CAMERA_DISTANCE - 1.0, zfar = CAMERA_DISTANCE + 1.0)
         scene.add(camera, pose=camera_pose)
         self.projection_matrix = camera.get_projection_matrix()
 
