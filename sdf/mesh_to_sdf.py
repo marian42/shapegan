@@ -235,16 +235,26 @@ def show_mesh(mesh):
     viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
 
 if __name__ == "__main__":
-    PATH = '/home/marian/shapenet/ShapeNetCore.v2/03001627/64871dc28a21843ad504e40666187f4e/models/model_normalized.obj'
+    PATH = 'data/shapenet/03001627/6ae8076b0f9c74199c2009e4fd70d135/models/model_normalized.obj'
+    #PATH = 'data/shapenet/03001627/64871dc28a21843ad504e40666187f4e/models/model_normalized.obj'
+
     mesh = trimesh.load(PATH)
     mesh = scale_to_unit_sphere(mesh)
+
 
     show_mesh(mesh)
     mesh_sdf = MeshSDF(mesh)
 
-    #mesh_sdf.show_pointcloud()
+    mesh_sdf.show_pointcloud()
     mesh_sdf.show_reconstructed_mesh()
 
-    #points, sdf = mesh_sdf.get_sample_points()
-    #combined = np.concatenate((points, sdf[:, np.newaxis]), axis=1)
-    #np.save("sdf_test.npy", combined)
+    points, sdf = mesh_sdf.get_sample_points()
+
+    scene = pyrender.Scene()
+    colors = np.zeros((points.shape[0], 3))
+    colors[sdf < 0, 2] = 1
+    colors[sdf > 0, 0] = 1
+    cloud = pyrender.Mesh.from_points(points, colors=colors)
+
+    scene.add(cloud)    
+    viewer = pyrender.Viewer(scene, use_raymond_lighting=True, point_size=2)
