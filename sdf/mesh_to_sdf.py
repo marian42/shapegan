@@ -125,7 +125,7 @@ def scale_to_unit_sphere(mesh):
     distances = np.linalg.norm(vertices, axis=1)
     size = np.max(distances)
     vertices /= size
-    return trimesh.base.Trimesh(vertices=vertices, faces=mesh.faces)
+    return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
 
 class MeshSDF:
     def __init__(self, mesh):
@@ -137,6 +137,13 @@ class MeshSDF:
         self.normals = np.concatenate([scan.normals for scan in self.scans], axis=0)
 
         self.kd_tree = KDTree(self.points)
+
+    def get_random_surface_points(self, count, use_scans=True):
+        if use_scans:
+            indices = np.random.choice(self.points.shape[0], count)
+            return self.points[indices, :]
+        else:
+            return self.mesh.sample(count)
 
     def get_sdf(self, query_points):
         distances, _ = self.kd_tree.query(query_points)
@@ -177,8 +184,7 @@ class MeshSDF:
         points = []
 
         surface_sample_count = int(number_of_points * 0.4)
-        surface_indices = np.random.choice(self.points.shape[0], surface_sample_count)
-        surface_points = self.points[surface_indices, :]
+        surface_points = self.get_random_surface_points(surface_sample_count)
         points.append(surface_points + np.random.normal(scale=0.0025, size=(surface_sample_count, 3)))
         points.append(surface_points + np.random.normal(scale=0.00025, size=(surface_sample_count, 3)))
 
