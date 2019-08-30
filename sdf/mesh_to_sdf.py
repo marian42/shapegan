@@ -166,6 +166,7 @@ class MeshSDF:
     def get_voxel_sdf(self, voxel_count = 32):
         voxels = self.get_sdf(self.get_voxel_coordinates(voxel_count=voxel_count))
         voxels = voxels.reshape(voxel_count, voxel_count, voxel_count)
+        self.check_voxels(voxels)
         return voxels
 
     def get_voxel_coordinates(self, voxel_count = 32):
@@ -194,7 +195,13 @@ class MeshSDF:
         points.append(unit_sphere_points[:unit_sphere_sample_count, :])
         points = np.concatenate(points).astype(np.float32)
 
-        return points, self.get_sdf(points)
+        sdf = self.get_sdf(points)
+        
+        model_size = np.count_nonzero(sdf[-unit_sphere_sample_count:] < 0) / unit_sphere_sample_count
+        if model_size < 0.015:
+            raise BadMeshException()
+
+        return points, sdf
 
     def get_surface_points_and_normals(self, number_of_points = 50000):
         count = self.points.shape[0]
@@ -204,6 +211,17 @@ class MeshSDF:
         np.random.shuffle(indices)
         indices = indices[:number_of_points]
         return np.concatenate([self.points[indices, :], self.normals[indices, :]], axis=1)
+
+    def check_voxels(self, voxels):
+        block = voxels[:-1, :-1, :-1]
+        d1 = (block - voxels[1:, :-1, :-1]).reshape(-1)
+        d2 = (block - voxels[:-1, 1:, :-1]).reshape(-1)
+        d3 = (block - voxels[:-1, :-1, 1:]).reshape(-1)
+
+        max_distance = max(np.max(d1), np.max(d2), np.max(d3))
+        if max_distance > 2.0 / voxels.shape[0] * 1.5:
+            raise BadMeshException()
+        
     
     def show_pointcloud(self):
         scene = pyrender.Scene()
