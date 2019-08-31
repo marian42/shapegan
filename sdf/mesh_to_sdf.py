@@ -180,7 +180,7 @@ class MeshSDF:
         points = np.stack(points)
         return points.reshape(3, -1).transpose()
 
-    def get_sample_points(self, number_of_points = 100000):
+    def get_sample_points(self, number_of_points = 200000):
         ''' Use sample points as described in the DeepSDF paper '''
         points = []
 
