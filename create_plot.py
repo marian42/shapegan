@@ -101,21 +101,22 @@ if "autoencoder" in sys.argv:
     create_tsne_plot(codes, voxels, labels, "plots/{:s}autoencoder-images.pdf".format('' if 'classic' in sys.argv else 'variational-'))
 
 if "autoencoder_hist" in sys.argv:
-    import scipy
+    import scipy.stats
     from dataset import dataset as dataset
     is_variational = 'classic' not in sys.argv
 
-    x_range = 0.11 if is_variational else 1
+    x_range = 4 if is_variational else 1
 
     indices = random.sample(list(range(dataset.size)), min(5000, dataset.size))
     voxels = dataset.voxels[indices, :, :, :]
     autoencoder = load_autoencoder(is_variational=is_variational)
     print("Generating codes...")
     with torch.no_grad():
+        autoencoder.train()
         codes = autoencoder.encode(voxels).cpu().numpy()
     
     print("Plotting...")
-    plt.hist(codes[:, ::4], bins=100, range=(-x_range, x_range), histtype='step', density=1)
+    plt.hist(codes[:, ::4], bins=100, range=(-x_range, x_range), histtype='step', density=1, color=['#1f77b4' for _ in range(0, codes.shape[1], 4)])
     plt.xlabel("$\mathbf{z}^{(i)}$")
     plt.ylabel("relative abundance")
     plt.savefig("plots/{:s}autoencoder-histogram.pdf".format('variational-' if is_variational else ''), bbox_inches='tight')
@@ -123,7 +124,8 @@ if "autoencoder_hist" in sys.argv:
     plt.clf()
     x = np.linspace(-x_range, x_range, 500)
     y = scipy.stats.norm.pdf(x, 0, 1)
-    #plt.plot(x, y, color='green')
+    if is_variational:
+        plt.plot(x, y, color='green')
     plt.hist(codes, bins=100, range=(-x_range, x_range), density=1)
     plt.xlabel("$\mathbf{z}$")
     plt.ylabel("relative abundance")
