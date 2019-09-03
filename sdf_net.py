@@ -18,15 +18,9 @@ if "nogui" not in sys.argv:
     viewer = VoxelViewer()
 
 POINTCLOUD_SIZE = 100000
-LIMIT_MODEL_COUNT = 4000
 
-data = torch.load("data/dataset-sdf-clouds.to")
-
-print("{:d} models available, using up to {:d}.".format(data.shape[0] // POINTCLOUD_SIZE, LIMIT_MODEL_COUNT))
-
-points = data[:LIMIT_MODEL_COUNT * POINTCLOUD_SIZE, :3].to(device)
-sdf = data[:LIMIT_MODEL_COUNT * POINTCLOUD_SIZE, 3].to(device)
-del data
+points = torch.load("data/dataset-sdf-clouds-points.to").to(device)
+sdf = torch.load("data/dataset-sdf-clouds-sdf.to").to(device)
 
 MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
 BATCH_SIZE = 20000

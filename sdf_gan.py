@@ -8,11 +8,8 @@ import numpy as np
 from voxel.viewer import VoxelViewer
 from util import device, standard_normal_distribution
 
-data = torch.load("data/dataset-sdf-clouds.to")
-points = data[:, :3]
-points = points.cuda()
-sdf = data[:, 3].to(device)
-del data
+points = torch.load("data/dataset-sdf-clouds-points.to").to(device)
+sdf = torch.load("data/dataset-sdf-clouds-sdf.to").to(device)
 
 POINTCLOUD_SIZE = 100000
 MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
