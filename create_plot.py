@@ -560,6 +560,22 @@ if "sdf_net_sample" in sys.argv:
         plot.set_image(get_image(sdf_net, codes[i, :]), i)
 
     plot.save("plots/deepsdf-samples.pdf")
+    
+if "hybrid_gan" in sys.argv:
+    from raymarching import get_image_for_index, get_image
+    from util import standard_normal_distribution
+    generator = load_sdf_net(filename='hybrid_gan_generator.to')
+
+    COUNT = 5
+    
+    codes = standard_normal_distribution.sample([COUNT, LATENT_CODE_SIZE]).to(device)
+    
+    plot = ImageGrid(COUNT, create_viewer=False)
+
+    for i in range(COUNT):
+        plot.set_image(get_image(generator, codes[i, :]), i)
+
+    plot.save("plots/hybrid-gan-samples.pdf")
 
 if "shapenet-errors" in sys.argv:
     from PIL import Image
