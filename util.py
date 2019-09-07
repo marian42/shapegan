@@ -1,6 +1,7 @@
 import torch
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
+import numpy as np
 
 CHARACTERS = '      `.-:/+osyhdmm###############'
 
@@ -27,3 +28,22 @@ def get_points_in_unit_sphere(n, device):
     if x.shape[0] < n:
         print("Warning: Did not find enough points.")
     return x
+
+def crop_image(image, background=255):
+    mask = image[:, :] != background
+    coords = np.array(np.nonzero(mask))
+    
+    if coords.size != 0:
+        top_left = np.min(coords, axis=1)
+        bottom_right = np.max(coords, axis=1)
+    else:
+        top_left = np.array((0, 0))
+        bottom_right = np.array(image.shape)
+        print("Warning: Image contains only background pixels.")
+        
+    half_size = int(max(bottom_right[0] - top_left[0], bottom_right[1] - top_left[1]) / 2)
+    center = ((top_left + bottom_right) / 2).astype(int)
+    center = (min(max(half_size, center[0]), image.shape[0] - half_size), min(max(half_size, center[1]), image.shape[1] - half_size))
+    if half_size > 100:
+        image = image[center[0] - half_size : center[0] + half_size, center[1] - half_size : center[1] + half_size]
+    return image

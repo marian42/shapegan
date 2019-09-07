@@ -88,7 +88,7 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
     return shadows.cpu().numpy().astype(bool)
     
 
-def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, iterations=1000, ssaa=2, radius=1.0):
+def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, iterations=1000, ssaa=2, radius=1.0, crop=False):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -188,6 +188,10 @@ def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, ite
     pixels[model_mask] = color
     pixels[ground_points[ground_shadows]] = 0.4
     pixels = pixels.reshape((resolution * ssaa, resolution * ssaa, 3))
+
+    if crop:
+        from util import crop_image
+        pixels = crop_image(pixels, background=1)
 
     image = Image.fromarray(np.uint8(pixels * 255) , 'RGB')
 

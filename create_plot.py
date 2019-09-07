@@ -621,7 +621,7 @@ if "hybrid_gan_upscaling" in sys.argv:
     voxels_128 = sdf_net.get_voxels(code, 128, sphere_only=False)
     plot.set_voxels(voxels_128, 2)
 
-    plot.set_image(render_image(sdf_net, code, radius=1.41421), 3)
+    plot.set_image(render_image(sdf_net, code, radius=1.41421, crop=True), 3)
 
     plot.save("plots/hybrid-gan-upscaling.pdf")
 
