@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import random
+import math
 from tqdm import tqdm
 from PIL import Image
 import os
@@ -87,12 +88,14 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
     return shadows.cpu().numpy().astype(bool)
     
 
-def get_image(sdf_net, latent_code, resolution = 800, focal_distance = 1.75, threshold = 0.0005, iterations=1000, ssaa=2, radius=1):
+def get_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, iterations=1000, ssaa=2, radius=1.0):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
     camera_right = np.cross(camera_forward, up)
+    camera_right /= np.linalg.norm(camera_right)
     camera_up = np.cross(camera_forward, camera_right)
+    camera_up /= np.linalg.norm(camera_up)
     
     screenspace_points = np.meshgrid(
         np.linspace(-1, 1, resolution * ssaa),
@@ -104,6 +107,7 @@ def get_image(sdf_net, latent_code, resolution = 800, focal_distance = 1.75, thr
     points = np.tile(camera_position, (screenspace_points.shape[0], 1))
     points = points.astype(np.float32)
     
+    focal_distance = 1.0 / math.tan(math.asin(radius / camera_distance))
     ray_directions = screenspace_points[:, 0] * camera_right[:, np.newaxis] \
         + screenspace_points[:, 1] * camera_up[:, np.newaxis] \
         + focal_distance * camera_forward[:, np.newaxis]
