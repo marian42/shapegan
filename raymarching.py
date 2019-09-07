@@ -35,16 +35,6 @@ def get_default_coordinates():
 
 camera_position, light_position = get_default_coordinates()
 
-def get_sdf(sdf_net, points, latent_codes):
-    with torch.no_grad():
-        batch_count = points.shape[0] // BATCH_SIZE
-        result = torch.zeros((points.shape[0]), device=points.device)
-        for i in range(batch_count):
-            result[BATCH_SIZE * i:BATCH_SIZE * (i+1)] = sdf_net.forward(points[BATCH_SIZE * i:BATCH_SIZE * (i+1), :], latent_codes[:BATCH_SIZE, :])
-        remainder = points.shape[0] - BATCH_SIZE * batch_count
-        result[BATCH_SIZE * batch_count:] = sdf_net.forward(points[BATCH_SIZE * batch_count:, :], latent_codes[:remainder, :])
-    return result
-
 def get_normals(sdf_net, points, latent_code):
     batch_count = points.shape[0] // BATCH_SIZE
     result = torch.zeros((points.shape[0], 3), device=points.device)
@@ -66,11 +56,9 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
     indices = torch.arange(points.shape[0])
     shadows = torch.zeros(points.shape[0], dtype=torch.uint8)
 
-    latent_codes = latent_code.repeat(min(indices.shape[0], BATCH_SIZE), 1)
-
     for i in tqdm(range(200)):
         test_points = points[indices, :]
-        sdf = get_sdf(sdf_net, test_points, latent_codes)
+        sdf = sdf_net.evaluate_in_batches(test_points, latent_code, return_cpu_tensor=False)
         sdf = torch.clamp_(sdf, -0.1, 0.1)
         points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
         
@@ -127,11 +115,9 @@ def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, ite
     indices = torch.tensor(indices, device=device, dtype=torch.int64)
     model_mask = torch.zeros(points.shape[0], dtype=torch.uint8)
 
-    latent_codes = latent_code.repeat(min(indices.shape[0], BATCH_SIZE), 1)
-
     for i in tqdm(range(iterations)):
         test_points = points[indices, :]
-        sdf = get_sdf(sdf_net, test_points, latent_codes)
+        sdf = sdf_net.evaluate_in_batches(test_points, latent_code, return_cpu_tensor=False)
         sdf = torch.clamp_(sdf, -0.02, 0.02)
         points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
         

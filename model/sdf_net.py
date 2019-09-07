@@ -64,13 +64,16 @@ class SDFNet(SavableModule):
         x = self.layers2.forward(x)
         return x.squeeze()
 
-    def evaluate_in_batches(self, points, latent_code, batch_size=100000):
+    def evaluate_in_batches(self, points, latent_code, batch_size=100000, return_cpu_tensor=True):
         latent_codes = latent_code.repeat(batch_size, 1)
         with torch.no_grad():
             batch_count = points.shape[0] // batch_size
-            result = torch.zeros((points.shape[0]))
+            if return_cpu_tensor:
+                result = torch.zeros((points.shape[0]))
+            else:
+                result = torch.zeros((points.shape[0]), device=points.device)
             for i in range(batch_count):
-                result[batch_size * i:batch_size * (i+1)] = self.forward(points[batch_size * i:batch_size * (i+1), :], latent_codes).cpu()
+                result[batch_size * i:batch_size * (i+1)] = self.forward(points[batch_size * i:batch_size * (i+1), :], latent_codes)
             remainder = points.shape[0] - batch_size * batch_count
             result[batch_size * batch_count:] = self.forward(points[batch_size * batch_count:, :], latent_codes[:remainder, :])
         return result
