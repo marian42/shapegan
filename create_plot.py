@@ -62,6 +62,20 @@ def load_generator(is_wgan=False):
     generator.eval()
     return generator
 
+def load_sdf_net(filename=None, return_latent_codes = False):
+    from model.sdf_net import SDFNet, LATENT_CODES_FILENAME
+    sdf_net = SDFNet()
+    if filename is not None:
+        sdf_net.filename = filename
+    sdf_net.load()
+    sdf_net.eval()
+
+    if return_latent_codes:
+        latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
+        return sdf_net, latent_codes
+    else:
+        return sdf_net
+
 def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf"):
     from sklearn.manifold import TSNE
     from matplotlib.offsetbox import OffsetImage, AnnotationBbox
@@ -478,8 +492,9 @@ if "model_images" in sys.argv:
         cv2.imwrite(image_filename, image)
 
 if 'sdf_net_reconstruction' in sys.argv:
-    from raymarching import latent_codes, get_image_for_index
+    from raymarching import get_image_for_index
     from PIL import Image
+    sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
 
     COUNT = 5
     MESH_FILENAME = 'screenshots/sdf_meshes/{:d}.png'
@@ -493,14 +508,15 @@ if 'sdf_net_reconstruction' in sys.argv:
         mesh = Image.open(MESH_FILENAME.format(indices[i]))
         plot.set_image(mesh, i, 0)
 
-        image = get_image_for_index(indices[i])
+        image = get_image_for_index(sdf_net, latent_codes, indices[i])
         plot.set_image(image, i, 1)
 
     plot.save('plots/deepsdf-reconstruction.pdf')
 
 if "sdf_net_interpolation" in sys.argv:
-    from raymarching import latent_codes, get_image_for_index, get_image
-
+    from raymarching import get_image_for_index, get_image
+    sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
+    
     STEPS = 6
     
     indices = random.sample(list(range(latent_codes.shape[0])), 2)
@@ -521,13 +537,15 @@ if "sdf_net_interpolation" in sys.argv:
     plot.set_image(get_image_for_index(indices[1]), STEPS - 1)
 
     for i in range(1, STEPS - 1):
-        plot.set_image(get_image(codes[i, :]), i)
+        plot.set_image(get_image(sdf_net, codes[i, :]), i)
 
     plot.save("plots/deepsdf-interpolation.pdf")
 
 if "sdf_net_sample" in sys.argv:
-    from raymarching import latent_codes, get_image_for_index, get_image
+    from raymarching import get_image_for_index, get_image    
+    sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
     latent_codes_flattened = latent_codes.detach().reshape(-1).cpu().numpy()
+
     COUNT = 5
     
     mean, variance = np.mean(latent_codes_flattened), np.var(latent_codes_flattened) ** 0.5
@@ -539,7 +557,7 @@ if "sdf_net_sample" in sys.argv:
     plot = ImageGrid(COUNT, create_viewer=False)
 
     for i in range(COUNT):
-        plot.set_image(get_image(codes[i, :]), i)
+        plot.set_image(get_image(sdf_net, codes[i, :]), i)
 
     plot.save("plots/deepsdf-samples.pdf")
 

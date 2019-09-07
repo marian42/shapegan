@@ -9,13 +9,6 @@ from model.sdf_net import SDFNet, LATENT_CODES_FILENAME
 from util import device
 from scipy.spatial.transform import Rotation
 
-FILENAME = 'screenshots/raymarching-examples/image-{:d}.png'
-
-sdf_net = SDFNet()
-sdf_net.load()
-sdf_net.eval()
-latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
-
 BATCH_SIZE = 100000
 
 def get_rotation_matrix(angle, axis='y'):
@@ -41,7 +34,7 @@ def get_default_coordinates():
 
 camera_position, light_position = get_default_coordinates()
 
-def get_sdf(points, latent_codes):
+def get_sdf(sdf_net, points, latent_codes):
     with torch.no_grad():
         batch_count = points.shape[0] // BATCH_SIZE
         result = torch.zeros((points.shape[0]), device=points.device)
@@ -51,7 +44,7 @@ def get_sdf(points, latent_codes):
         result[BATCH_SIZE * batch_count:] = sdf_net.forward(points[BATCH_SIZE * batch_count:, :], latent_codes[:remainder, :])
     return result
 
-def get_normals(points, latent_code):
+def get_normals(sdf_net, points, latent_code):
     batch_count = points.shape[0] // BATCH_SIZE
     result = torch.zeros((points.shape[0], 3), device=points.device)
     for i in range(batch_count):
@@ -61,7 +54,7 @@ def get_normals(points, latent_code):
     return result
 
 
-def get_shadows(points, light_position, latent_code, threshold = 0.001):
+def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001):
     ray_directions = light_position[np.newaxis, :] - points
     ray_directions /= np.linalg.norm(ray_directions, axis=1)[:, np.newaxis]
     ray_directions_t = torch.tensor(ray_directions, device=device, dtype=torch.float32)
@@ -76,7 +69,7 @@ def get_shadows(points, light_position, latent_code, threshold = 0.001):
 
     for i in tqdm(range(200)):
         test_points = points[indices, :]
-        sdf = get_sdf(test_points, latent_codes)
+        sdf = get_sdf(sdf_net, test_points, latent_codes)
         sdf = torch.clamp_(sdf, -0.1, 0.1)
         points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
         
@@ -94,7 +87,7 @@ def get_shadows(points, light_position, latent_code, threshold = 0.001):
     return shadows.cpu().numpy().astype(bool)
     
 
-def get_image(latent_code, resolution = 800, focal_distance = 1.75, threshold = 0.0005, iterations=1000, ssaa=2):
+def get_image(sdf_net, latent_code, resolution = 800, focal_distance = 1.75, threshold = 0.0005, iterations=1000, ssaa=2):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -134,7 +127,7 @@ def get_image(latent_code, resolution = 800, focal_distance = 1.75, threshold = 
 
     for i in tqdm(range(iterations)):
         test_points = points[indices, :]
-        sdf = get_sdf(test_points, latent_codes)
+        sdf = get_sdf(sdf_net, test_points, latent_codes)
         sdf = torch.clamp_(sdf, -0.02, 0.02)
         points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
         
@@ -150,13 +143,13 @@ def get_image(latent_code, resolution = 800, focal_distance = 1.75, threshold = 
         
     model_mask[indices] = 1
 
-    normal = get_normals(points[model_mask], latent_code).cpu().numpy()
+    normal = get_normals(sdf_net, points[model_mask], latent_code).cpu().numpy()
 
     model_mask = model_mask.cpu().numpy().astype(bool)
     points = points.cpu().numpy()
     model_points = points[model_mask]
     
-    seen_by_light = 1.0 - get_shadows(model_points, light_position, latent_code)
+    seen_by_light = 1.0 - get_shadows(sdf_net, model_points, light_position, latent_code)
     
     light_direction = light_position[np.newaxis, :] - model_points
     light_direction /= np.linalg.norm(light_direction, axis=1)[:, np.newaxis]
@@ -185,7 +178,7 @@ def get_image(latent_code, resolution = 800, focal_distance = 1.75, threshold = 
     points[ground_points, :] -= ray_directions[ground_points, :] * ((points[ground_points, 1] - ground_plane) / ray_directions[ground_points, 1])[:, np.newaxis]    
     ground_points = ground_points[np.linalg.norm(points[ground_points, ::2], axis=1) < 3]
 
-    ground_shadows = get_shadows(points[ground_points, :], light_position, latent_code)
+    ground_shadows = get_shadows(sdf_net, points[ground_points, :], light_position, latent_code)
     
     pixels = np.ones((points.shape[0], 3))
     pixels[model_mask] = color
@@ -199,20 +192,28 @@ def get_image(latent_code, resolution = 800, focal_distance = 1.75, threshold = 
 
     return image
 
-def get_image_for_index(index):
+
+
+def get_image_for_index(sdf_net, latent_codes, index):
+    FILENAME = 'screenshots/raymarching-examples/image-{:d}.png'
     filename = FILENAME.format(index)
 
     if os.path.isfile(filename):
         return Image.open(filename)
     
-    img = get_image(latent_codes[index])
+    img = get_image(sdf_net, latent_codes[index])
     img.save(filename)
     return img
 
 if __name__ == "__main__":
+    sdf_net = SDFNet()
+    sdf_net.load()
+    sdf_net.eval()
+    latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
+
     codes = list(range(latent_codes.shape[0]))
     random.shuffle(codes)
 
     for i in codes:
-        img = get_image_for_index(i)
+        img = get_image_for_index(sdf_net, latent_codes, i)
         img.show()
