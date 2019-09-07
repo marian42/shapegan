@@ -600,6 +600,31 @@ if "hybrid_gan_interpolation" in sys.argv:
 
     plot.save("plots/hybrid-gan-interpolation.pdf")
 
+if "hybrid_gan_upscaling" in sys.argv:
+    from raymarching import render_image_for_index, render_image
+    from util import standard_normal_distribution
+    sdf_net = load_sdf_net(filename='hybrid_gan_generator.to')
+        
+    code = standard_normal_distribution.sample([LATENT_CODE_SIZE]).to(device)
+
+    plot = ImageGrid(4)
+    
+    voxels_32 = sdf_net.get_voxels(code, 32, sphere_only=False)
+    plot.set_voxels(voxels_32, 0)
+    voxels_32 = voxels_32[1:-2, 1:-2, 1:-2]
+
+    import scipy.ndimage
+    voxels_upscaled = scipy.ndimage.zoom(voxels_32, 4)
+    voxels_upscaled = np.pad(voxels_upscaled, 1, mode='constant', constant_values=1)
+    plot.set_voxels(voxels_upscaled, 1)
+
+    voxels_128 = sdf_net.get_voxels(code, 128, sphere_only=False)
+    plot.set_voxels(voxels_128, 2)
+
+    plot.set_image(render_image(sdf_net, code, radius=1.41421), 3)
+
+    plot.save("plots/hybrid-gan-upscaling.pdf")
+
 if "shapenet-errors" in sys.argv:
     from PIL import Image
     plot = ImageGrid(6, create_viewer=False)
