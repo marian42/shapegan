@@ -492,7 +492,7 @@ if "model_images" in sys.argv:
         cv2.imwrite(image_filename, image)
 
 if 'sdf_net_reconstruction' in sys.argv:
-    from raymarching import get_image_for_index
+    from raymarching import render_image_for_index
     from PIL import Image
     sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
 
@@ -508,13 +508,13 @@ if 'sdf_net_reconstruction' in sys.argv:
         mesh = Image.open(MESH_FILENAME.format(indices[i]))
         plot.set_image(mesh, i, 0)
 
-        image = get_image_for_index(sdf_net, latent_codes, indices[i])
+        image = render_image_for_index(sdf_net, latent_codes, indices[i])
         plot.set_image(image, i, 1)
 
     plot.save('plots/deepsdf-reconstruction.pdf')
 
 if "sdf_net_interpolation" in sys.argv:
-    from raymarching import get_image_for_index, get_image
+    from raymarching import render_image_for_index, render_image
     sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
     
     STEPS = 6
@@ -533,16 +533,16 @@ if "sdf_net_interpolation" in sys.argv:
 
     plot = ImageGrid(STEPS, create_viewer=False)
     
-    plot.set_image(get_image_for_index(indices[0]), 0)
-    plot.set_image(get_image_for_index(indices[1]), STEPS - 1)
+    plot.set_image(render_image_for_index(indices[0]), 0)
+    plot.set_image(render_image_for_index(indices[1]), STEPS - 1)
 
     for i in range(1, STEPS - 1):
-        plot.set_image(get_image(sdf_net, codes[i, :]), i)
+        plot.set_image(render_image(sdf_net, codes[i, :]), i)
 
     plot.save("plots/deepsdf-interpolation.pdf")
 
 if "sdf_net_sample" in sys.argv:
-    from raymarching import get_image_for_index, get_image    
+    from raymarching import render_image    
     sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
     latent_codes_flattened = latent_codes.detach().reshape(-1).cpu().numpy()
 
@@ -557,12 +557,12 @@ if "sdf_net_sample" in sys.argv:
     plot = ImageGrid(COUNT, create_viewer=False)
 
     for i in range(COUNT):
-        plot.set_image(get_image(sdf_net, codes[i, :]), i)
+        plot.set_image(render_image(sdf_net, codes[i, :]), i)
 
     plot.save("plots/deepsdf-samples.pdf")
     
 if "hybrid_gan" in sys.argv:
-    from raymarching import get_image_for_index, get_image
+    from raymarching import render_image
     from util import standard_normal_distribution
     generator = load_sdf_net(filename='hybrid_gan_generator.to')
 
@@ -573,7 +573,7 @@ if "hybrid_gan" in sys.argv:
     plot = ImageGrid(COUNT, create_viewer=False)
 
     for i in range(COUNT):
-        plot.set_image(get_image(generator, codes[i, :], radius=1.41421), i)
+        plot.set_image(render_image(generator, codes[i, :], radius=1.41421), i)
 
     plot.save("plots/hybrid-gan-samples.pdf")
 

@@ -88,7 +88,7 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
     return shadows.cpu().numpy().astype(bool)
     
 
-def get_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, iterations=1000, ssaa=2, radius=1.0):
+def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, iterations=1000, ssaa=2, radius=1.0):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -198,14 +198,14 @@ def get_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, iterat
 
 
 
-def get_image_for_index(sdf_net, latent_codes, index):
+def render_image_for_index(sdf_net, latent_codes, index):
     FILENAME = 'screenshots/raymarching-examples/image-{:d}.png'
     filename = FILENAME.format(index)
 
     if os.path.isfile(filename):
         return Image.open(filename)
     
-    img = get_image(sdf_net, latent_codes[index])
+    img = render_image(sdf_net, latent_codes[index])
     img.save(filename)
     return img
 
@@ -219,5 +219,5 @@ if __name__ == "__main__":
     random.shuffle(codes)
 
     for i in codes:
-        img = get_image_for_index(sdf_net, latent_codes, i)
+        img = render_image_for_index(sdf_net, latent_codes, i)
         img.show()
