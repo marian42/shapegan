@@ -533,8 +533,8 @@ if "sdf_net_interpolation" in sys.argv:
 
     plot = ImageGrid(STEPS, create_viewer=False)
     
-    plot.set_image(render_image_for_index(indices[0]), 0)
-    plot.set_image(render_image_for_index(indices[1]), STEPS - 1)
+    plot.set_image(render_image_for_index(sdf_net, latent_codes, indices[0]), 0)
+    plot.set_image(render_image_for_index(sdf_net, latent_codes, indices[1]), STEPS - 1)
 
     for i in range(1, STEPS - 1):
         plot.set_image(render_image(sdf_net, codes[i, :]), i)
@@ -576,6 +576,29 @@ if "hybrid_gan" in sys.argv:
         plot.set_image(render_image(generator, codes[i, :], radius=1.41421), i)
 
     plot.save("plots/hybrid-gan-samples.pdf")
+
+
+if "hybrid_gan_interpolation" in sys.argv:
+    from raymarching import render_image_for_index, render_image
+    from util import standard_normal_distribution
+    sdf_net = load_sdf_net(filename='hybrid_gan_generator.to')
+    
+    STEPS = 6
+        
+    code_start = standard_normal_distribution.sample([LATENT_CODE_SIZE]).to(device)
+    code_end = standard_normal_distribution.sample([LATENT_CODE_SIZE]).to(device)
+
+    with torch.no_grad():
+        codes = torch.zeros([STEPS, LATENT_CODE_SIZE], device=device)
+        for i in range(STEPS):
+            codes[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
+
+    plot = ImageGrid(STEPS, create_viewer=False)
+    
+    for i in range(STEPS):
+        plot.set_image(render_image(sdf_net, codes[i, :]), i)
+
+    plot.save("plots/hybrid-gan-interpolation.pdf")
 
 if "shapenet-errors" in sys.argv:
     from PIL import Image
