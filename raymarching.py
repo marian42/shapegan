@@ -54,7 +54,7 @@ def get_normals(sdf_net, points, latent_code):
     return result
 
 
-def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001):
+def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001, radius=1.0):
     ray_directions = light_position[np.newaxis, :] - points
     ray_directions /= np.linalg.norm(ray_directions, axis=1)[:, np.newaxis]
     ray_directions_t = torch.tensor(ray_directions, device=device, dtype=torch.float32)
@@ -77,7 +77,7 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001)
         shadows[indices[hits]] = 1
         indices = indices[~hits]
         
-        misses = points[indices, 1] > 1
+        misses = points[indices, 1] > radius
         indices = indices[~misses]
         
         if indices.shape[0] < 2:
@@ -87,7 +87,7 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001)
     return shadows.cpu().numpy().astype(bool)
     
 
-def get_image(sdf_net, latent_code, resolution = 800, focal_distance = 1.75, threshold = 0.0005, iterations=1000, ssaa=2):
+def get_image(sdf_net, latent_code, resolution = 800, focal_distance = 1.75, threshold = 0.0005, iterations=1000, ssaa=2, radius=1):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -111,7 +111,7 @@ def get_image(sdf_net, latent_code, resolution = 800, focal_distance = 1.75, thr
     ray_directions /= np.linalg.norm(ray_directions, axis=1)[:, np.newaxis]
 
     b = np.einsum('ij,ij->i', points, ray_directions) * 2
-    c = np.dot(camera_position, camera_position) - 1
+    c = np.dot(camera_position, camera_position) - radius * radius
     distance_to_sphere = (-b - np.sqrt(np.power(b, 2) - 4 * c)) / 2
     indices = np.argwhere(np.isfinite(distance_to_sphere)).reshape(-1)
 
@@ -135,7 +135,7 @@ def get_image(sdf_net, latent_code, resolution = 800, focal_distance = 1.75, thr
         model_mask[indices[hits]] = 1
         indices = indices[~hits]
         
-        misses = torch.norm(points[indices, :], dim=1) > 1
+        misses = torch.norm(points[indices, :], dim=1) > radius
         indices = indices[~misses]
         
         if indices.shape[0] < 2:
@@ -149,7 +149,7 @@ def get_image(sdf_net, latent_code, resolution = 800, focal_distance = 1.75, thr
     points = points.cpu().numpy()
     model_points = points[model_mask]
     
-    seen_by_light = 1.0 - get_shadows(sdf_net, model_points, light_position, latent_code)
+    seen_by_light = 1.0 - get_shadows(sdf_net, model_points, light_position, latent_code, radius=radius)
     
     light_direction = light_position[np.newaxis, :] - model_points
     light_direction /= np.linalg.norm(light_direction, axis=1)[:, np.newaxis]

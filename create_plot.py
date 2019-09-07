@@ -573,7 +573,7 @@ if "hybrid_gan" in sys.argv:
     plot = ImageGrid(COUNT, create_viewer=False)
 
     for i in range(COUNT):
-        plot.set_image(get_image(generator, codes[i, :]), i)
+        plot.set_image(get_image(generator, codes[i, :], radius=1.41421), i)
 
     plot.save("plots/hybrid-gan-samples.pdf")
 
