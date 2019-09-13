@@ -4,6 +4,7 @@ from tqdm import tqdm
 from queue import Queue
 from threading import Thread
 import time
+import sys
 
 PATH = 'data/shapenet/03001627/'
 
@@ -71,7 +72,13 @@ def delete_existing_data(directories):
         
         for file in files:
             if os.path.isfile(file):
+                print("Deleting: ", file)
                 os.remove(file)
+
+if 'delete' in sys.argv:
+    directories = get_directorries()
+    delete_existing_data(directories)
+    exit()
 
 print("Scanning for directories.")
 directories = Queue()
