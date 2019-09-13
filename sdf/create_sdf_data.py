@@ -93,6 +93,7 @@ def worker():
         directory = directories.get()
         process_directory(directory)
         progress.update()
+        directories.task_done()
         time.sleep(0.001)
 
 for _ in range(4):
