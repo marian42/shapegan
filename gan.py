@@ -111,6 +111,10 @@ def train():
         generator.save()
         discriminator.save()
 
+        if epoch % 20 == 0:
+            generator.save(epoch=epoch)
+            discriminator.save(epoch=epoch)
+
         if "show_slice" in sys.argv:
             voxels = generator.generate().squeeze()
             print(create_text_slice(voxels))

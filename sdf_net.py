@@ -83,7 +83,12 @@ def train():
             batch_index += 1
         
         print("Epoch {:d}. Loss: {:.8f}".format(epoch, np.mean(loss_values)))
+
         sdf_net.save()
         torch.save(latent_codes, LATENT_CODES_FILENAME)
+        
+        if epoch % 20 == 0:
+            sdf_net.save(epoch=epoch)
+            torch.save(latent_codes, sdf_net.get_filename(epoch=epoch, filename='sdf_net_latent_codes.to'))
 
 train()

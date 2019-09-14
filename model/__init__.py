@@ -21,14 +21,23 @@ class SavableModule(nn.Module):
         super(SavableModule, self).__init__()
         self.filename = filename
 
-    def get_filename(self):
-        return os.path.join(MODEL_PATH, self.filename)
+    def get_filename(self, epoch=None, filename=None):
+        if filename is None:
+            filename = self.filename
+        if epoch is None:
+            return os.path.join(MODEL_PATH, filename)
+        else:
+            filename = filename.split('.')
+            filename[-2] += '-epoch-{:05d}'.format(epoch)
+            filename = '.'.join(filename)
+            return os.path.join(MODEL_PATH, 'checkpoints', filename)
 
-    def load(self):
-        self.load_state_dict(torch.load(self.get_filename()), strict=False)
+
+    def load(self, epoch=None):
+        self.load_state_dict(torch.load(self.get_filename(epoch=epoch)), strict=False)
     
-    def save(self):
-        torch.save(self.state_dict(), self.get_filename())
+    def save(self, epoch=None):
+        torch.save(self.state_dict(), self.get_filename(epoch=epoch))
 
     @property
     def device(self):

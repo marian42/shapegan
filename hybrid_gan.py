@@ -143,6 +143,10 @@ def train():
         generator.save()
         discriminator.save()
 
+        if epoch % 20 == 0:
+            generator.save(epoch=epoch)
+            discriminator.save(epoch=epoch)
+
         if "show_slice" in sys.argv:
             latent_code = sample_latent_codes(1)
             voxels = generator.forward(grid_points, latent_code)

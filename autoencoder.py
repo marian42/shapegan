@@ -139,6 +139,8 @@ def train():
                     viewer.stop()
                 return
         autoencoder.save()
+        if epoch % 20 == 0:
+            autoencoder.save(epoch=epoch)
         test(epoch, time.time() - epoch_start_time)
 
 train()

@@ -83,4 +83,7 @@ def train():
         print("Epoch {:d}. Loss: {:.8f}".format(epoch, np.mean(loss_values)))
         sdf_autoencoder.save()
 
+        if epoch % 20 == 0:
+            sdf_autoencoder.save(epoch=epoch)
+
 train()
