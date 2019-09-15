@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import torch
 import random
+import sys
 
 DATASET_DIRECTORY = "data/shapenet/"
 MIN_SAMPLES_PER_CATEGORY = 2000
@@ -13,6 +14,12 @@ MODELS_SDF_FILENAME = "data/dataset-sdf-{:d}.to".format(VOXEL_SIZE)
 CLOUDS_SDF_FILENAME = "data/dataset-sdf-clouds.to"
 SURFACE_POINTCLOUDS_FILENAME = "data/dataset-surface-pointclouds.to"
 LABELS_FILENAME = "data/labels-{:d}-{:d}.to".format(VOXEL_SIZE, MIN_SAMPLES_PER_CATEGORY)
+
+VOXEL_FILENAME = "sdf-{:d}.npy".format(VOXEL_SIZE)
+SDF_CLOUD_FILENAME = "sdf-pointcloud.npy"
+SURFACE_POINTCLOUD_FILENAME = "surface-pointcloud.npy"
+
+DIRECTORIES_FILE = 'data/models.txt'
 
 SDF_CLIPPING = 0.1
 MIN_OCCUPIED_VOXELS = 550
@@ -62,24 +69,28 @@ class Dataset():
         for i in range(len(self.categories)):
             self.categories[i].label = i
 
-    def find_model_files(self, model_filename):
-        labels = []
-        filenames = []
-
-        print("Scanning directory...")        
-        for label in range(len(self.categories)):
-            current_category = self.categories[label]
-            items_in_category = 0
-            category_directory = os.path.join(DATASET_DIRECTORY, str(current_category.id).rjust(8, '0'))
+    def prepare_models_file(self):
+        directories = []
+        
+        for category in tqdm(self.categories):
+            category_directory = os.path.join(DATASET_DIRECTORY, str(category.id).rjust(8, '0'))
             for subdirectory in os.listdir(category_directory):
-                filename = os.path.join(category_directory, subdirectory, "models", model_filename)
-                if os.path.isfile(filename):
-                    filenames.append(filename)
-                    category_directory += 1
+                model_directory = os.path.join(category_directory, subdirectory, "models")
 
-            labels.append(torch.ones(category_directory) * label)
+                if all(os.path.isfile(os.path.join(model_directory, n)) for n in (VOXEL_FILENAME, SDF_CLOUD_FILENAME, SURFACE_POINTCLOUD_FILENAME)):
+                    directories.append(model_directory)
 
-        return filenames, labels
+        random.shuffle(directories)
+        
+        with open(DIRECTORIES_FILE, 'w') as file:
+            file.write('\n'.join(directories))
+
+    def get_models(self):
+        if not os.path.isfile(DIRECTORIES_FILE):
+            self.prepare_models_file()
+        
+        with open(DIRECTORIES_FILE, 'r') as file:
+            return [line.strip() for line in file.readlines()]
 
     def prepare_binary(self):
         from voxel.binvox_rw import read_as_3d_array
@@ -130,7 +141,7 @@ class Dataset():
         print("Done.")
 
     def prepare_sdf_clouds(self):
-        filenames, _ = self.find_model_files("sdf-pointcloud.npy")
+        filenames, _ = self.find_model_files(SDF_CLOUD_FILENAME)
         used_filenames = []
         
         POINTCLOUD_SIZE = 100000
