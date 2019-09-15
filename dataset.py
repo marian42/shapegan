@@ -9,11 +9,11 @@ import sys
 DATASET_DIRECTORY = "data/shapenet/"
 MIN_SAMPLES_PER_CATEGORY = 2000
 VOXEL_SIZE = 32
-MODELS_FILENAME = "data/dataset-{:d}-{:d}.to".format(VOXEL_SIZE, MIN_SAMPLES_PER_CATEGORY)
-MODELS_SDF_FILENAME = "data/dataset-sdf-{:d}.to".format(VOXEL_SIZE)
-CLOUDS_SDF_FILENAME = "data/dataset-sdf-clouds.to"
-SURFACE_POINTCLOUDS_FILENAME = "data/dataset-surface-pointclouds.to"
-LABELS_FILENAME = "data/labels-{:d}-{:d}.to".format(VOXEL_SIZE, MIN_SAMPLES_PER_CATEGORY)
+
+VOXELS_SDF_FILENAME = "data/voxels-{:d}.to".format(VOXEL_SIZE)
+CLOUDS_SDF_FILENAME = "data/sdf-clouds.to"
+SURFACE_POINTCLOUDS_FILENAME = "data/surface-pointclouds.to"
+LABELS_FILENAME = "data/labels.to"
 
 VOXEL_FILENAME = "sdf-{:d}.npy".format(VOXEL_SIZE)
 SDF_CLOUD_FILENAME = "sdf-pointcloud.npy"
@@ -22,7 +22,6 @@ SURFACE_POINTCLOUD_FILENAME = "surface-pointcloud.npy"
 DIRECTORIES_FILE = 'data/models.txt'
 
 SDF_CLIPPING = 0.1
-MIN_OCCUPIED_VOXELS = 550
 
 class Category():
     def __init__(self, name, id, count):
@@ -42,9 +41,9 @@ class Category():
 
 class Dataset():
     def __init__(self):
-        self.prepare_categories()
+        self.load_categories()
 
-    def prepare_categories(self):
+    def load_categories(self):
         taxonomy_filename = os.path.join(DATASET_DIRECTORY, "taxonomy.json")
         file_content = open(taxonomy_filename).read()
         taxonomy = json.loads(file_content)
@@ -92,59 +91,38 @@ class Dataset():
         with open(DIRECTORIES_FILE, 'r') as file:
             return [line.strip() for line in file.readlines()]
 
-    def prepare_binary(self):
-        from voxel.binvox_rw import read_as_3d_array
-
-        filenames, labels = self.find_model_files("model_normalized.solid.binvox")        
-        
-        indices = list(range(len(filenames)))
-        random.shuffle(indices)
-        if LIMIT_SIZE > 0:
-            indices = indices[:LIMIT_SIZE]
-        filenames = [filenames[i] for i in indices]        
-
-        models = []
-        pool = torch.nn.MaxPool3d(4)
-        print("Loading models...")
-        for filename in tqdm(filenames):
-            voxels = torch.tensor(read_as_3d_array(open(filename, 'rb')).data.astype(np.float32)) * -2 + 1
-            voxels = torch.unsqueeze(voxels, 0)
-            voxels = pool(voxels).squeeze()
-            models.append(voxels.to(torch.int8))
-        
-        print("Saving...")
-        tensor = torch.stack(models).to(torch.int8)
-        torch.save(tensor, MODELS_FILENAME)
-
-        labels = torch.cat(labels).to(torch.int8)[indices]
-        torch.save(labels, LABELS_FILENAME)
-
-        print("Done.")
-
-    def prepare_sdf(self):
-        filenames, _ = self.find_model_files("sdf-{:d}.npy".format(VOXEL_SIZE))
-        
-        random.shuffle(filenames)
-
+    def prepare_voxels(self):
         models = []
         print("Loading models...")
-        for filename in tqdm(filenames):
-            voxels = np.load(filename)
+        for directory in tqdm(self.get_models()):
+            voxels = np.load(os.path.join(directory, VOXEL_FILENAME))
             voxels = torch.tensor(voxels)
             models.append(voxels)
         
-        print("Saving...")
+        print("Stacking...")
         tensor = torch.stack(models)
         tensor = torch.transpose(tensor, 1, 2)
-        torch.save(tensor, MODELS_SDF_FILENAME)
-        
+        print("Saving...")
+        torch.save(tensor, VOXELS_SDF_FILENAME)        
         print("Done.")
 
+    def prepare_labels(self):
+        directories = self.get_models()
+        labels = torch.zeros(len(directories), dtype=torch.int64)
+
+        for i in range(len(directories)):
+            category_id = int(directories[i].split('/')[2])
+            label = self.categories_by_id[category_id].label
+            labels[i] = label
+        
+        torch.save(labels, LABELS_FILENAME)
+
     def prepare_sdf_clouds(self):
+        # Outdated
         filenames, _ = self.find_model_files(SDF_CLOUD_FILENAME)
         used_filenames = []
         
-        POINTCLOUD_SIZE = 100000
+        POINTCLOUD_SIZE = 200000
 
         random.shuffle(filenames)
         result = torch.zeros((POINTCLOUD_SIZE * len(filenames), 4))
@@ -176,6 +154,7 @@ class Dataset():
         print("Used {:d}/{:d} pointclouds.".format(len(used_filenames), len(filenames)))
 
     def prepare_surface_clouds(self, limit_models_number=None):
+        # Outdated
         filenames, _ = self.find_model_files("surface-pointcloud.npy")
         
         POINTCLOUD_SIZE = 50000
@@ -201,28 +180,25 @@ class Dataset():
         
         print("Done.")
 
-    def load_sdf(self, device):
+    def load_voxels(self, device):
         print("Loading dataset...")
-        self.voxels = torch.load(MODELS_SDF_FILENAME).to(device).float()
-
-        if MIN_OCCUPIED_VOXELS != 0:
-            occupied = torch.sum(self.voxels < 0, dim=[1, 2, 3])
-            mask = occupied > MIN_OCCUPIED_VOXELS
-            self.voxels = self.voxels[mask, :, :, :]
+        self.voxels = torch.load(VOXELS_SDF_FILENAME).to(device).float()
 
         torch.clamp_(self.voxels, -SDF_CLIPPING, SDF_CLIPPING)
         self.voxels /= SDF_CLIPPING
         self.size = self.voxels.shape[0]
-        self.label_indices = torch.zeros(self.size).to(torch.int64).to(device)
-        self.labels = torch.zeros((self.size, self.label_count))
-        self.labels[torch.arange(0, self.size, dtype=torch.long, device=device), self.label_indices] = 1
-        self.labels = self.labels.to(device)
+        
+        self.labels = torch.load(LABELS_FILENAME).to(device)
 
 
 dataset = Dataset()
 
 if __name__ == "__main__":
-    dataset.prepare_sdf_clouds()
+    if "init" in sys.argv:
+        dataset.get_models()
+        dataset.prepare_labels()
+    if "prepare_voxels" in sys.arg:
+        dataset.prepare_voxels()
 else:
     from util import device
-    dataset.load_sdf(device)
+    dataset.load_voxels(device)

@@ -220,8 +220,7 @@ class MeshSDF:
 
         max_distance = max(np.max(d1), np.max(d2), np.max(d3))
         if max_distance > 2.0 / voxels.shape[0] * 1.5:
-            raise BadMeshException()
-        
+            raise BadMeshException()        
     
     def show_pointcloud(self):
         scene = pyrender.Scene()
@@ -254,8 +253,7 @@ def show_mesh(mesh):
 
 if __name__ == "__main__":
     PATH = 'data/shapenet/03001627/6ae8076b0f9c74199c2009e4fd70d135/models/model_normalized.obj'
-    #PATH = 'data/shapenet/03001627/64871dc28a21843ad504e40666187f4e/models/model_normalized.obj'
-
+    
     mesh = trimesh.load(PATH)
     mesh = scale_to_unit_sphere(mesh)
 
