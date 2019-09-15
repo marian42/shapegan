@@ -197,7 +197,7 @@ if __name__ == "__main__":
     if "init" in sys.argv:
         dataset.get_models()
         dataset.prepare_labels()
-    if "prepare_voxels" in sys.arg:
+    if "prepare_voxels" in sys.argv:
         dataset.prepare_voxels()
 else:
     from util import device
