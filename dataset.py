@@ -6,25 +6,25 @@ import torch
 import random
 
 DATASET_DIRECTORY = "data/shapenet/"
-MIN_SAMPLES_PER_CLASS = 500
+MIN_SAMPLES_PER_CATEGORY = 2000
 VOXEL_SIZE = 32
-LIMIT_SIZE = 15000
-MODELS_FILENAME = "data/dataset-{:d}-{:d}-{:d}.to".format(VOXEL_SIZE, LIMIT_SIZE, MIN_SAMPLES_PER_CLASS)
+MODELS_FILENAME = "data/dataset-{:d}-{:d}.to".format(VOXEL_SIZE, MIN_SAMPLES_PER_CATEGORY)
 MODELS_SDF_FILENAME = "data/dataset-sdf-{:d}.to".format(VOXEL_SIZE)
 CLOUDS_SDF_FILENAME = "data/dataset-sdf-clouds.to"
 SURFACE_POINTCLOUDS_FILENAME = "data/dataset-surface-pointclouds.to"
-LABELS_FILENAME = "data/labels-{:d}-{:d}-{:d}.to".format(VOXEL_SIZE, LIMIT_SIZE, MIN_SAMPLES_PER_CLASS)
+LABELS_FILENAME = "data/labels-{:d}-{:d}.to".format(VOXEL_SIZE, MIN_SAMPLES_PER_CATEGORY)
 
 SDF_CLIPPING = 0.1
 MIN_OCCUPIED_VOXELS = 550
 
-class DataClass():
+class Category():
     def __init__(self, name, id, count):
         self.name = name
         self.id = id
         self.is_root = True
         self.children = []
         self.count = count
+        self.label = None
 
     def print(self, depth = 0):
         if self.count < MIN_SIZE:
@@ -35,45 +35,49 @@ class DataClass():
 
 class Dataset():
     def __init__(self):
-        self.prepare_class_data()
+        self.prepare_categories()
 
-    def prepare_class_data(self):
+    def prepare_categories(self):
         taxonomy_filename = os.path.join(DATASET_DIRECTORY, "taxonomy.json")
         file_content = open(taxonomy_filename).read()
         taxonomy = json.loads(file_content)
-        classes = dict()
+        categories = dict()
         for item in taxonomy:
             id = int(item['synsetId'])
-            dataclass = DataClass(item['name'], id, item['numInstances'])
-            classes[id] = dataclass
+            category = Category(item['name'], id, item['numInstances'])
+            categories[id] = category
 
         for item in taxonomy:
             id = int(item['synsetId'])
-            dataclass = classes[id]
+            category = categories[id]
             for str_id in item["children"]:
                 child_id = int(str_id)
-                dataclass.children.append(classes[child_id])
-                classes[child_id].is_root = False
+                category.children.append(categories[child_id])
+                categories[child_id].is_root = False
         
-        self.classes = [item for item in classes.values() if item.is_root and item.count >= MIN_SAMPLES_PER_CLASS]
-        self.label_count = len(self.classes)
+        self.categories = [item for item in categories.values() if item.is_root and item.count >= MIN_SAMPLES_PER_CATEGORY]
+        self.categories = sorted(self.categories, key=lambda item: item.id)
+        self.categories_by_id = {item.id : item for item in self.categories}
+        self.label_count = len(self.categories)
+        for i in range(len(self.categories)):
+            self.categories[i].label = i
 
     def find_model_files(self, model_filename):
         labels = []
         filenames = []
 
         print("Scanning directory...")        
-        for label in range(len(self.classes)):
-            current_class = self.classes[label]
-            items_in_class = 0
-            class_directory = os.path.join(DATASET_DIRECTORY, str(current_class.id).rjust(8, '0'))
-            for subdirectory in os.listdir(class_directory):
-                filename = os.path.join(class_directory, subdirectory, "models", model_filename)
+        for label in range(len(self.categories)):
+            current_category = self.categories[label]
+            items_in_category = 0
+            category_directory = os.path.join(DATASET_DIRECTORY, str(current_category.id).rjust(8, '0'))
+            for subdirectory in os.listdir(category_directory):
+                filename = os.path.join(category_directory, subdirectory, "models", model_filename)
                 if os.path.isfile(filename):
                     filenames.append(filename)
-                    items_in_class += 1
+                    category_directory += 1
 
-            labels.append(torch.ones(items_in_class) * label)
+            labels.append(torch.ones(category_directory) * label)
 
         return filenames, labels
 
@@ -185,16 +189,6 @@ class Dataset():
         torch.save(result, SURFACE_POINTCLOUDS_FILENAME)
         
         print("Done.")
-
-
-    def load_binary(self, device):
-        print("Loading dataset...")
-        self.voxels = torch.load(MODELS_FILENAME).to(device).float()
-        self.size = self.voxels.shape[0]
-        self.label_indices = torch.load(LABELS_FILENAME).to(torch.int64).to(device)
-        self.labels = torch.zeros((self.size, self.label_count))
-        self.labels[torch.arange(0, self.size, dtype=torch.long, device=device), self.label_indices] = 1
-        self.labels = self.labels.to(device)
 
     def load_sdf(self, device):
         print("Loading dataset...")
