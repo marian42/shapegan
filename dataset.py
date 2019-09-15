@@ -11,7 +11,8 @@ MIN_SAMPLES_PER_CATEGORY = 2000
 VOXEL_SIZE = 32
 
 VOXELS_SDF_FILENAME = "data/voxels-{:d}.to".format(VOXEL_SIZE)
-CLOUDS_SDF_FILENAME = "data/sdf-clouds.to"
+SDF_POINTS_FILENAME = "data/sdf-points-{:d}.to"
+SDF_VALUES_FILENAME = "data/sdf--values-{:d}.to"
 SURFACE_POINTCLOUDS_FILENAME = "data/surface-pointclouds.to"
 LABELS_FILENAME = "data/labels.to"
 
@@ -22,6 +23,8 @@ SURFACE_POINTCLOUD_FILENAME = "surface-pointcloud.npy"
 DIRECTORIES_FILE = 'data/models.txt'
 
 SDF_CLIPPING = 0.1
+
+SDF_PARTS = 5
 
 class Category():
     def __init__(self, name, id, count):
@@ -121,65 +124,32 @@ class Dataset():
         torch.save(labels, LABELS_FILENAME)
 
     def prepare_sdf_clouds(self):
-        # Outdated
-        filenames, _ = self.find_model_files(SDF_CLOUD_FILENAME)
-        used_filenames = []
-        
+        directories = self.get_models()        
         POINTCLOUD_SIZE = 200000
+        part_size = POINTCLOUD_SIZE // SDF_PARTS
 
-        random.shuffle(filenames)
-        result = torch.zeros((POINTCLOUD_SIZE * len(filenames), 4))
-        position = 0
+        for part in range(SDF_PARTS):
+            print("Preparing part {:d} / {:d}...".format(part + 1, SDF_PARTS))
 
-        print("Loading models...")
-        for filename in tqdm(filenames):
-            cloud = np.load(filename)
-            if cloud.shape[0] != POINTCLOUD_SIZE:
-                print("Bad pointcloud shape: ", cloud.shape)
-                continue
+            points = torch.zeros((part_size * len(directories), 3))
+            sdf = torch.zeros((part_size * len(directories)))            
+            position = 0
+
+            print("Loading models...")
+            for directory in tqdm(directories):
+                cloud = np.load(os.path.join(directory, SDF_CLOUD_FILENAME))
+                cloud = cloud[part::SDF_PARTS, :]
+                if cloud.shape[0] != part_size:
+                    raise Exception("Bad pointcloud shape: ", cloud.shape)
+
+                cloud = torch.tensor(cloud)
+                points[position * part_size:(position + 1) * part_size, :] = cloud[:, :3]
+                sdf[position * part_size:(position + 1) * part_size] = cloud[:, 3]
+                position += 1
             
-            model_size = np.count_nonzero(cloud[-20000:, 3] < 0) / 20000
-            if model_size < 0.015:
-                continue
-
-            cloud = torch.tensor(cloud)
-            result[position * POINTCLOUD_SIZE:(position + 1) * POINTCLOUD_SIZE, :] = cloud
-            position += 1
-            used_filenames.append(filename)
-        
-        print("Saving...")
-        result = result[:position * POINTCLOUD_SIZE, :].clone()
-        torch.save(result, CLOUDS_SDF_FILENAME)
-
-        with open('data/sdf-clouds.txt', 'w') as file:
-            file.write('\n'.join(used_filenames))
-        
-        print("Used {:d}/{:d} pointclouds.".format(len(used_filenames), len(filenames)))
-
-    def prepare_surface_clouds(self, limit_models_number=None):
-        # Outdated
-        filenames, _ = self.find_model_files("surface-pointcloud.npy")
-        
-        POINTCLOUD_SIZE = 50000
-        if limit_models_number is not None:
-            filenames = filenames[:limit_models_number]
-
-        random.shuffle(filenames)
-        result = torch.zeros((POINTCLOUD_SIZE * len(filenames), 6))
-        position = 0
-
-        print("Loading models...")
-        for filename in tqdm(filenames):
-            cloud = np.load(filename)
-            if cloud.shape[0] != POINTCLOUD_SIZE:
-                print("Bad pointcloud shape: ", cloud.shape)
-                continue
-            cloud = torch.tensor(cloud)
-            result[position * POINTCLOUD_SIZE:(position + 1) * POINTCLOUD_SIZE, :] = cloud
-            position += 1
-        
-        print("Saving...")
-        torch.save(result, SURFACE_POINTCLOUDS_FILENAME)
+            print("Saving...")
+            torch.save(points, SDF_POINTS_FILENAME.format(part))
+            torch.save(sdf, SDF_VALUES_FILENAME.format(part))
         
         print("Done.")
 
@@ -208,3 +178,5 @@ if __name__ == "__main__":
         dataset.prepare_labels()
     if "prepare_voxels" in sys.argv:
         dataset.prepare_voxels()
+    if "prepare_sdf" in sys.argv:
+        dataset.prepare_sdf_clouds()
