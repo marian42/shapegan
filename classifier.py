@@ -26,8 +26,9 @@ random.shuffle(all_indices)
 test_indices = all_indices[:int(dataset.size * TEST_SPLIT)]
 training_indices = list(all_indices[int(dataset.size * TEST_SPLIT):])
 test_data = dataset.voxels[test_indices]
-test_labels = dataset.labels[test_indices]
-test_classes = dataset.label_indices[test_indices]
+labels_onehot = dataset.get_labels_onehot(device)
+test_labels = labels_onehot[test_indices]
+test_classes = labels_onehot[test_indices]
 
 classifier = Classifier()
 if "continue" in sys.argv:
@@ -66,7 +67,7 @@ def train():
         for batch in create_batches():
             indices = torch.tensor(batch, device = device)
             sample = dataset.voxels[indices, :, :, :]
-            labels = dataset.labels[indices]
+            labels = labels_onehot[indices]
 
             classifier.zero_grad()
             output = classifier.forward(sample)
@@ -77,7 +78,7 @@ def train():
             error_history.append(error)
 
             _, output_classes = torch.max(output, 1)
-            accuracy = float(torch.sum(output_classes == dataset.label_indices[indices])) / len(indices)
+            accuracy = float(torch.sum(output_classes == labels_onehot[indices])) / len(indices)
             accuracy_history.append(accuracy)
 
             batch_index += 1

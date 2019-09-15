@@ -190,6 +190,10 @@ class Dataset():
         
         self.labels = torch.load(LABELS_FILENAME).to(device)
 
+    def get_labels_onehot(self, device):
+        labels_onehot = torch.zeros(self.size, self.label_count).to(device)
+        labels_onehot[:, self.labels] = 1
+        return labels_onehot
 
 dataset = Dataset()
 

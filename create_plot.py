@@ -111,7 +111,7 @@ if "autoencoder" in sys.argv:
     print("Generating codes...")
     with torch.no_grad():
         codes = autoencoder.encode(voxels).cpu().numpy()
-    labels = dataset.label_indices[indices].cpu().numpy()
+    labels = dataset.get_labels_onehot('cpu')[indices].numpy()
     create_tsne_plot(codes, voxels, labels, "plots/{:s}autoencoder-images.pdf".format('' if 'classic' in sys.argv else 'variational-'))
 
 if "autoencoder_hist" in sys.argv:
