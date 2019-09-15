@@ -41,6 +41,9 @@ class Category():
 
 class Dataset():
     def __init__(self):
+        self.clip_sdf = True
+        self.rescale_sdf = True
+
         self.load_categories()
 
     def load_categories(self):
@@ -184,8 +187,10 @@ class Dataset():
         print("Loading dataset...")
         self.voxels = torch.load(VOXELS_SDF_FILENAME).to(device).float()
 
-        torch.clamp_(self.voxels, -SDF_CLIPPING, SDF_CLIPPING)
-        self.voxels /= SDF_CLIPPING
+        if self.clip_sdf:
+            torch.clamp_(self.voxels, -SDF_CLIPPING, SDF_CLIPPING)
+            if self.rescale_sdf:
+                self.voxels /= SDF_CLIPPING
         self.size = self.voxels.shape[0]
         
         self.labels = torch.load(LABELS_FILENAME).to(device)

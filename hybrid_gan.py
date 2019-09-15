@@ -17,6 +17,7 @@ from util import create_text_slice, device, standard_normal_distribution
 from dataset import dataset as dataset, VOXEL_SIZE, SDF_CLIPPING
 from loss import inception_score
 from util import create_text_slice
+dataset.rescale_sdf = False
 dataset.load_voxels(device)
 
 generator = SDFNet()
@@ -24,8 +25,6 @@ generator.filename = 'hybrid_gan_generator.to'
 
 discriminator = Discriminator()
 discriminator.filename = 'hybrid_gan_discriminator.to'
-
-dataset.voxels *= SDF_CLIPPING # Undo scaling of SDF values that is done by the dataset loader
 
 if "continue" in sys.argv:
     generator.load()
