@@ -1,19 +1,18 @@
 import os
-from mesh_to_sdf import *
+from sdf.mesh_to_sdf import *
 from tqdm import tqdm
 from queue import Queue
 from threading import Thread
 import time
 import sys
 
-PATH = 'data/shapenet/03001627/'
+from dataset import dataset as dataset
+from dataset import VOXEL_FILENAME, SDF_CLOUD_FILENAME, SURFACE_POINTCLOUD_FILENAME, VOXEL_SIZE
 
 BAD_MODEL_FILENAME = "bad_model"
-VOXEL_RESOLUTION = 32
 MODEL_FILENAME = "model_normalized.obj"
-VOXEL_FILENAME = "sdf-{:d}.npy".format(VOXEL_RESOLUTION)
-SDF_CLOUD_FILENAME = "sdf-pointcloud.npy"
-SURFACE_POINTCLOUD_FILENAME = "surface-pointcloud.npy"
+
+NUMBER_OF_THREADS = 2
 
 def mark_bad_model(directory):
     open(os.path.join(directory, BAD_MODEL_FILENAME), 'w')
@@ -41,7 +40,7 @@ def process_directory(directory):
 
     if not os.path.isfile(voxels_filename):
         try:
-            voxels = mesh_sdf.get_voxel_sdf(voxel_count=VOXEL_RESOLUTION)
+            voxels = mesh_sdf.get_voxel_sdf(voxel_count=VOXEL_SIZE)
             np.save(voxels_filename, voxels)
         except BadMeshException:
             mark_bad_model(directory)
@@ -58,9 +57,10 @@ def process_directory(directory):
     return True
     
 def get_directorries():
-    for directory, _, files in os.walk(PATH):
-        if MODEL_FILENAME in files:
-            yield directory
+    for category in tqdm(dataset.categories):
+        for directory, _, files in os.walk(category.get_directory()):
+            if MODEL_FILENAME in files:
+                yield directory
 
 def delete_existing_data(directories):
     for directory in directories:
@@ -96,7 +96,7 @@ def worker():
         directories.task_done()
         time.sleep(0.001)
 
-for _ in range(4):
+for _ in range(NUMBER_OF_THREADS):
     thread = Thread(target=worker)
     thread.start()
 directories.join()

@@ -42,6 +42,9 @@ class Category():
         for child in self.children:
             child.print(depth = depth + 1)
 
+    def get_directory(self):
+        return os.path.join(DATASET_DIRECTORY, str(self.id).rjust(8, '0'))
+
 class Dataset():
     def __init__(self):
         self.clip_sdf = True
@@ -78,7 +81,7 @@ class Dataset():
         directories = []
         
         for category in tqdm(self.categories):
-            category_directory = os.path.join(DATASET_DIRECTORY, str(category.id).rjust(8, '0'))
+            category_directory = category.get_directory()
             for subdirectory in os.listdir(category_directory):
                 model_directory = os.path.join(category_directory, subdirectory, "models")
 
