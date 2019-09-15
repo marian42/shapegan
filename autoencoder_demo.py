@@ -13,6 +13,7 @@ from voxel.viewer import VoxelViewer
 from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
 from dataset import dataset as dataset
 from util import device
+dataset.load_voxels(device)
 
 autoencoder = Autoencoder(is_variational='classic' not in sys.argv)
 autoencoder.load()

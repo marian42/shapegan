@@ -23,6 +23,7 @@ if "mesh" in sys.argv:
         time.sleep(0.5)
     
 else:
+    dataset.load_voxels('cpu')
     for i in tqdm(list(range(dataset.voxels.shape[0]))):
         try:
             viewer.set_voxels(dataset.voxels[i, :, :, :].squeeze().detach().cpu().numpy())

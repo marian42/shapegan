@@ -21,6 +21,7 @@ from collections import deque
 
 from dataset import dataset as dataset
 from util import create_text_slice, device
+dataset.load_voxels(device)
 
 
 BATCH_SIZE = 32

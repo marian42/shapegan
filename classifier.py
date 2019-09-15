@@ -17,6 +17,7 @@ from model.classifier import Classifier
 from loss import voxel_difference, kld_loss
 from dataset import dataset as dataset
 from util import device
+dataset.load_voxels(device)
 
 BATCH_SIZE = 32
 TEST_SPLIT = 0.1

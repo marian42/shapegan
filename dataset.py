@@ -203,6 +203,3 @@ if __name__ == "__main__":
         dataset.prepare_labels()
     if "prepare_voxels" in sys.argv:
         dataset.prepare_voxels()
-else:
-    from util import device
-    dataset.load_voxels(device)

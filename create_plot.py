@@ -104,6 +104,7 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
 
 if "autoencoder" in sys.argv:
     from dataset import dataset as dataset
+    dataset.load_voxels(device)
     
     indices = random.sample(list(range(dataset.size)), 1000)
     voxels = dataset.voxels[indices, :, :, :]
@@ -117,6 +118,7 @@ if "autoencoder" in sys.argv:
 if "autoencoder_hist" in sys.argv:
     import scipy.stats
     from dataset import dataset as dataset
+    dataset.load_voxels(device)
     is_variational = 'classic' not in sys.argv
 
     x_range = 4 if is_variational else 1
@@ -167,6 +169,7 @@ if "autodecoder_hist" in sys.argv:
 
 if "autoencoder_examples" in sys.argv:
     from dataset import dataset as dataset
+    dataset.load_voxels(device)
 
     from voxel.viewer import VoxelViewer
     viewer = VoxelViewer(start_thread=False)
@@ -199,6 +202,7 @@ if "autoencoder_examples" in sys.argv:
 
 if "autoencoder_examples_2" in sys.argv:
     from dataset import dataset as dataset
+    dataset.load_voxels(device)
 
     indices = random.sample(list(range(dataset.size)), 5)
     voxels = dataset.voxels[indices, :, :, :]
@@ -223,6 +227,7 @@ if "autoencoder_examples_2" in sys.argv:
 
 if "autoencoder_generate" in sys.argv:
     from dataset import dataset as dataset
+    dataset.load_voxels(device)
     from sklearn.metrics import pairwise_distances
 
     SAMPLES = 5
@@ -276,6 +281,7 @@ if "autoencoder_generate" in sys.argv:
 
 if "autoencoder_interpolation" in sys.argv:
     from dataset import dataset as dataset
+    dataset.load_voxels(device)
     voxels = dataset.voxels
 
     STEPS = 6
@@ -460,6 +466,7 @@ if "sdf_slice" in sys.argv:
 
 if "voxel_occupancy" in sys.argv:
     from dataset import dataset as dataset
+    dataset.load_voxels(device)
     voxels = dataset.voxels.cpu()
     mask = voxels < 0
     occupied = torch.sum(mask, dim=[1, 2, 3]).numpy()
