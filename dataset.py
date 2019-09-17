@@ -24,6 +24,7 @@ DIRECTORIES_FILE = 'data/models.txt'
 
 SDF_CLIPPING = 0.1
 POINTCLOUD_SIZE = 200000
+SURFACE_POINTCLOUD_SIZE = 50000
 
 SDF_PARTS = 8
 
@@ -159,6 +160,27 @@ class Dataset():
         
         print("Done.")
 
+    def prepare_surface_clouds(self):
+        directories = self.get_models()
+
+        points = torch.zeros((SURFACE_POINTCLOUD_SIZE * len(directories), 3))
+        position = 0
+
+        print("Loading models...")
+        for directory in tqdm(directories):
+            cloud = np.load(os.path.join(directory, SURFACE_POINTCLOUD_FILENAME))
+            if cloud.shape[0] != SURFACE_POINTCLOUD_SIZE:
+                raise Exception("Bad pointcloud shape: ", cloud.shape)
+
+            cloud = torch.tensor(cloud)
+            points[position * SURFACE_POINTCLOUD_SIZE:(position + 1) * SURFACE_POINTCLOUD_SIZE, :] = cloud[:, :3]
+            position += 1
+        
+        print("Saving...")
+        torch.save(points, SURFACE_POINTCLOUDS_FILENAME)
+        
+        print("Done.")
+
     def load_voxels(self, device):
         print("Loading dataset...")
         self.voxels = torch.load(VOXELS_SDF_FILENAME).to(device).float()
@@ -178,6 +200,10 @@ class Dataset():
                 labels = labels.to(device)
             self.labels = labels
 
+    def load_surface_clouds(self, device):
+        self.surface_pointclouds = torch.load(SURFACE_POINTCLOUDS_FILENAME).to(device)
+        return self.surface_pointclouds
+
     def get_labels_onehot(self, device):
         labels_onehot = torch.nn.functional.one_hot(self.labels, self.label_count).to(torch.float32)
         return labels_onehot.type(torch.float32).to(device)
@@ -192,6 +218,8 @@ if __name__ == "__main__":
         dataset.prepare_voxels()
     if "prepare_sdf" in sys.argv:
         dataset.prepare_sdf_clouds()
+    if "prepare_surface" in sys.argv:
+        dataset.prepare_surface_clouds()
     if "stats" in sys.argv:
         dataset.load_labels()
         label_count = torch.sum(dataset.get_labels_onehot('cpu'), dim=0)
