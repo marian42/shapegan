@@ -195,10 +195,21 @@ if __name__ == "__main__":
     if "stats" in sys.argv:
         dataset.load_labels()
         label_count = torch.sum(dataset.get_labels_onehot('cpu'), dim=0)
-        for category in dataset.categories:
-            print('{:d}: {:s} - used {:d} / {:d}'.format(
-                category.label,
-                category.name,
-                int(label_count[category.label]),
-                category.count))
+        if "latex" in sys.argv:
+            for category in sorted(dataset.categories, key=lambda c: -c.count):
+                print('{:s} & {:d} & {:d} \\\\'.format(
+                    category.name,
+                    category.count,
+                    int(label_count[category.label])))
+
+            print('\midrule total & {:d} & {:d} \\\\'.format(
+                    sum(c.count for c in dataset.categories),
+                    int(torch.sum(label_count))))
+        else:
+            for category in sorted(dataset.categories, key=lambda c: -c.count):
+                print('{:d}: {:s} - used {:d} / {:d}'.format(
+                    category.label,
+                    category.name,
+                    int(label_count[category.label]),
+                    category.count))
 
