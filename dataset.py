@@ -52,6 +52,7 @@ class Dataset():
         self.rescale_sdf = True
 
         self.load_categories()
+        self.labels = None
 
     def load_categories(self):
         taxonomy_filename = os.path.join(DATASET_DIRECTORY, "taxonomy.json")
@@ -167,8 +168,15 @@ class Dataset():
             if self.rescale_sdf:
                 self.voxels /= SDF_CLIPPING
         self.size = self.voxels.shape[0]
+
+        self.load_labels(device=device)        
         
-        self.labels = torch.load(LABELS_FILENAME).to(device)
+    def load_labels(self, device = None):
+        if self.labels is None:
+            labels = torch.load(LABELS_FILENAME)
+            if device is not None:
+                labels = labels.to(device)
+            self.labels = labels
 
     def get_labels_onehot(self, device):
         labels_onehot = torch.nn.functional.one_hot(self.labels, self.label_count).to(torch.float32)
@@ -184,3 +192,13 @@ if __name__ == "__main__":
         dataset.prepare_voxels()
     if "prepare_sdf" in sys.argv:
         dataset.prepare_sdf_clouds()
+    if "stats" in sys.argv:
+        dataset.load_labels()
+        label_count = torch.sum(dataset.get_labels_onehot('cpu'), dim=0)
+        for category in dataset.categories:
+            print('{:d}: {:s} - used {:d} / {:d}'.format(
+                category.label,
+                category.name,
+                int(label_count[category.label]),
+                category.count))
+
