@@ -34,8 +34,6 @@ class InceptionScore():
         self.classifier = None
 
     def __call__(self, input):
-        return 0
-        
         if self.classifier is None:
             from model.classifier import Classifier
             self.classifier = Classifier()
