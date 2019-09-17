@@ -12,7 +12,7 @@ VOXEL_SIZE = 32
 
 VOXELS_SDF_FILENAME = "data/voxels-{:d}.to".format(VOXEL_SIZE)
 SDF_POINTS_FILENAME = "data/sdf-points-{:d}.to"
-SDF_VALUES_FILENAME = "data/sdf--values-{:d}.to"
+SDF_VALUES_FILENAME = "data/sdf-values-{:d}.to"
 SURFACE_POINTCLOUDS_FILENAME = "data/surface-pointclouds.to"
 LABELS_FILENAME = "data/labels.to"
 
@@ -23,8 +23,9 @@ SURFACE_POINTCLOUD_FILENAME = "surface-pointcloud.npy"
 DIRECTORIES_FILE = 'data/models.txt'
 
 SDF_CLIPPING = 0.1
+POINTCLOUD_SIZE = 200000
 
-SDF_PARTS = 5
+SDF_PARTS = 8
 
 class Category():
     def __init__(self, name, id, count):
@@ -127,8 +128,7 @@ class Dataset():
         torch.save(labels, LABELS_FILENAME)
 
     def prepare_sdf_clouds(self):
-        directories = self.get_models()        
-        POINTCLOUD_SIZE = 200000
+        directories = self.get_models()
         part_size = POINTCLOUD_SIZE // SDF_PARTS
 
         for part in range(SDF_PARTS):
@@ -153,6 +153,8 @@ class Dataset():
             print("Saving...")
             torch.save(points, SDF_POINTS_FILENAME.format(part))
             torch.save(sdf, SDF_VALUES_FILENAME.format(part))
+            del points
+            del sdf
         
         print("Done.")
 
