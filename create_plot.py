@@ -378,7 +378,7 @@ def get_moving_average(data, window_size):
     return np.arange(window_size / 2, data.shape[0] - window_size / 2, dtype=int), moving_average
 
 if "gan_training" in sys.argv:
-    data = numpy.genfromtxt('plots/gan_training.csv', delimiter=' ')
+    data = np.genfromtxt('plots/gan_training.csv', delimiter=' ')
         
     plt.plot(data[:, 2])
     plt.plot(*get_moving_average(data[:, 2], 10))
@@ -389,7 +389,7 @@ if "gan_training" in sys.argv:
     plt.savefig("plots/gan-training.pdf")
 
 if "wgan_training" in sys.argv:
-    data = numpy.genfromtxt('plots/wgan_training.csv', delimiter=' ')
+    data = np.genfromtxt('plots/wgan_training.csv', delimiter=' ')
         
     plt.plot(data[:, 2])
     plt.plot(*get_moving_average(data[:, 2], 10))
@@ -404,7 +404,7 @@ def create_autoencoder_training_plot(data_file, title, plot_file):
     if not os.path.isfile(data_file):
         return
 
-    data = numpy.genfromtxt(data_file, delimiter=' ')
+    data = np.genfromtxt(data_file, delimiter=' ')
     
     #plt.yscale('log')
     plt.axhline(y=data[-1, 2], color='black', linewidth=1)
