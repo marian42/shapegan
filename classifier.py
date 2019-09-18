@@ -14,7 +14,6 @@ random.seed(0)
 torch.manual_seed(0)
 
 from model.classifier import Classifier
-from loss import voxel_difference, kld_loss
 from dataset import dataset as dataset
 from util import device
 dataset.load_voxels(device)

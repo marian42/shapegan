@@ -189,7 +189,6 @@ class Dataset():
             torch.clamp_(self.voxels, -SDF_CLIPPING, SDF_CLIPPING)
             if self.rescale_sdf:
                 self.voxels /= SDF_CLIPPING
-        self.size = self.voxels.shape[0]
 
         self.load_labels(device=device)        
         
@@ -199,6 +198,7 @@ class Dataset():
             if device is not None:
                 labels = labels.to(device)
             self.labels = labels
+            self.size = self.labels.shape[0]
 
     def load_surface_clouds(self, device):
         self.surface_pointclouds = torch.load(SURFACE_POINTCLOUDS_FILENAME).to(device)
