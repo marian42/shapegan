@@ -79,6 +79,7 @@ def load_sdf_net(filename=None, return_latent_codes = False):
 def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf"):
     from sklearn.manifold import TSNE
     from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+    import colorsys
 
     print("Calculating t-sne embedding...")
     tsne = TSNE(n_components=2)
@@ -86,8 +87,9 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
     
     print("Plotting...")
     fig, ax = plt.subplots()
+    plt.axis('off')
     ax.scatter(embedded[:, 0], embedded[:, 1], c=labels, s = 40, cmap='Set1')
-    fig.set_size_inches(40, 40)
+    fig.set_size_inches(40, 50)
 
     if voxels is not None:
         print("Creating images...")
@@ -95,6 +97,7 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
         viewer = VoxelViewer(start_thread=False)
         for i in tqdm(range(voxels.shape[0])):
             viewer.set_voxels(voxels[i, :, :, :].cpu().numpy())
+            viewer.model_color = colorsys.hsv_to_rgb(((labels[i] - 2) / dataset.label_count) % 1, 0.8888, 0.9)
             image = viewer.get_image(crop=True, output_size=128)
             box = AnnotationBbox(OffsetImage(image, zoom = 0.5, cmap='gray'), embedded[i, :], frameon=True)
             ax.add_artist(box)
@@ -105,6 +108,7 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
 if "autoencoder" in sys.argv:
     from dataset import dataset as dataset
     dataset.load_voxels(device)
+    dataset.load_labels(device)
     
     indices = random.sample(list(range(dataset.size)), 1000)
     voxels = dataset.voxels[indices, :, :, :]
@@ -112,7 +116,7 @@ if "autoencoder" in sys.argv:
     print("Generating codes...")
     with torch.no_grad():
         codes = autoencoder.encode(voxels).cpu().numpy()
-    create_tsne_plot(codes, voxels, dataset.labels[indices].cpu().numpy(), "plots/{:s}autoencoder-images.pdf".format('' if 'classic' in sys.argv else 'variational-'))
+    create_tsne_plot(codes, voxels, dataset.labels[indices].cpu().numpy(), "plots/{:s}autoencoder-tsne.pdf".format('' if 'classic' in sys.argv else 'variational-'))
 
 if "autoencoder_hist" in sys.argv:
     import scipy.stats

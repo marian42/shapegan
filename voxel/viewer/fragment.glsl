@@ -9,9 +9,9 @@ sampler2D shadow_map;
 const float ambient = 0.5;
 const float diffuse = 0.5;
 const float specular = 0.3;
-const vec3 albedo = vec3(0.8, 0.1, 0.1);
 
 uniform float isFloor;
+uniform vec3 albedo;
 
 float isInShadow(vec2 uv, float reference_depth) {
     return reference_depth > texture(shadow_map, uv.xy).r ? 1.0 : 0.0;

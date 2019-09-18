@@ -25,6 +25,7 @@ class Shader(object):
         self.shadow_texture_location = None
         self.is_floor_location = None
         self.y_offset_location = None
+        self.color_location = None
 
         try:
             glUseProgram(self.program)
@@ -54,6 +55,11 @@ class Shader(object):
         if self.is_floor_location is None:
             self.is_floor_location = glGetUniformLocation(self.program, 'isFloor')
         glUniform1fv(self.is_floor_location, 1, 1.0 if is_floor else 0.0)
+
+    def set_color(self, color):
+        if self.color_location is None:
+            self.color_location = glGetUniformLocation(self.program, 'albedo')
+        glUniform3fv(self.color_location, 1, color)
 
     def set_y_offset(self, value):
         if self.y_offset_location is None:

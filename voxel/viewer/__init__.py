@@ -92,6 +92,7 @@ class VoxelViewer():
         self.window = None
 
         self.background_color = background_color
+        self.model_color = (0.8, 0.1, 0.1)
 
         self.shadow_framebuffer = None
         self.shadow_texture = None
@@ -250,6 +251,7 @@ class VoxelViewer():
         
         self.shader.use()
         self.shader.set_floor(False)
+        self.shader.set_color(self.model_color)
         self.shader.set_y_offset(0)
         camera_vp_matrix = get_camera_transform(self.model_size * 2, self.rotation[0], self.rotation[1])
         self.shader.set_vp_matrix(camera_vp_matrix)
@@ -273,7 +275,7 @@ class VoxelViewer():
         self._draw_mesh()
         self.shader.set_floor(True)
         self._draw_floor()
-        self.render_lock.release()        
+        self.render_lock.release()
 
     def _initialize_opengl(self):
         pygame.init()
