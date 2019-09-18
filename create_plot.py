@@ -92,7 +92,7 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
     if voxels is not None:
         print("Creating images...")
         from voxel.viewer import VoxelViewer
-        viewer = VoxelViewer(start_thread=False, background_color = (1.0, 1.0, 1.0, 1.0))
+        viewer = VoxelViewer(start_thread=False)
         for i in tqdm(range(voxels.shape[0])):
             viewer.set_voxels(voxels[i, :, :, :].cpu().numpy())
             image = viewer.get_image(crop=True, output_size=128)
@@ -112,8 +112,7 @@ if "autoencoder" in sys.argv:
     print("Generating codes...")
     with torch.no_grad():
         codes = autoencoder.encode(voxels).cpu().numpy()
-    labels = dataset.get_labels_onehot('cpu')[indices].numpy()
-    create_tsne_plot(codes, voxels, labels, "plots/{:s}autoencoder-images.pdf".format('' if 'classic' in sys.argv else 'variational-'))
+    create_tsne_plot(codes, voxels, dataset.labels[indices].cpu().numpy(), "plots/{:s}autoencoder-images.pdf".format('' if 'classic' in sys.argv else 'variational-'))
 
 if "autoencoder_hist" in sys.argv:
     import scipy.stats
