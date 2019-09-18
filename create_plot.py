@@ -407,18 +407,22 @@ def create_autoencoder_training_plot(data_file, title, plot_file):
     data = np.genfromtxt(data_file, delimiter=' ')
     
     #plt.yscale('log')
-    plt.axhline(y=data[-1, 2], color='black', linewidth=1)
-    plt.plot(data[:, 2], label='Reconstruction loss ({:.4f})'.format(data[-1, 2]))
-    plt.plot(*get_moving_average(data[:, 2], 10), label='Reconstruction loss (Moving average)')
-    plt.plot(data[:, 3], label='KLD loss ({:.4f})'.format(data[-1, 3]))
-    voxel_error = np.array(data[:, 4])
-    voxel_error *= data[0, 2] / voxel_error[0]
-    plt.plot(voxel_error, label='Voxel error ({:.4f})'.format(data[-1, 4]))
+    max_reconstruction_loss = np.max(data[:, 2])
+    reconstruction_loss = data[:, 2] / max_reconstruction_loss
+    kld_loss = data[:, 3] / max_reconstruction_loss
+    voxel_error = data[:, 4] / np.max(data[:, 4])
+    inception_score = data[:, 5] / np.max(data[:, 5])
+    #plt.axhline(y=data[-1, 2], color='black', linewidth=1)
+    plt.plot(reconstruction_loss, label='Reconstruction loss ({:.3f})'.format(data[-1, 2]))
+    #plt.plot(kld_loss, label='KLD loss ({:.3f})'.format(data[-1, 3]))
+    plt.plot(voxel_error, label='Voxel error ({:.3f})'.format(data[-1, 4]))
+    plt.plot(inception_score, label='Inception score ({:.3f})'.format(data[-1, 5]))
 
     plt.xlabel('Epoch')
+    plt.yticks([])
     plt.title(title)
-    plt.legend()
-    plt.savefig(plot_file)
+    plt.legend(loc='center right')
+    plt.savefig(plot_file, bbox_inches='tight')
     plt.clf()
 
 if "autoencoder_training" in sys.argv:
