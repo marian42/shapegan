@@ -161,9 +161,10 @@ class Dataset():
         print("Done.")
 
     def prepare_surface_clouds(self):
+        SKIP_POINTS = 2
         directories = self.get_models()
 
-        points = torch.zeros((SURFACE_POINTCLOUD_SIZE * len(directories), 3))
+        points = torch.zeros((SURFACE_POINTCLOUD_SIZE * len(directories) // SKIP_POINTS, 3))
         position = 0
 
         print("Loading models...")
@@ -172,8 +173,8 @@ class Dataset():
             if cloud.shape[0] != SURFACE_POINTCLOUD_SIZE:
                 raise Exception("Bad pointcloud shape: ", cloud.shape)
 
-            cloud = torch.tensor(cloud)
-            points[position * SURFACE_POINTCLOUD_SIZE:(position + 1) * SURFACE_POINTCLOUD_SIZE, :] = cloud[:, :3]
+            cloud = torch.tensor(cloud[::SKIP_POINTS, :3])
+            points[position * SURFACE_POINTCLOUD_SIZE // SKIP_POINTS:(position + 1) * (SURFACE_POINTCLOUD_SIZE // SKIP_POINTS), :] = cloud
             position += 1
         
         print("Saving...")

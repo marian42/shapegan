@@ -20,7 +20,7 @@ from util import device
 
 dataset.load_labels(device=device)
 points = dataset.load_surface_clouds('cpu')
-points = points[::2, :].to(device)
+points = points.to(device)
 del dataset.surface_pointclouds
 
 TEST_SPLIT = 0.75
