@@ -8,12 +8,12 @@ import numpy as np
 from voxel.viewer import VoxelViewer
 from util import device, standard_normal_distribution
 
-points = torch.load("data/dataset-sdf-clouds-points.to").to(device)
-sdf = torch.load("data/dataset-sdf-clouds-sdf.to").to(device)
+points = torch.load("data/chairs-points.to").to(device)
+sdf = torch.load("data/chairs-sdf.to").to(device)
 
 POINTCLOUD_SIZE = 100000
 MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
-POINT_SAMPLE_COUNT = 4096
+POINT_SAMPLE_COUNT = 1000
 SDF_CUTOFF = 0.1
 torch.clamp_(sdf, -SDF_CUTOFF, SDF_CUTOFF)
 
@@ -92,7 +92,7 @@ for step in count():
 
 
     if step % 50 == 0 and step != 0:
-        print("Prediction on fake samples: {:.3f}, on real samples: {:.3f}".format(np.mean(history_fake), np.mean(history_real)))
+        print("Step {:d}: Prediction on fake samples: {:.3f}, on real samples: {:.3f}".format(step, np.mean(history_fake), np.mean(history_real)))
         try:
             viewer.set_mesh(generator.get_mesh(create_latent_code(repeat=1)))
         except ValueError:
