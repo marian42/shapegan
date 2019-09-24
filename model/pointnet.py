@@ -27,9 +27,7 @@ class GlobalSetAbstractionModule(torch.nn.Module):
     def forward(self, features, points, batch):
         x = self.nn(torch.cat([features, points], dim=1))
         x = global_max_pool(x, batch)
-        points = points.new_zeros((x.size(0), 3))
-        batch = torch.arange(x.size(0), device=batch.device)
-        return x, points, batch
+        return x
 
 
 def create_MLP(layer_sizes):
@@ -39,6 +37,5 @@ def create_MLP(layer_sizes):
             continue
         layers.append(Linear(layer_sizes[i - 1], layer_size))
         layers.append(ReLU())
-        layers.append(BatchNorm1d(layer_size))
 
     return Sequential(*layers)

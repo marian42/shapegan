@@ -25,7 +25,7 @@ del dataset.surface_pointclouds
 
 TEST_SPLIT = 0.75
 POINTCLOUD_SIZE = points.shape[0] // dataset.size
-SAMPLE_SIZE = 4000
+SAMPLE_SIZE = 1000
 
 all_indices = list(range(dataset.size))
 test_indices = all_indices[:int(dataset.size * TEST_SPLIT)]
@@ -36,7 +36,7 @@ classifier = PointcloudClassifier()
 if "continue" in sys.argv:
     classifier.load()
 
-optimizer = optim.Adam(classifier.parameters(), lr=0.0005)
+optimizer = optim.Adam(classifier.parameters(), lr=0.0008)
 criterion = nn.BCELoss()
 
 error_history = deque(maxlen = dataset.size)
