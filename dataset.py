@@ -226,12 +226,12 @@ if __name__ == "__main__":
         label_count = torch.sum(dataset.get_labels_onehot('cpu'), dim=0)
         if "latex" in sys.argv:
             for category in sorted(dataset.categories, key=lambda c: -c.count):
-                print('{:s} & {:d} & {:d} \\\\'.format(
-                    category.name,
+                print('{:s} & \\SI{{{:d}}}{{}} & \\SI{{{:d}}}{{}} \\\\'.format(
+                    category.name.split(',')[0],
                     category.count,
                     int(label_count[category.label])))
 
-            print('\midrule total & {:d} & {:d} \\\\'.format(
+            print('\midrule\ntotal & \\SI{{{:d}}}{{}} & \\SI{{{:d}}}{{}} \\\\'.format(
                     sum(c.count for c in dataset.categories),
                     int(torch.sum(label_count))))
         else:
