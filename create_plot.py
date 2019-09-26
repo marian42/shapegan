@@ -428,9 +428,36 @@ def create_autoencoder_training_plot(data_file, title, plot_file):
     plt.savefig(plot_file, bbox_inches='tight')
     plt.clf()
 
+def create_autoencoder_training_plot_latex():
+    data = np.genfromtxt('plots/variational_autoencoder_training.csv', delimiter=' ')
+    
+    plt.plot(data[:, 2], label='Reconstruction loss')
+    plt.plot(data[:, 3], label='KLD loss')    
+    plt.xlabel('Epoch')
+    plt.legend()
+    plt.title('Loss')
+    plt.savefig('plots/vae-training-loss.pdf', bbox_inches='tight')
+
+    plt.clf()
+    plt.plot(data[:, 4]) 
+    plt.xlabel('Epoch')
+    plt.title('Voxel error')
+    plt.savefig('plots/vae-training-error.pdf', bbox_inches='tight')
+    
+    plt.clf()
+    plt.plot(data[:, 5]) 
+    plt.xlabel('Epoch')
+    plt.title('Inception score')
+    plt.savefig('plots/vae-training-inception-score.pdf', bbox_inches='tight')
+    
+    plt.clf()
+
 if "autoencoder_training" in sys.argv:
-    create_autoencoder_training_plot('plots/autoencoder_training.csv', 'Autoencoder Training', 'plots/autoencoder-training.pdf')
-    create_autoencoder_training_plot('plots/variational_autoencoder_training.csv', 'Variational Autoencoder Training', 'plots/variational-autoencoder-training.pdf')
+    if 'latex' in sys.argv:
+        create_autoencoder_training_plot_latex()
+    else:
+        create_autoencoder_training_plot('plots/autoencoder_training.csv', 'Autoencoder Training', 'plots/autoencoder-training.pdf')
+        create_autoencoder_training_plot('plots/variational_autoencoder_training.csv', 'Variational Autoencoder Training', 'plots/variational-autoencoder-training.pdf')
 
 if "sdf_slice" in sys.argv:
     from sdf.mesh_to_sdf import MeshSDF, scale_to_unit_sphere
