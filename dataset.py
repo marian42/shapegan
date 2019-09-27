@@ -208,6 +208,24 @@ class Dataset():
     def get_labels_onehot(self, device):
         labels_onehot = torch.nn.functional.one_hot(self.labels, self.label_count).to(torch.float32)
         return labels_onehot.type(torch.float32).to(device)
+    
+    def get_color(self, label):
+        if label == 2:
+            return (0.9, 0.1, 0.14) # red
+        elif label == 1:
+            return (0.8, 0.7, 0.1) # yellow
+        elif label == 6:
+            return (0.05, 0.7, 0.05) # green
+        elif label == 5:
+            return (0.1, 0.2, 0.9) # blue
+        elif label == 4:
+            return (0.46, 0.1, 0.9) # purple
+        elif label == 3:
+            return (0.9, 0.1, 0.673) # purple
+        elif label == 0:
+            return (0.05, 0.6, 0.6) # cyan
+        else:
+            return (0.7, 0.7, 0.7)
 
 dataset = Dataset()
 
