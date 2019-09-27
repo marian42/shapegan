@@ -34,14 +34,16 @@ class ImageGrid():
         cell.axis('off')
         cell.patch.set_visible(False)
 
-    def set_voxels(self, voxels, x = 0, y = 0):
+    def set_voxels(self, voxels, x = 0, y = 0, color=None):
+        if color is not None:
+            self.viewer.model_color = color
         self.viewer.set_voxels(voxels)
         image = self.viewer.get_image(crop=self.crop)
         self.set_image(image, x, y)
 
     def save(self, filename):
         plt.axis('off')
-        extent = self.figure.get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())    
+        extent = self.figure.get_window_extent().transformed(self.figure.dpi_scale_trans.inverted())
         plt.savefig(filename, bbox_inches=extent, dpi=400)
         if self.viewer is not None:
             self.viewer.delete_buffers()
@@ -81,6 +83,8 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
     from matplotlib.offsetbox import OffsetImage, AnnotationBbox
     import colorsys
 
+    width, height = 40, 50
+
     print("Calculating t-sne embedding...")
     tsne = TSNE(n_components=2)
     embedded = tsne.fit_transform(codes)
@@ -88,8 +92,16 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
     print("Plotting...")
     fig, ax = plt.subplots()
     plt.axis('off')
-    ax.scatter(embedded[:, 0], embedded[:, 1], c=labels, s = 40, cmap='Set1')
-    fig.set_size_inches(40, 50)
+    margin = 0.0128
+    plt.margins(margin * height / width, margin)
+
+    x = embedded[:, 0]
+    y = embedded[:, 1]
+    x = np.interp(x, (x.min(), x.max()), (0, 1))
+    y = np.interp(y, (y.min(), y.max()), (0, 1))
+
+    ax.scatter(x, y, c=labels, s = 40, cmap='Set1')
+    fig.set_size_inches(width, height)
 
     if voxels is not None:
         print("Creating images...")
@@ -97,13 +109,15 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
         viewer = VoxelViewer(start_thread=False)
         for i in tqdm(range(voxels.shape[0])):
             viewer.set_voxels(voxels[i, :, :, :].cpu().numpy())
-            viewer.model_color = colorsys.hsv_to_rgb(((labels[i] - 2) / dataset.label_count) % 1, 0.8888, 0.9)
+            viewer.model_color = dataset.get_color(labels[i])
             image = viewer.get_image(crop=True, output_size=128)
-            box = AnnotationBbox(OffsetImage(image, zoom = 0.5, cmap='gray'), embedded[i, :], frameon=True)
+            box = AnnotationBbox(OffsetImage(image, zoom = 0.5, cmap='gray'), (x[i], y[i]), frameon=True)
             ax.add_artist(box)
         
     print("Saving PDF...")
-    plt.savefig(filename, dpi=200, bbox_inches='tight')
+    
+    extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
+    plt.savefig(filename, bbox_inches=extent, dpi=200)
 
 if "autoencoder" in sys.argv:
     from dataset import dataset as dataset
