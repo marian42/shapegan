@@ -395,12 +395,23 @@ if "wgan_training" in sys.argv:
     data = np.genfromtxt('plots/wgan_training.csv', delimiter=' ')
         
     plt.plot(data[:, 2])
-    plt.plot(*get_moving_average(data[:, 2], 10))
+    #plt.plot(*get_moving_average(data[:, 2], 10))
 
     plt.ylabel('Inception Score')
     plt.xlabel('Epoch')
-    plt.title('WGAN Training')
-    plt.savefig("plots/wgan-training.pdf")
+    plt.title('Inception Score')
+    plt.savefig("plots/wgan-training-score.pdf", bbox_inches='tight')
+
+    plt.clf()
+    plt.yscale('log')
+    plt.plot(data[:, 4], label="Assessment of real objects")
+    plt.plot(data[:, 3], label="Assessment of fake objects")
+
+    plt.ylabel('Critic output')
+    plt.xlabel('Epoch')
+    plt.title('Critic assessment')
+    plt.legend()
+    plt.savefig("plots/wgan-training-critic.pdf", bbox_inches='tight')
 
 
 def create_autoencoder_training_plot(data_file, title, plot_file):
