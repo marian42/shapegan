@@ -215,7 +215,7 @@ class Dataset():
         elif label == 1:
             return (0.8, 0.7, 0.1) # yellow
         elif label == 6:
-            return (0.05, 0.7, 0.05) # green
+            return (0.05, 0.5, 0.05) # green
         elif label == 5:
             return (0.1, 0.2, 0.9) # blue
         elif label == 4:
@@ -223,7 +223,7 @@ class Dataset():
         elif label == 3:
             return (0.9, 0.1, 0.673) # purple
         elif label == 0:
-            return (0.05, 0.6, 0.6) # cyan
+            return (0.01, 0.6, 0.9) # cyan
         else:
             return (0.7, 0.7, 0.7)
 
