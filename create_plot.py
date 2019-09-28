@@ -83,7 +83,7 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
     from matplotlib.offsetbox import OffsetImage, AnnotationBbox
     import colorsys
 
-    width, height = 40, 50
+    width, height = 40, 52
 
     print("Calculating t-sne embedding...")
     tsne = TSNE(n_components=2)
@@ -118,6 +118,24 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf")
     
     extent = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
     plt.savefig(filename, bbox_inches=extent, dpi=200)
+
+if "color-test" in sys.argv:
+    import colorsys
+    from dataset import dataset as dataset
+    dataset.load_voxels('cpu')
+    voxels = dataset.voxels
+
+    COUNT = dataset.label_count
+
+    plot = ImageGrid(COUNT)
+    
+    for label in tqdm(range(COUNT)):
+        objects = (dataset.labels == label).nonzero()
+        index = objects[random.randint(0, objects.shape[0] - 1)].item()
+        tensor = voxels[index, :, :, :].clone()
+        plot.set_voxels(tensor, label, color=dataset.get_color(label))
+
+    plot.save("plots/test.pdf")
 
 if "autoencoder" in sys.argv:
     from dataset import dataset as dataset
