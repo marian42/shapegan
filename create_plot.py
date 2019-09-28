@@ -488,7 +488,7 @@ def create_autoencoder_training_plot_latex():
     plt.savefig('plots/vae-training-error.pdf', bbox_inches='tight')
     
     plt.clf()
-    plt.plot(data[:, 5]) 
+    plt.plot(data[:, 5] * 3.23444) # workaround for outdated reference inception score
     plt.xlabel('Epoch')
     plt.title('Inception score')
     plt.savefig('plots/vae-training-inception-score.pdf', bbox_inches='tight')

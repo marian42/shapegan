@@ -27,7 +27,7 @@ def kld_loss(mean, log_variance):
     return -0.5 * torch.sum(1 + log_variance - mean.pow(2) - log_variance.exp()) / mean.nelement()
 
 # Inception score of a sample from the dataset
-REFERENCE_INCEPTION_SCORE = 14.33
+REFERENCE_INCEPTION_SCORE_VOXEL = 4.430443 # 14.33, factor 3.23444
 
 class InceptionScore():
     def __init__(self):
@@ -46,6 +46,6 @@ class InceptionScore():
             kld = -torch.sum(label_distribution * torch.log(marginal_distribution / label_distribution), dim = 1)
             
             score = torch.exp(torch.mean(kld[torch.isfinite(kld)]))
-        return score.item() / REFERENCE_INCEPTION_SCORE
+        return score.item() / REFERENCE_INCEPTION_SCORE_VOXEL
 
 inception_score = InceptionScore()
