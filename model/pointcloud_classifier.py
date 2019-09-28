@@ -19,11 +19,8 @@ class PointcloudClassifier(SavableModule):
 
         self.cuda()
 
-    def forward(self, points, labels=None):
-        if labels is None:
-            batch = torch.zeros(points.shape[0], device=points.device, dtype=torch.int64)
-        else:
-            batch = labels.repeat(points.shape[0] / labels.shape[0])
+    def forward(self, points):
+        batch = torch.zeros(points.shape[0], device=points.device, dtype=torch.int64)
         
         x, points, batch = self.set_abstraction_1(None, points, batch)
         x, points, batch = self.set_abstraction_2(x, points, batch)

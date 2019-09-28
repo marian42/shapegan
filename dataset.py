@@ -203,6 +203,7 @@ class Dataset():
 
     def load_surface_clouds(self, device):
         self.surface_pointclouds = torch.load(SURFACE_POINTCLOUDS_FILENAME).to(device)
+        self.load_labels(device)
         return self.surface_pointclouds
 
     def get_labels_onehot(self, device):
