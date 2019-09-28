@@ -112,7 +112,6 @@ class Autoencoder(SavableModule):
     def get_inception_score(self, sample_size = 1000):
         with torch.no_grad():
             shape = torch.Size([sample_size, LATENT_CODE_SIZE])
-            inception_score_latent_codes[sample_size] = standard_normal_distribution.sample(shape).to(self.device)
-
-            sample = self.decode(inception_score_latent_codes[sample_size])
+            inception_score_latent_codes = standard_normal_distribution.sample(shape).to(self.device)
+            sample = self.decode(inception_score_latent_codes)
             return inception_score(sample)
