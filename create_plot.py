@@ -137,6 +137,33 @@ if "color-test" in sys.argv:
 
     plot.save("plots/test.pdf")
 
+if "autoencoder-classes" in sys.argv:
+    import colorsys
+    from dataset import dataset as dataset
+    dataset.load_voxels(device)
+
+    COUNT = dataset.label_count
+
+    vae = load_autoencoder(is_variational=True)
+    indices = []
+    for label in tqdm(range(COUNT)):
+        objects = (dataset.labels == label).nonzero()
+        indices.append(objects[random.randint(0, objects.shape[0] - 1)].item())    
+    voxels = dataset.voxels[indices, :, :, :]
+
+    print("Generating codes...")
+    with torch.no_grad():
+        codes_vae = vae.encode(voxels)
+        reconstructed_vae = vae.decode(codes_vae).cpu().numpy()
+    
+    plot = ImageGrid(COUNT, 2)
+
+    for i in range(COUNT):
+        plot.set_voxels(voxels[i, :, :, :], i, 0, color=dataset.get_color(i))
+        plot.set_voxels(reconstructed_vae[i, :, :, :], i, 1)
+
+    plot.save("plots/vae-reconstruction-classes.pdf")
+
 if "autoencoder" in sys.argv:
     from dataset import dataset as dataset
     dataset.load_voxels(device)
@@ -351,7 +378,36 @@ if "autoencoder_interpolation" in sys.argv:
         plot.set_voxels(reconstructed_ae[i, :, :, :], i, 0)
         plot.set_voxels(reconstructed_vae[i, :, :, :], i, 1)
 
-    plot.save("plots/ae-vae-interpolation.pdf")    
+    plot.save("plots/ae-vae-interpolation.pdf")
+
+if "autoencoder_interpolation_2" in sys.argv:
+    from dataset import dataset as dataset
+    dataset.load_voxels(device)
+    voxels = dataset.voxels
+
+    STEPS = 6
+    
+    indices = random.sample(list(range(dataset.size)), STEPS)
+    print(indices)
+    
+    vae = load_autoencoder(is_variational=True)
+
+    print("Generating codes...")
+    with torch.no_grad():
+        codes_vae = torch.zeros([STEPS, LATENT_CODE_SIZE], device=device)
+        codes_start_end = vae.encode(voxels[indices, :, :, :])
+        code_start = codes_start_end[0, :]
+        code_end = codes_start_end[1, :]
+        for i in range(STEPS):
+            codes_vae[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
+        reconstructed_vae = vae.decode(codes_vae)
+
+    plot = ImageGrid(STEPS)
+    
+    for i in range(STEPS):
+        plot.set_voxels(reconstructed_vae[i, :, :, :], i)
+
+    plot.save("plots/vae-interpolation.pdf")
 
 if "gan_tsne" in sys.argv:
     generator = load_generator(is_wgan='wgan' in sys.argv)
@@ -435,7 +491,7 @@ if "wgan_training" in sys.argv:
     plt.savefig("plots/wgan-training-score.pdf", bbox_inches='tight')
 
     plt.clf()
-    plt.yscale('log')
+    plt.ylim((-400, 1000))
     plt.plot(data[:, 4], label="Assessment of real objects")
     plt.plot(data[:, 3], label="Assessment of fake objects")
 
@@ -574,6 +630,19 @@ if "model_images" in sys.argv:
         viewer.set_mesh(mesh, center_and_scale=True)
         image = viewer.get_image(crop=False, output_size=viewer.size, greyscale=False)
         cv2.imwrite(image_filename, image)
+
+if "wgan-results" in sys.argv:
+    from util import crop_image
+
+    COUNT = 5
+    
+    plot = ImageGrid(COUNT, create_viewer=False)
+    
+    for i in range(COUNT):
+        image = plt.imread('screenshots/wgan/{:d}.png'.format(i))
+        plot.set_image(crop_image(image, background=1), i)
+        
+    plot.save('plots/wgan-results.pdf')
 
 if 'sdf_net_reconstruction' in sys.argv:
     from raymarching import render_image_for_index
