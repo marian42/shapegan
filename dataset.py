@@ -28,6 +28,8 @@ SURFACE_POINTCLOUD_SIZE = 50000
 
 SDF_PARTS = 8
 
+from util import device
+
 class Category():
     def __init__(self, name, id, count):
         self.name = name
@@ -47,6 +49,28 @@ class Category():
     def get_directory(self):
         return os.path.join(DATASET_DIRECTORY, str(self.id).rjust(8, '0'))
 
+class SDFPart():
+    def __init__(self, index, dataset):
+        self.index = index
+        self.points_filename = SDF_POINTS_FILENAME.format(index)
+        self.values_filename = SDF_VALUES_FILENAME.format(index)
+        self.points = None
+        self.values = None
+        self.dataset = dataset
+
+    def load(self):
+        self.points = torch.load(self.points_filename).to(device)
+        self.values = torch.load(self.values_filename).to(device)
+        
+        if self.dataset.clip_sdf:
+            torch.clamp_(self.values, -SDF_CLIPPING, SDF_CLIPPING)
+            if self.dataset.rescale_sdf:
+                self.values /= SDF_CLIPPING
+
+    def unload(self):
+        del self.points
+        del self.values
+
 class Dataset():
     def __init__(self):
         self.clip_sdf = True
@@ -54,6 +78,10 @@ class Dataset():
 
         self.load_categories()
         self.labels = None
+
+        self.sdf_part_count = 8
+        self.last_part_loaded = None
+        self.sdf_parts = [SDFPart(i, self) for i in range(self.sdf_part_count)]
 
     def load_categories(self):
         taxonomy_filename = os.path.join(DATASET_DIRECTORY, "taxonomy.json")
@@ -227,6 +255,14 @@ class Dataset():
             return (0.01, 0.6, 0.9) # cyan
         else:
             return (0.7, 0.7, 0.7)
+
+    def load_sdf_part(self, index):
+        if self.last_part_loaded is not None and self.last_part_loaded.index != index:
+            self.last_part_loaded.unload()
+        part = self.sdf_parts[index]
+        part.load()
+        self.last_part_loaded = part
+        return part
 
 dataset = Dataset()
 
