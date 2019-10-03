@@ -40,6 +40,8 @@ network_optimizer = optim.Adam(sdf_net.parameters(), lr=1e-5)
 latent_code_optimizer = optim.Adam([latent_codes], lr=1e-5)
 criterion = nn.MSELoss()
 
+log_file = open("plots/sdf_net_training.csv", "a" if "continue" in sys.argv else "w")
+
 def create_batches():
     size = POINTCLOUD_PART_SIZE * dataset.size
     batch_count = int(size / BATCH_SIZE)
@@ -51,12 +53,12 @@ def create_batches():
 
 def train():
     for epoch in count():
+        epoch_start_time = time.time()
         progress = tqdm(total=dataset.sdf_part_count * POINTCLOUD_PART_SIZE * dataset.size // BATCH_SIZE)
+        loss_values = []
+        batch_index = 0
         for part_index in range(dataset.sdf_part_count):
             dataset_part = dataset.load_sdf_part(part_index)
-            loss_values = []
-            batch_index = 0
-            epoch_start_time = time.time()
             for batch in list(create_batches()):
                 indices = torch.tensor(batch, device = device)
                 model_indices = indices / POINTCLOUD_PART_SIZE
@@ -82,14 +84,18 @@ def train():
 
                 batch_index += 1
                 progress.update()
+        progress.close()
         
         print("Epoch {:d}. Loss: {:.8f}".format(epoch, np.mean(loss_values)))
 
         sdf_net.save()
         torch.save(latent_codes, LATENT_CODES_FILENAME)
         
-        if epoch % 20 == 0:
+        if epoch % 5 == 0:
             sdf_net.save(epoch=epoch)
             torch.save(latent_codes, sdf_net.get_filename(epoch=epoch, filename='sdf_net_latent_codes.to'))
+
+        log_file.write('{:d} {:.1f} {:.6f}\n'.format(epoch, time.time() - epoch_start_time, np.mean(loss_values)))
+        log_file.flush()
 
 train()
