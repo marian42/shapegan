@@ -95,9 +95,8 @@ def train():
         sdf_net.save()
         torch.save(latent_codes, LATENT_CODES_FILENAME)
         
-        if epoch % 5 == 0:
-            sdf_net.save(epoch=epoch)
-            torch.save(latent_codes, sdf_net.get_filename(epoch=epoch, filename='sdf_net_latent_codes.to'))
+        sdf_net.save(epoch=epoch)
+        torch.save(latent_codes, sdf_net.get_filename(epoch=epoch, filename='sdf_net_latent_codes.to'))
 
         log_file.write('{:d} {:.1f} {:.6f} {:.6f} {:.6f}\n'.format(epoch, epoch_duration, np.mean(loss_values), score, variance))
         log_file.flush()
