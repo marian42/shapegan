@@ -79,7 +79,7 @@ class Dataset():
         self.load_categories()
         self.labels = None
 
-        self.sdf_part_count = 8
+        self.sdf_part_count = SDF_PARTS
         self.last_part_loaded = None
         self.sdf_parts = [SDFPart(i, self) for i in range(self.sdf_part_count)]
 

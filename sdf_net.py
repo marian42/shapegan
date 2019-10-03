@@ -85,8 +85,12 @@ def train():
                 batch_index += 1
                 progress.update()
         progress.close()
+
+        variance = np.var(latent_codes.detach().reshape(-1).cpu().numpy()) ** 0.5
+        score = sdf_net.get_inception_score(latent_variance = variance)
+        epoch_duration = time.time() - epoch_start_time
         
-        print("Epoch {:d}. Loss: {:.8f}".format(epoch, np.mean(loss_values)))
+        print("Epoch {:d}, {:.1f}s. Loss: {:.8f}, Inception score: {:.4}".format(epoch, epoch_duration, np.mean(loss_values), score))
 
         sdf_net.save()
         torch.save(latent_codes, LATENT_CODES_FILENAME)
@@ -95,7 +99,7 @@ def train():
             sdf_net.save(epoch=epoch)
             torch.save(latent_codes, sdf_net.get_filename(epoch=epoch, filename='sdf_net_latent_codes.to'))
 
-        log_file.write('{:d} {:.1f} {:.6f}\n'.format(epoch, time.time() - epoch_start_time, np.mean(loss_values)))
+        log_file.write('{:d} {:.1f} {:.6f} {:.6f} {:.6f}\n'.format(epoch, epoch_duration, np.mean(loss_values), score, variance))
         log_file.flush()
 
 train()
