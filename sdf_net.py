@@ -68,6 +68,8 @@ def train():
                 batch_sdf = dataset_part.values[indices]
 
                 sdf_net.zero_grad()
+                if latent_codes.grad is not None:
+                    latent_codes.grad.data.zero_()
                 output = sdf_net.forward(batch_points, batch_latent_codes)
                 output = output.clamp(-SDF_CUTOFF, SDF_CUTOFF)
                 loss = torch.mean(torch.abs(output - batch_sdf)) + SIGMA * torch.mean(torch.pow(batch_latent_codes, 2))
