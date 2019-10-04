@@ -59,8 +59,12 @@ class SDFPart():
         self.dataset = dataset
 
     def load(self):
-        self.points = torch.load(self.points_filename).to(device)
-        self.values = torch.load(self.values_filename).to(device)
+        points_cpu = torch.load(self.points_filename)
+        self.points = points_cpu.to(device)
+        del points_cpu
+        values_cpu = torch.load(self.values_filename)
+        self.values = values_cpu.to(device)
+        del values_cpu
         
         if self.dataset.clip_sdf:
             torch.clamp_(self.values, -SDF_CLIPPING, SDF_CLIPPING)
