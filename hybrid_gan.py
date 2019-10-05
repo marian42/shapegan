@@ -73,7 +73,7 @@ def sample_latent_codes(current_batch_size):
     latent_codes = standard_normal_distribution.sample(sample_shape=[current_batch_size, LATENT_CODE_SIZE]).to(device)
     latent_codes = latent_codes.repeat((1, 1, grid_points.shape[0])).reshape(-1, LATENT_CODE_SIZE)
     return latent_codes
-                
+
 
 grid_points = create_grid_points()
 history_fake = deque(maxlen=50)
@@ -153,7 +153,7 @@ def train():
             voxels = voxels.reshape(VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
             print(create_text_slice(voxels / SDF_CLIPPING))
 
-        score = 0
+        score = generator.get_inception_score()
         prediction_fake = np.mean(history_fake)
         prediction_real = np.mean(history_real)
         print('Epoch {:d} ({:.1f}s), inception score: {:.4f}, prediction on fake: {:.4f}, prediction on real: {:.4f}'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
