@@ -27,6 +27,8 @@ SDF_CUTOFF = 0.1
 
 SIGMA = 0.01
 
+LOG_FILE_NAME = "plots/sdf_net_training.csv"
+
 sdf_net = SDFNet()
 if "continue" in sys.argv:
     sdf_net.load()
@@ -40,7 +42,12 @@ network_optimizer = optim.Adam(sdf_net.parameters(), lr=1e-5)
 latent_code_optimizer = optim.Adam([latent_codes], lr=1e-5)
 criterion = nn.MSELoss()
 
-log_file = open("plots/sdf_net_training.csv", "a" if "continue" in sys.argv else "w")
+first_epoch = 0
+if 'continue' in sys.argv:
+    log_file_contents = open(LOG_FILE_NAME, 'r').readlines()
+    first_epoch = len(log_file_contents)
+
+log_file = open(LOG_FILE_NAME, "a" if "continue" in sys.argv else "w")
 
 def create_batches():
     size = POINTCLOUD_PART_SIZE * dataset.size
@@ -52,7 +59,7 @@ def create_batches():
     yield indices[(batch_count - 1) * BATCH_SIZE:]
 
 def train():
-    for epoch in count():
+    for epoch in count(start=first_epoch):
         epoch_start_time = time.time()
         progress = tqdm(total=dataset.sdf_part_count * POINTCLOUD_PART_SIZE * dataset.size // BATCH_SIZE)
         loss_values = []
