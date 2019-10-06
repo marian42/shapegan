@@ -739,7 +739,7 @@ if 'sdf_net_reconstruction' in sys.argv:
         mesh = Image.open(MESH_FILENAME.format(indices[i]))
         plot.set_image(mesh, i, 0)
 
-        image = render_image_for_index(sdf_net, latent_codes, indices[i])
+        image = render_image_for_index(sdf_net, latent_codes, indices[i], crop=True)
         plot.set_image(image, i, 1)
 
     plot.save('plots/deepsdf-reconstruction.pdf')
@@ -764,11 +764,11 @@ if "sdf_net_interpolation" in sys.argv:
 
     plot = ImageGrid(STEPS, create_viewer=False)
     
-    plot.set_image(render_image_for_index(sdf_net, latent_codes, indices[0]), 0)
-    plot.set_image(render_image_for_index(sdf_net, latent_codes, indices[1]), STEPS - 1)
+    plot.set_image(render_image_for_index(sdf_net, latent_codes, indices[0], crop=True), 0)
+    plot.set_image(render_image_for_index(sdf_net, latent_codes, indices[1], crop=True), STEPS - 1)
 
     for i in range(1, STEPS - 1):
-        plot.set_image(render_image(sdf_net, codes[i, :]), i)
+        plot.set_image(render_image(sdf_net, codes[i, :], crop=True), i)
 
     plot.save("plots/deepsdf-interpolation.pdf")
 
@@ -788,7 +788,7 @@ if "sdf_net_sample" in sys.argv:
     plot = ImageGrid(COUNT, create_viewer=False)
 
     for i in range(COUNT):
-        plot.set_image(render_image(sdf_net, codes[i, :]), i)
+        plot.set_image(render_image(sdf_net, codes[i, :], crop=True), i)
 
     plot.save("plots/deepsdf-samples.pdf")
     
@@ -804,7 +804,7 @@ if "hybrid_gan" in sys.argv:
     plot = ImageGrid(COUNT, create_viewer=False)
 
     for i in range(COUNT):
-        plot.set_image(render_image(generator, codes[i, :], radius=1.41421), i)
+        plot.set_image(render_image(generator, codes[i, :], radius=1.41421, crop=True), i)
 
     plot.save("plots/hybrid-gan-samples.pdf")
 
@@ -827,7 +827,7 @@ if "hybrid_gan_interpolation" in sys.argv:
     plot = ImageGrid(STEPS, create_viewer=False)
     
     for i in range(STEPS):
-        plot.set_image(render_image(sdf_net, codes[i, :]), i)
+        plot.set_image(render_image(sdf_net, codes[i, :], crop=True), i)
 
     plot.save("plots/hybrid-gan-interpolation.pdf")
 

@@ -188,14 +188,14 @@ def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, ite
 
 
 
-def render_image_for_index(sdf_net, latent_codes, index):
+def render_image_for_index(sdf_net, latent_codes, index, crop=False):
     FILENAME = 'screenshots/raymarching-examples/image-{:d}.png'
     filename = FILENAME.format(index)
 
     if os.path.isfile(filename):
         return Image.open(filename)
     
-    img = render_image(sdf_net, latent_codes[index])
+    img = render_image(sdf_net, latent_codes[index], crop=crop)
     img.save(filename)
     return img
 
