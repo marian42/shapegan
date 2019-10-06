@@ -23,7 +23,7 @@ from tqdm import tqdm
 dataset.rescale_sdf = False
 dataset.load_voxels(device)
 
-LEARN_RATE = 0.00005
+LEARN_RATE = 0.00001
 BATCH_SIZE = 8
 CRITIC_UPDATES_PER_GENERATOR_UPDATE = 5
 CRITIC_WEIGHT_LIMIT = 0.01
