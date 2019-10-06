@@ -18,8 +18,6 @@ from dataset import dataset as dataset, VOXEL_SIZE, SDF_CLIPPING
 from loss import inception_score
 from util import create_text_slice
 
-from tqdm import tqdm
-
 dataset.rescale_sdf = False
 dataset.load_voxels(device)
 
@@ -97,7 +95,7 @@ def train():
     for epoch in count(start=first_epoch):
         batch_index = 0
         epoch_start_time = time.time()
-        for batch in tqdm(list(create_batches(dataset.size, BATCH_SIZE))):
+        for batch in list(create_batches(dataset.size, BATCH_SIZE)):
             try:
                 indices = torch.tensor(batch, device = device)
                 current_batch_size = indices.shape[0] # equals BATCH_SIZE for all batches except the last one
