@@ -58,16 +58,15 @@ if show_viewer:
 
 
 
-valid_target_default = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
-fake_target_default = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
+valid_target = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
+fake_target = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
 
-def create_batches(sample_count, batch_size):
-    batch_count = int(sample_count / batch_size)
+def create_batches(sample_count):
+    batch_count = int(sample_count / BATCH_SIZE)
     indices = list(range(sample_count))
     random.shuffle(indices)
     for i in range(batch_count - 1):
-        yield indices[i * batch_size:(i+1)*batch_size]
-    yield indices[(batch_count - 1) * batch_size:]
+        yield indices[i * BATCH_SIZE:(i+1)*BATCH_SIZE]
 
 def create_grid_points():
     sample_points = np.meshgrid(
@@ -81,13 +80,13 @@ def create_grid_points():
     sample_points = torch.tensor(sample_points, device=device)
     return sample_points
 
-def sample_latent_codes(current_batch_size):
-    latent_codes = standard_normal_distribution.sample(sample_shape=[current_batch_size, LATENT_CODE_SIZE]).to(device)
-    latent_codes = latent_codes.repeat((1, 1, grid_points.shape[0])).reshape(-1, LATENT_CODE_SIZE)
+def sample_latent_codes():
+    latent_codes = standard_normal_distribution.sample(sample_shape=[BATCH_SIZE, LATENT_CODE_SIZE]).to(device)
+    latent_codes = latent_codes.repeat((1, 1, VOXEL_SIZE**3)).reshape(-1, LATENT_CODE_SIZE)
     return latent_codes
 
 
-grid_points = create_grid_points()
+grid_points = create_grid_points().repeat((BATCH_SIZE, 1))
 history_fake = deque(maxlen=50)
 history_real = deque(maxlen=50)
 
@@ -95,19 +94,14 @@ def train():
     for epoch in count(start=first_epoch):
         batch_index = 0
         epoch_start_time = time.time()
-        for batch in list(create_batches(dataset.size, BATCH_SIZE)):
+        for batch in list(create_batches(dataset.size)):
             try:
                 indices = torch.tensor(batch, device = device)
-                current_batch_size = indices.shape[0] # equals BATCH_SIZE for all batches except the last one
-                batch_grid_points = grid_points.repeat((current_batch_size, 1))
                 
                 # train critic
-                fake_target = fake_target_default if current_batch_size == BATCH_SIZE else torch.zeros(current_batch_size, requires_grad=False).to(device)
-                valid_target = valid_target_default if current_batch_size == BATCH_SIZE else torch.ones(current_batch_size, requires_grad=False).to(device)
-
                 critic_optimizer.zero_grad()                
-                latent_codes = sample_latent_codes(current_batch_size)
-                fake_sample = generator.forward(batch_grid_points, latent_codes)
+                latent_codes = sample_latent_codes()
+                fake_sample = generator.forward(grid_points, latent_codes)
                 fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
                 valid_sample = dataset.voxels[indices, :, :, :]
 
@@ -124,8 +118,8 @@ def train():
                     generator_optimizer.zero_grad()
                     critic.zero_grad()
                     
-                    latent_codes = sample_latent_codes(current_batch_size)
-                    fake_sample = generator.forward(batch_grid_points, latent_codes)
+                    latent_codes = sample_latent_codes()
+                    fake_sample = generator.forward(grid_points, latent_codes)
                     fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
                     if batch_index % 20 == 0 and show_viewer:
                         viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
