@@ -113,10 +113,13 @@ class SDFNet(SavableModule):
         return mesh
 
     def get_normals(self, latent_code, points):
+        if latent_code.requires_grad or points.requires_grad:
+            raise Exception('get_normals may only be called with tensors that don\'t require grad.')
+        
         points.requires_grad = True
         latent_codes = latent_code.repeat(points.shape[0], 1)
         sdf = self.forward(points, latent_codes)
-        sdf.backward(torch.ones((sdf.shape[0]), device=self.device))
+        sdf.backward(torch.ones(sdf.shape[0], device=self.device))
         normals = points.grad
         normals /= torch.norm(normals, dim=1).unsqueeze(dim=1)
         return normals
