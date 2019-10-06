@@ -70,7 +70,7 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
         indices = indices[~misses]
         
         if indices.shape[0] < 2:
-            return
+            break
 
     shadows[indices] = 1
     return shadows.cpu().numpy().astype(bool)
