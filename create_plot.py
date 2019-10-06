@@ -74,6 +74,7 @@ def load_sdf_net(filename=None, return_latent_codes = False):
 
     if return_latent_codes:
         latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
+        latent_codes.requires_grad = False
         return sdf_net, latent_codes
     else:
         return sdf_net
@@ -190,7 +191,6 @@ if "autodecoder-classes" in sys.argv:
     COUNT = dataset.label_count
 
     sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
-    latent_codes.requires_grad = False
     indices = []
     for label in range(COUNT):
         objects = (dataset.labels == label).nonzero()
