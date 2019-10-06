@@ -194,7 +194,7 @@ if "autodecoder-classes" in sys.argv:
     indices = []
     for label in range(COUNT):
         objects = (dataset.labels == label).nonzero()
-        indices.append(objects[random.randint(0, objects.shape[0] - 1)].item())    
+        indices.append(objects[random.randint(0, objects.shape[0] - 1)].item())
     
     latent_codes = latent_codes[indices, :]
     
@@ -749,9 +749,8 @@ if "sdf_net_interpolation" in sys.argv:
     sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
     
     STEPS = 6
-    
+
     indices = random.sample(list(range(latent_codes.shape[0])), 2)
-    indices = [40, 2700]
     print(indices)
     code_start = latent_codes[indices[0], :]
     code_end = latent_codes[indices[1], :]
