@@ -35,7 +35,7 @@ log_file = open("plots/hybrid_gan_training.csv", "a" if "continue" in sys.argv e
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.001)
 
 discriminator_criterion = torch.nn.functional.binary_cross_entropy
-discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00001)
+discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.000005)
 
 show_viewer = "nogui" not in sys.argv
 
