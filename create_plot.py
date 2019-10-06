@@ -501,6 +501,24 @@ if "wgan_training" in sys.argv:
     plt.legend()
     plt.savefig("plots/wgan-training-critic.pdf", bbox_inches='tight')
 
+if "sdf_training" in sys.argv:
+    data = np.genfromtxt('plots/sdf_net_training.csv', delimiter=' ')
+        
+    plt.plot(data[:, 3])
+
+    plt.ylabel('Inception Score')
+    plt.xlabel('Epoch')
+    plt.title('Inception Score')
+    plt.savefig("plots/deepsdf-training-score.pdf", bbox_inches='tight')
+
+    plt.clf()
+    plt.plot(data[:, 2])
+
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.title('Loss')
+    plt.savefig("plots/deepsdf-training-loss.pdf", bbox_inches='tight')
+
 
 def create_autoencoder_training_plot(data_file, title, plot_file):
     if not os.path.isfile(data_file):
