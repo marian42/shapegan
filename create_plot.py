@@ -116,15 +116,13 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf",
 
     if indices is not None:
         print("Creating images...")
-        directories = open('data/models.txt', 'r').readlines()
         from voxel.viewer import VoxelViewer
         viewer = VoxelViewer(start_thread=False)
         import trimesh
         import logging
         logging.getLogger('trimesh').setLevel(1000000)
         for i in tqdm(range(len(indices))):
-            mesh = trimesh.load(os.path.join(directories[indices[i]].strip(), 'model_normalized.obj'))
-            viewer.set_mesh(mesh, center_and_scale=True)
+            viewer.set_dataset_mesh(indices[i])
             viewer.model_color = dataset.get_color(labels[i])
             image = viewer.get_image(crop=True, output_size=128)
             box = AnnotationBbox(OffsetImage(image, zoom = 0.5, cmap='gray'), (x[i], y[i]), frameon=True)
@@ -154,7 +152,6 @@ if "color-test" in sys.argv:
     plot.save("plots/test.pdf")
 
 if "autoencoder-classes" in sys.argv:
-    import colorsys
     from dataset import dataset as dataset
     dataset.load_voxels(device)
 
@@ -179,6 +176,40 @@ if "autoencoder-classes" in sys.argv:
         plot.set_voxels(reconstructed_vae[i, :, :, :], i, 1)
 
     plot.save("plots/vae-reconstruction-classes.pdf")
+
+if "autodecoder-classes" in sys.argv:
+    from dataset import dataset as dataset
+    dataset.load_labels(device='cpu')
+    from raymarching import render_image
+    from voxel.viewer import VoxelViewer
+    import logging
+    logging.getLogger('trimesh').setLevel(1000000)
+
+    viewer = VoxelViewer(start_thread=False)
+
+    COUNT = dataset.label_count
+
+    sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
+    latent_codes.requires_grad = False
+    indices = []
+    for label in range(COUNT):
+        objects = (dataset.labels == label).nonzero()
+        indices.append(objects[random.randint(0, objects.shape[0] - 1)].item())    
+    
+    latent_codes = latent_codes[indices, :]
+    
+    plot = ImageGrid(COUNT, 2, create_viewer=False)
+
+    for i in range(COUNT):
+        viewer.set_dataset_mesh(indices[i])
+        viewer.model_color = dataset.get_color(i)
+        image = viewer.get_image(crop=True)
+        plot.set_image(image, i, 0)
+
+        image = render_image(sdf_net, latent_codes[i, :], color=dataset.get_color(i), crop=True)
+        plot.set_image(image, i, 1)
+    viewer.delete_buffers()
+    plot.save("plots/deepsdf-reconstruction-classes.pdf")
 
 if "autoencoder" in sys.argv:
     from dataset import dataset as dataset

@@ -76,7 +76,7 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
     return shadows.cpu().numpy().astype(bool)
     
 
-def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, iterations=1000, ssaa=2, radius=1.0, crop=False):
+def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, iterations=1000, ssaa=2, radius=1.0, crop=False, color=(0.8, 0.1, 0.1)):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -156,7 +156,7 @@ def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, ite
     rim_light = 1.0 - np.clip(rim_light, 0, 1)
     rim_light = np.power(rim_light, 4) * 0.3
 
-    color = np.array([0.8, 0.1, 0.1])[np.newaxis, :] * (diffuse * 0.5 + 0.5)[:, np.newaxis]
+    color = np.array(color)[np.newaxis, :] * (diffuse * 0.5 + 0.5)[:, np.newaxis]
     color += (specular * 0.3 + rim_light)[:, np.newaxis]
 
     color = np.clip(color, 0, 1)
@@ -165,11 +165,11 @@ def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, ite
     ground_points[model_mask] = 0
     ground_points = np.argwhere(ground_points).reshape(-1)
     ground_plane = np.min(model_points[:, 1]).item()
-    points[ground_points, :] -= ray_directions[ground_points, :] * ((points[ground_points, 1] - ground_plane) / ray_directions[ground_points, 1])[:, np.newaxis]    
+    points[ground_points, :] -= ray_directions[ground_points, :] * ((points[ground_points, 1] - ground_plane) / ray_directions[ground_points, 1])[:, np.newaxis]
     ground_points = ground_points[np.linalg.norm(points[ground_points, ::2], axis=1) < 3]
-
-    ground_shadows = get_shadows(sdf_net, points[ground_points, :], light_position, latent_code)
     
+    ground_shadows = get_shadows(sdf_net, points[ground_points, :], light_position, latent_code)
+
     pixels = np.ones((points.shape[0], 3))
     pixels[model_mask] = color
     pixels[ground_points[ground_shadows]] = 0.4

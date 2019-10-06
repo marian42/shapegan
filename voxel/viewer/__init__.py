@@ -104,6 +104,8 @@ class VoxelViewer():
 
         self.render_lock = Lock()
 
+        self.dataset_directories = None
+
         if start_thread:
             thread = Thread(target = self._run)
             thread.start()
@@ -179,6 +181,12 @@ class VoxelViewer():
         
         self._update_buffers(vertices, normals)
         self.model_size = 1.08
+
+    def set_dataset_mesh(self, index):
+        if self.dataset_directories is None:
+            self.dataset_directories = directories = open('data/models.txt', 'r').readlines()
+        mesh = trimesh.load(os.path.join(self.dataset_directories[index].strip(), 'model_normalized.obj'))
+        self.set_mesh(mesh, center_and_scale=True)
 
     def _poll_mouse(self):
         left_mouse, _, right_mouse = pygame.mouse.get_pressed()
