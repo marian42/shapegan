@@ -864,3 +864,35 @@ if "shapenet-errors" in sys.argv:
         plot.set_image(image, i)
 
     plot.save("plots/errors.pdf")
+
+from model import CHECKPOINT_PATH
+
+if 'vae_checkpoints' in sys.argv:
+    COUNT = 5
+    checkpoints = os.listdir(CHECKPOINT_PATH)
+    checkpoints = [i for i in checkpoints if i.startswith('variational-autoencoder-64-')]
+    checkpoints = sorted(checkpoints)
+    checkpoints = checkpoints[:6]
+    checkpoints = [checkpoints[i * (len(checkpoints) - 1) // (COUNT - 1)] for i in range(COUNT)]
+    print('\n'.join(checkpoints))
+    
+    from dataset import dataset
+    dataset.load_voxels(device=device)
+
+    MODEL_INDEX = random.randint(0, dataset.voxels.shape[0]-1)
+    print(MODEL_INDEX)
+    model = dataset.voxels[(MODEL_INDEX, MODEL_INDEX), :, :, :]
+
+    from model.autoencoder import Autoencoder
+    vae = Autoencoder()
+    vae.eval()
+
+    plot = ImageGrid(COUNT)
+    with torch.no_grad():
+        for i in range(COUNT):
+            vae.load_state_dict(torch.load(os.path.join(CHECKPOINT_PATH, checkpoints[i])))
+            reconstructed, _, _ = vae.forward(model)
+            plot.set_voxels(reconstructed[0, :, :, :], i)
+
+    plot.save('plots/vae-checkpoints.pdf')
+
