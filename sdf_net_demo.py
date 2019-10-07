@@ -12,11 +12,11 @@ from voxel.viewer import VoxelViewer
 from model.sdf_net import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 from util import device
 
-USE_HYBRID_GAN = 'hybrid_gan' in sys.argv
+USE_HYBRID_GAN = 'hybrid_gan' in sys.argv or 'hybrid_wgan' in sys.argv
 
 sdf_net = SDFNet()
 if USE_HYBRID_GAN:
-    sdf_net.filename = 'hybrid_gan_generator.to'
+    sdf_net.filename = 'hybrid_gan_generator.to' if 'hybrid_gan' in sys.argv else 'hybrid_wgan_generator.to'
 sdf_net.load()
 sdf_net.eval()
 
