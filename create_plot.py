@@ -896,3 +896,32 @@ if 'vae_checkpoints' in sys.argv:
 
     plot.save('plots/vae-checkpoints.pdf')
 
+if 'sdf_checkpoints' in sys.argv:
+    from raymarching import render_image
+    COUNT = 5
+    checkpoints = os.listdir(CHECKPOINT_PATH)
+    checkpoints_network = [i for i in checkpoints if i.startswith('sdf_net-epoch-')]
+    checkpoints_latent_codes = [i for i in checkpoints if i.startswith('sdf_net_latent_codes-epoch-')]
+    checkpoints_network = sorted(checkpoints_network)
+    checkpoints_latent_codes = sorted(checkpoints_latent_codes)
+    indices = [i * (len(checkpoints_network) - 1) // (COUNT - 1) for i in range(COUNT)]
+
+    checkpoints_network = [checkpoints_network[i] for i in indices]
+    checkpoints_latent_codes = [checkpoints_latent_codes[i] for i in indices]
+    print('\n'.join(checkpoints_network))
+
+    MODEL_INDEX = 1000
+    print(MODEL_INDEX)
+
+    from model.sdf_net import SDFNet
+    sdf_net = SDFNet()
+    sdf_net.eval()
+
+    plot = ImageGrid(COUNT, create_viewer=False)
+    for i in range(COUNT):
+        sdf_net.load_state_dict(torch.load(os.path.join(CHECKPOINT_PATH, checkpoints_network[i])))
+        latent_codes = torch.load(os.path.join(CHECKPOINT_PATH, checkpoints_latent_codes[i])).detach()
+        latent_code = latent_codes[MODEL_INDEX, :]
+        plot.set_image(render_image(sdf_net, latent_code, crop=True), i)
+
+    plot.save('plots/deepsdf-checkpoints.pdf')
