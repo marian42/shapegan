@@ -547,7 +547,6 @@ if "wgan_training" in sys.argv:
 
     plt.ylabel('Inception Score')
     plt.xlabel('Epoch')
-    plt.title('Inception Score')
     plt.savefig("plots/wgan-training-score.pdf", bbox_inches='tight')
 
     plt.clf()
@@ -555,28 +554,27 @@ if "wgan_training" in sys.argv:
     plt.plot(data[:, 4], label="Assessment of real objects")
     plt.plot(data[:, 3], label="Assessment of fake objects")
 
-    plt.ylabel('Critic output')
     plt.xlabel('Epoch')
-    plt.title('Critic assessment')
+    plt.ylabel('Critic output')
     plt.legend()
     plt.savefig("plots/wgan-training-critic.pdf", bbox_inches='tight')
 
 if "sdf_training" in sys.argv:
     data = np.genfromtxt('plots/sdf_net_training.csv', delimiter=' ')
-        
-    plt.plot(data[:, 3])
+    
+    plt.plot(data[:, 3], linestyle='-', linewidth=0.5, color='grey')
+    plt.plot(data[:, 3], 'x')
 
     plt.ylabel('Inception Score')
     plt.xlabel('Epoch')
-    plt.title('Inception Score')
     plt.savefig("plots/deepsdf-training-score.pdf", bbox_inches='tight')
 
     plt.clf()
-    plt.plot(data[:, 2])
+    plt.plot(data[:, 2], linestyle='-', linewidth=0.5, color='grey')
+    plt.plot(data[:, 2], 'x')
 
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
-    plt.title('Loss')
     plt.savefig("plots/deepsdf-training-loss.pdf", bbox_inches='tight')
 
 
@@ -612,19 +610,19 @@ def create_autoencoder_training_plot_latex():
     plt.plot(data[:, 3], label='KLD loss')    
     plt.xlabel('Epoch')
     plt.legend()
-    plt.title('Loss')
+    plt.ylabel('Loss')
     plt.savefig('plots/vae-training-loss.pdf', bbox_inches='tight')
 
     plt.clf()
     plt.plot(data[:, 4]) 
     plt.xlabel('Epoch')
-    plt.title('Voxel error')
+    plt.ylabel('Voxel error')
     plt.savefig('plots/vae-training-error.pdf', bbox_inches='tight')
     
     plt.clf()
     plt.plot(data[:, 5] * 3.23444) # workaround for outdated reference inception score
     plt.xlabel('Epoch')
-    plt.title('Inception score')
+    plt.ylabel('Inception score')
     plt.savefig('plots/vae-training-inception-score.pdf', bbox_inches='tight')
     
     plt.clf()
