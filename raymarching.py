@@ -46,24 +46,32 @@ def get_normals(sdf_net, points, latent_code):
 
 
 def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001, radius=1.0):
-    ray_directions = light_position[np.newaxis, :] - points
-    ray_directions /= np.linalg.norm(ray_directions, axis=1)[:, np.newaxis]
-    ray_directions_t = torch.tensor(ray_directions, device=device, dtype=torch.float32)
-    points = torch.tensor(points, device=device, dtype=torch.float32)
+    light_position = torch.tensor(light_position, device=device, dtype=torch.float32).unsqueeze(0)
+    starting_points = torch.tensor(points, device=device, dtype=torch.float32)
+    ray_directions = light_position - starting_points
+    ray_directions /= torch.norm(ray_directions, dim=1).unsqueeze(dim=1)
     
-    points += ray_directions_t * 0.1
+    points = starting_points + ray_directions * 0.1
 
-    indices = torch.arange(points.shape[0])
-    shadows = torch.zeros(points.shape[0])
+    indices = torch.arange(points.shape[0], device=device)
+
+    smallest_distance_to_surface = torch.zeros(points.shape[0], device=device)
+    smallest_distance_to_surface[:] = float('inf')
+    smallest_distance_to_start = torch.zeros(points.shape[0], device=device)
 
     for i in tqdm(range(200)):
         test_points = points[indices, :]
         sdf = sdf_net.evaluate_in_batches(test_points, latent_code, return_cpu_tensor=False)
         sdf = torch.clamp_(sdf, -0.1, 0.1)
-        points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
+
+        update_map = (sdf > 0) & (sdf < smallest_distance_to_surface[indices])
+        smallest_distance_update_indices = indices[update_map]
+        smallest_distance_to_surface[smallest_distance_update_indices] = sdf[update_map]
+        smallest_distance_to_start[smallest_distance_update_indices] = torch.norm(points[smallest_distance_update_indices] - starting_points[smallest_distance_update_indices], dim=1)
+
+        points[indices, :] += ray_directions[indices, :] * sdf.unsqueeze(1)
         
         hits = (sdf > 0) & (sdf < threshold)
-        shadows[indices[hits]] = 1
         indices = indices[~hits]
         
         misses = points[indices, 1] > radius
@@ -72,8 +80,10 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
         if indices.shape[0] < 2:
             break
 
-    shadows[indices] = 1
-    return shadows.cpu().numpy()
+    result = 1.0 - smallest_distance_to_surface * 8.0 / smallest_distance_to_start
+    result.clamp_(0, 1)
+    result = result ** 2 * (3 - result * 2) # smoothstep
+    return result.cpu().numpy()
     
 
 def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, iterations=1000, ssaa=2, radius=1.0, crop=False, color=(0.8, 0.1, 0.1)):
