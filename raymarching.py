@@ -45,8 +45,12 @@ def get_normals(sdf_net, points, latent_code):
     return result
 
 
-def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001, radius=1.0):
-    ray_directions = light_position[np.newaxis, :] - points
+def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001, radius=1.0, samples=10):
+    light_positions = np.repeat(light_position[np.newaxis, :], points.shape[0] * samples, axis=0)
+    light_positions += np.random.normal(loc=0, scale=0.2, size=light_positions.shape)
+    points = np.repeat(points, samples, axis=0)
+    
+    ray_directions = light_positions - points
     ray_directions /= np.linalg.norm(ray_directions, axis=1)[:, np.newaxis]
     ray_directions_t = torch.tensor(ray_directions, device=device, dtype=torch.float32)
     points = torch.tensor(points, device=device, dtype=torch.float32)
@@ -73,6 +77,8 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
             break
 
     shadows[indices] = 1
+    shadows = shadows.reshape((-1, samples))
+    shadows = torch.mean(shadows, dim=1)
     return shadows.cpu().numpy()
     
 
