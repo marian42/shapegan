@@ -30,7 +30,13 @@ if "continue" in sys.argv:
     generator.load()
     discriminator.load()
 
-log_file = open("plots/hybrid_gan_training.csv", "a" if "continue" in sys.argv else "w")
+LOG_FILE_NAME = "plots/hybrid_gan_training.csv"
+first_epoch = 0
+if 'continue' in sys.argv:
+    log_file_contents = open(LOG_FILE_NAME, 'r').readlines()
+    first_epoch = len(log_file_contents)
+
+log_file = open(LOG_FILE_NAME, "a" if "continue" in sys.argv else "w")
 
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.001)
 
@@ -80,7 +86,7 @@ history_fake = deque(maxlen=50)
 history_real = deque(maxlen=50)
 
 def train():
-    for epoch in count():
+    for epoch in count(start=first_epoch):
         batch_index = 0
         epoch_start_time = time.time()
         for batch in create_batches(dataset.size, BATCH_SIZE):
