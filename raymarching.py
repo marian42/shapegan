@@ -204,6 +204,7 @@ if __name__ == "__main__":
     sdf_net.load()
     sdf_net.eval()
     latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
+    latent_codes.requires_grad = False
 
     codes = list(range(latent_codes.shape[0]))
     random.shuffle(codes)
