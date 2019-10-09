@@ -54,7 +54,7 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
     points += ray_directions_t * 0.1
 
     indices = torch.arange(points.shape[0])
-    shadows = torch.zeros(points.shape[0], dtype=torch.uint8)
+    shadows = torch.zeros(points.shape[0])
 
     for i in tqdm(range(200)):
         test_points = points[indices, :]
@@ -73,7 +73,7 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
             break
 
     shadows[indices] = 1
-    return shadows.cpu().numpy().astype(bool)
+    return shadows.cpu().numpy()
     
 
 def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, iterations=1000, ssaa=2, radius=1.0, crop=False, color=(0.8, 0.1, 0.1)):
@@ -172,7 +172,7 @@ def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, ite
 
     pixels = np.ones((points.shape[0], 3))
     pixels[model_mask] = color
-    pixels[ground_points[ground_shadows]] = 0.4
+    pixels[ground_points] -= ((1.0 - 0.4) * ground_shadows)[:, np.newaxis]
     pixels = pixels.reshape((resolution * ssaa, resolution * ssaa, 3))
 
     if crop:
