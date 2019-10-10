@@ -9,6 +9,7 @@ import random
 import time
 import sys
 from collections import deque
+from tqdm import tqdm
 
 from model.sdf_net import SDFNet
 from model.gan import Discriminator, LATENT_CODE_SIZE
@@ -91,7 +92,7 @@ def train():
     for epoch in count(start=first_epoch):
         batch_index = 0
         epoch_start_time = time.time()
-        for batch in create_batches(dataset.size, BATCH_SIZE):
+        for batch in tqdm(list(create_batches(dataset.size, BATCH_SIZE))):
             try:
                 indices = torch.tensor(batch, device = device)
                 current_batch_size = indices.shape[0] # equals BATCH_SIZE for all batches except the last one
