@@ -723,6 +723,7 @@ if "wgan-results" in sys.argv:
 if 'sdf_net_reconstruction' in sys.argv:
     from raymarching import render_image_for_index
     from PIL import Image
+    from util import crop_image
     sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
 
     COUNT = 5
@@ -735,6 +736,8 @@ if 'sdf_net_reconstruction' in sys.argv:
 
     for i in range(COUNT):
         mesh = Image.open(MESH_FILENAME.format(indices[i]))
+        mesh = np.array(mesh)
+        mesh = crop_image(mesh)
         plot.set_image(mesh, i, 0)
 
         image = render_image_for_index(sdf_net, latent_codes, indices[i], crop=True)
@@ -855,10 +858,13 @@ if "hybrid_gan_upscaling" in sys.argv:
 
 if "shapenet-errors" in sys.argv:
     from PIL import Image
+    from util import crop_image
     plot = ImageGrid(6, create_viewer=False)
 
     for i in range(6):
-        image = Image.open('screenshots/errors/error-{:d}.png'.format(i+1))        
+        image = Image.open('screenshots/errors/error-{:d}.png'.format(i+1))
+        image = np.array(image)
+        image = crop_image(image)
         plot.set_image(image, i)
 
     plot.save("plots/errors.pdf")
