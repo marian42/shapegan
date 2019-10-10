@@ -10,6 +10,7 @@ import time
 import sys
 from collections import deque
 from tqdm import tqdm
+import math
 
 from model.sdf_net import SDFNet
 from model.gan import Discriminator, LATENT_CODE_SIZE
@@ -150,8 +151,12 @@ def train():
                     viewer.stop()
                 return
         
-        generator.save()
-        discriminator.save()
+        prediction_fake = np.mean(history_fake)
+        prediction_real = np.mean(history_real)
+        
+        if math.abs(prediction_fake - prediction_real) < 0.1:
+            generator.save()
+            discriminator.save()
 
         generator.save(epoch=epoch)
         discriminator.save(epoch=epoch)
@@ -163,8 +168,6 @@ def train():
             print(create_text_slice(voxels / SDF_CLIPPING))
 
         score = generator.get_inception_score()
-        prediction_fake = np.mean(history_fake)
-        prediction_real = np.mean(history_real)
         print('Epoch {:d} ({:.1f}s), inception score: {:.4f}, prediction on fake: {:.4f}, prediction on real: {:.4f}'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
         log_file.write('{:d} {:.1f} {:.4f} {:.4f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
         log_file.flush()
