@@ -153,9 +153,12 @@ def train():
         prediction_fake = np.mean(history_fake)
         prediction_real = np.mean(history_real)
         
-        if abs(prediction_fake - prediction_real) < 0.1:
-            generator.save()
-            discriminator.save()
+        if abs(prediction_fake - prediction_real) > 0.1:
+            print("Network diverged.")
+            exit()
+
+        generator.save()
+        discriminator.save()
 
         generator.save(epoch=epoch)
         discriminator.save(epoch=epoch)
