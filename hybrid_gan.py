@@ -51,6 +51,8 @@ if show_viewer:
 
 BATCH_SIZE = 8
 
+GENERATOR_UPDATES_PER_DISCRIMINATOR_UPDATE = 5
+
 
 valid_target_default = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
 fake_target_default = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
@@ -112,29 +114,30 @@ def train():
                 generator_optimizer.step()
                     
                 
-                # train discriminator on fake samples
-                fake_target = fake_target_default if current_batch_size == BATCH_SIZE else torch.zeros(current_batch_size, requires_grad=False).to(device)
-                valid_target = valid_target_default if current_batch_size == BATCH_SIZE else torch.ones(current_batch_size, requires_grad=False).to(device)
+                if batch_index % GENERATOR_UPDATES_PER_DISCRIMINATOR_UPDATE == 0:
+                    # train discriminator on fake samples                
+                    fake_target = fake_target_default if current_batch_size == BATCH_SIZE else torch.zeros(current_batch_size, requires_grad=False).to(device)
+                    valid_target = valid_target_default if current_batch_size == BATCH_SIZE else torch.ones(current_batch_size, requires_grad=False).to(device)
 
-                discriminator_optimizer.zero_grad()                
-                latent_codes = sample_latent_codes(current_batch_size)
-                fake_sample = generator.forward(batch_grid_points, latent_codes)
-                fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
-                discriminator_output_fake = discriminator.forward(fake_sample)
-                fake_loss = discriminator_criterion(discriminator_output_fake, fake_target)
-                fake_loss.backward()
-                discriminator_optimizer.step()
+                    discriminator_optimizer.zero_grad()                
+                    latent_codes = sample_latent_codes(current_batch_size)
+                    fake_sample = generator.forward(batch_grid_points, latent_codes)
+                    fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+                    discriminator_output_fake = discriminator.forward(fake_sample)
+                    fake_loss = discriminator_criterion(discriminator_output_fake, fake_target)
+                    fake_loss.backward()
+                    discriminator_optimizer.step()
 
-                # train discriminator on real samples
-                discriminator_optimizer.zero_grad()
-                valid_sample = dataset.voxels[indices, :, :, :]
-                discriminator_output_valid = discriminator.forward(valid_sample)
-                valid_loss = discriminator_criterion(discriminator_output_valid, valid_target)
-                valid_loss.backward()
-                discriminator_optimizer.step()
-                
-                history_fake.append(torch.mean(discriminator_output_fake).item())
-                history_real.append(torch.mean(discriminator_output_valid).item())
+                    # train discriminator on real samples
+                    discriminator_optimizer.zero_grad()
+                    valid_sample = dataset.voxels[indices, :, :, :]
+                    discriminator_output_valid = discriminator.forward(valid_sample)
+                    valid_loss = discriminator_criterion(discriminator_output_valid, valid_target)
+                    valid_loss.backward()
+                    discriminator_optimizer.step()
+                    
+                    history_fake.append(torch.mean(discriminator_output_fake).item())
+                    history_real.append(torch.mean(discriminator_output_valid).item())
                 batch_index += 1
 
                 if "verbose" in sys.argv:
