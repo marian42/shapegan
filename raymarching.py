@@ -40,8 +40,9 @@ def get_normals(sdf_net, points, latent_code):
     result = torch.zeros((points.shape[0], 3), device=points.device)
     for i in range(batch_count):
         result[BATCH_SIZE * i:BATCH_SIZE * (i+1), :] = sdf_net.get_normals(latent_code, points[BATCH_SIZE * i:BATCH_SIZE * (i+1), :])
-    remainder = points.shape[0] - BATCH_SIZE * batch_count
-    result[BATCH_SIZE * batch_count:, :] = sdf_net.get_normals(latent_code, points[BATCH_SIZE * batch_count:, :])
+    
+    if points.shape[0] > BATCH_SIZE * batch_count:
+        result[BATCH_SIZE * batch_count:, :] = sdf_net.get_normals(latent_code, points[BATCH_SIZE * batch_count:, :])
     return result
 
 
