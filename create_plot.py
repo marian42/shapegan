@@ -812,12 +812,20 @@ if "hybrid_gan" in sys.argv:
 if "hybrid_gan_interpolation" in sys.argv:
     from raymarching import render_image_for_index, render_image
     from util import standard_normal_distribution
+    import cv2
     sdf_net = load_sdf_net(filename='hybrid_gan_generator.to')
+
+    OPTIONS = 10
+    
+    codes = standard_normal_distribution.sample([OPTIONS, LATENT_CODE_SIZE]).to(device)
+    for i in range(OPTIONS):
+        image = render_image(sdf_net, codes[i, :], resolution=200, radius=1.41421)
+        image.save('plots/option-{:d}.png'.format(i))
     
     STEPS = 6
         
-    code_start = standard_normal_distribution.sample([LATENT_CODE_SIZE]).to(device)
-    code_end = standard_normal_distribution.sample([LATENT_CODE_SIZE]).to(device)
+    code_start = codes[int(input('Enter index for starting shape: ')), :]
+    code_end = codes[int(input('Enter index for ending shape: ')), :]
 
     with torch.no_grad():
         codes = torch.zeros([STEPS, LATENT_CODE_SIZE], device=device)
@@ -827,7 +835,7 @@ if "hybrid_gan_interpolation" in sys.argv:
     plot = ImageGrid(STEPS, create_viewer=False)
     
     for i in range(STEPS):
-        plot.set_image(render_image(sdf_net, codes[i, :], crop=True), i)
+        plot.set_image(render_image(sdf_net, codes[i, :], crop=True, radius=1.41421), i)
 
     plot.save("plots/hybrid-gan-interpolation.pdf")
 
