@@ -421,7 +421,7 @@ if "autoencoder_interpolation" in sys.argv:
         code_start = codes_start_end[0, :]
         code_end = codes_start_end[1, :]
         for i in range(STEPS):
-            codes_ae[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
+            codes_ae[i, :] = code_start * (1.0 - i / (STEPS - 1)) + code_end * i / (STEPS - 1)
         reconstructed_ae = ae.decode(codes_ae)
         
         codes_vae = torch.zeros([STEPS, LATENT_CODE_SIZE], device=device)
@@ -429,7 +429,7 @@ if "autoencoder_interpolation" in sys.argv:
         code_start = codes_start_end[0, :]
         code_end = codes_start_end[1, :]
         for i in range(STEPS):
-            codes_vae[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
+            codes_vae[i, :] = code_start * (1.0 - i / (STEPS - 1)) + code_end * i / (STEPS - 1)
         reconstructed_vae = vae.decode(codes_vae)
 
     plot = ImageGrid(STEPS, 2)
@@ -459,7 +459,7 @@ if "autoencoder_interpolation_2" in sys.argv:
         code_start = codes_start_end[0, :]
         code_end = codes_start_end[1, :]
         for i in range(STEPS):
-            codes_vae[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
+            codes_vae[i, :] = code_start * (1.0 - i / (STEPS - 1)) + code_end * i / (STEPS - 1)
         reconstructed_vae = vae.decode(codes_vae)
 
     plot = ImageGrid(STEPS)
@@ -509,7 +509,7 @@ if "gan_interpolation" in sys.argv:
         code_start = codes_start_end[0, :]
         code_end = codes_start_end[1, :]
         for i in range(STEPS):
-            codes[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
+            codes[i, :] = code_start * (1.0 - i / (STEPS - 1)) + code_end * i / (STEPS - 1)
         for i in range(3):
             codes = codes.unsqueeze(dim=i+2)
         voxels = generator.forward(codes)
@@ -760,14 +760,11 @@ if "sdf_net_interpolation" in sys.argv:
     with torch.no_grad():
         codes = torch.zeros([STEPS, LATENT_CODE_SIZE], device=device)
         for i in range(STEPS):
-            codes[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
+            codes[i, :] = code_start * (1.0 - i / (STEPS - 1)) + code_end * i / (STEPS - 1)
 
     plot = ImageGrid(STEPS, create_viewer=False)
-    
-    plot.set_image(render_image_for_index(sdf_net, latent_codes, indices[0], crop=True), 0)
-    plot.set_image(render_image_for_index(sdf_net, latent_codes, indices[1], crop=True), STEPS - 1)
 
-    for i in range(1, STEPS - 1):
+    for i in range(STEPS):
         plot.set_image(render_image(sdf_net, codes[i, :], crop=True), i)
 
     plot.save("plots/deepsdf-interpolation.pdf")
@@ -830,7 +827,7 @@ if "hybrid_gan_interpolation" in sys.argv:
     with torch.no_grad():
         codes = torch.zeros([STEPS, LATENT_CODE_SIZE], device=device)
         for i in range(STEPS):
-            codes[i, :] = code_start * (1.0 - (i - 1) / STEPS) + code_end * (i - 1) / STEPS
+            codes[i, :] = code_start * (1.0 - i / (STEPS - 1)) + code_end * i / (STEPS - 1)
 
     plot = ImageGrid(STEPS, create_viewer=False)
     
