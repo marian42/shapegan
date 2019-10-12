@@ -447,7 +447,7 @@ if "autoencoder_interpolation_2" in sys.argv:
 
     STEPS = 6
     
-    indices = random.sample(list(range(dataset.size)), STEPS)
+    indices = random.sample(list(range(dataset.size)), 2)
     print(indices)
     
     vae = load_autoencoder(is_variational=True)
@@ -934,3 +934,27 @@ if 'sdf_checkpoints' in sys.argv:
         plot.set_image(render_image(sdf_net, latent_code, crop=True), i)
 
     plot.save('plots/deepsdf-checkpoints.pdf')
+
+
+
+if "deepsdf-interpolation-stl" in sys.argv:
+    from raymarching import render_image_for_index, render_image
+    sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
+    
+    STEPS = 5
+
+    indices = random.sample(list(range(latent_codes.shape[0])), 2)
+    print(indices)
+    code_start = latent_codes[indices[0], :]
+    code_end = latent_codes[indices[1], :]
+
+    print("Generating codes...")
+    with torch.no_grad():
+        codes = torch.zeros([STEPS, LATENT_CODE_SIZE], device=device)
+        for i in range(STEPS):
+            codes[i, :] = code_start * (1.0 - i / (STEPS - 1)) + code_end * i / (STEPS - 1)
+    
+    for i in range(STEPS):
+        print(i)
+        mesh = sdf_net.get_mesh(codes[i, :], voxel_count=256, sphere_only=False)
+        mesh.export('plots/mesh-{:d}.stl'.format(i))
