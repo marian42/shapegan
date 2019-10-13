@@ -46,7 +46,7 @@ def get_normals(sdf_net, points, latent_code):
     return result
 
 
-def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001, radius=1.0):
+def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001, sdf_offset=0, radius=1.0):
     ray_directions = light_position[np.newaxis, :] - points
     ray_directions /= np.linalg.norm(ray_directions, axis=1)[:, np.newaxis]
     ray_directions_t = torch.tensor(ray_directions, device=device, dtype=torch.float32)
@@ -59,7 +59,7 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
 
     for i in tqdm(range(200)):
         test_points = points[indices, :]
-        sdf = sdf_net.evaluate_in_batches(test_points, latent_code, return_cpu_tensor=False)
+        sdf = sdf_net.evaluate_in_batches(test_points, latent_code, return_cpu_tensor=False) + sdf_offset
         sdf = torch.clamp_(sdf, -0.1, 0.1)
         points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
         
@@ -77,7 +77,7 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
     return shadows.cpu().numpy()
     
 
-def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, iterations=1000, ssaa=2, radius=1.0, crop=False, color=(0.8, 0.1, 0.1)):
+def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, sdf_offset=0, iterations=1000, ssaa=2, radius=1.0, crop=False, color=(0.8, 0.1, 0.1)):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -118,8 +118,8 @@ def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, ite
 
     for i in tqdm(range(iterations)):
         test_points = points[indices, :]
-        sdf = sdf_net.evaluate_in_batches(test_points, latent_code, return_cpu_tensor=False)
-        sdf = torch.clamp_(sdf, -0.02, 0.02)
+        sdf = sdf_net.evaluate_in_batches(test_points, latent_code, return_cpu_tensor=False) + sdf_offset
+        torch.clamp_(sdf, -0.02, 0.02)
         points[indices, :] += ray_directions_t[indices, :] * sdf.unsqueeze(1)
         
         hits = (sdf > 0) & (sdf < threshold)
@@ -140,7 +140,7 @@ def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, ite
     points = points.cpu().numpy()
     model_points = points[model_mask]
     
-    seen_by_light = 1.0 - get_shadows(sdf_net, model_points, light_position, latent_code, radius=radius)
+    seen_by_light = 1.0 - get_shadows(sdf_net, model_points, light_position, latent_code, radius=radius, sdf_offset=sdf_offset)
     
     light_direction = light_position[np.newaxis, :] - model_points
     light_direction /= np.linalg.norm(light_direction, axis=1)[:, np.newaxis]
@@ -169,7 +169,7 @@ def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, ite
     points[ground_points, :] -= ray_directions[ground_points, :] * ((points[ground_points, 1] - ground_plane) / ray_directions[ground_points, 1])[:, np.newaxis]
     ground_points = ground_points[np.linalg.norm(points[ground_points, ::2], axis=1) < 3]
     
-    ground_shadows = get_shadows(sdf_net, points[ground_points, :], light_position, latent_code)
+    ground_shadows = get_shadows(sdf_net, points[ground_points, :], light_position, latent_code, sdf_offset=sdf_offset)
 
     pixels = np.ones((points.shape[0], 3))
     pixels[model_mask] = color

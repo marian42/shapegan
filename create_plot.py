@@ -801,7 +801,7 @@ if "hybrid_gan" in sys.argv:
     plot = ImageGrid(COUNT, create_viewer=False)
 
     for i in range(COUNT):
-        plot.set_image(render_image(generator, codes[i, :], radius=1.41421, crop=True), i)
+        plot.set_image(render_image(generator, codes[i, :], radius=1.6, crop=True, sdf_offset=-0.045), i)
 
     plot.save("plots/hybrid-gan-samples.pdf")
 
@@ -832,7 +832,7 @@ if "hybrid_gan_interpolation" in sys.argv:
     plot = ImageGrid(STEPS, create_viewer=False)
     
     for i in range(STEPS):
-        plot.set_image(render_image(sdf_net, codes[i, :], crop=True, radius=1.41421), i)
+        plot.set_image(render_image(sdf_net, codes[i, :], crop=True, radius=1.6, sdf_offset=-0.045), i)
 
     plot.save("plots/hybrid-gan-interpolation.pdf")
 
