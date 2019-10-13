@@ -562,16 +562,16 @@ if "wgan_training" in sys.argv:
 if "sdf_training" in sys.argv:
     data = np.genfromtxt('plots/sdf_net_training.csv', delimiter=' ')
     
-    plt.plot(data[:, 3], linestyle='-', linewidth=0.5, color='grey')
-    plt.plot(data[:, 3], 'x')
+    plt.plot(np.arange(1, data.shape[0] + 1), data[:, 3], linestyle='-', linewidth=0.5, color='grey')
+    plt.plot(np.arange(1, data.shape[0] + 1), data[:, 3], 'x')
 
     plt.ylabel('Inception Score')
     plt.xlabel('Epoch')
     plt.savefig("plots/deepsdf-training-score.pdf", bbox_inches='tight')
 
     plt.clf()
-    plt.plot(data[:, 2], linestyle='-', linewidth=0.5, color='grey')
-    plt.plot(data[:, 2], 'x')
+    plt.plot(np.arange(1, data.shape[0] + 1), data[:, 2], linestyle='-', linewidth=0.5, color='grey')
+    plt.plot(np.arange(1, data.shape[0] + 1), data[:, 2], 'x')
 
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
