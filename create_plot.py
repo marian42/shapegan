@@ -801,7 +801,7 @@ if "hybrid_gan" in sys.argv:
     plot = ImageGrid(COUNT, create_viewer=False)
 
     for i in range(COUNT):
-        plot.set_image(render_image(generator, codes[i, :], radius=1.6, crop=True, sdf_offset=-0.045), i)
+        plot.set_image(render_image(generator, codes[i, :], radius=1.6, crop=True, sdf_offset=-0.045, vertical_cutoff=1), i)
 
     plot.save("plots/hybrid-gan-samples.pdf")
 
@@ -816,7 +816,7 @@ if "hybrid_gan_interpolation" in sys.argv:
     
     codes = standard_normal_distribution.sample([OPTIONS, LATENT_CODE_SIZE]).to(device)
     for i in range(OPTIONS):
-        image = render_image(sdf_net, codes[i, :], resolution=200, radius=1.41421)
+        image = render_image(sdf_net, codes[i, :], resolution=200, radius=1.6, sdf_offset=-0.045, vertical_cutoff=1, crop=True)
         image.save('plots/option-{:d}.png'.format(i))
     
     STEPS = 6
@@ -832,7 +832,7 @@ if "hybrid_gan_interpolation" in sys.argv:
     plot = ImageGrid(STEPS, create_viewer=False)
     
     for i in range(STEPS):
-        plot.set_image(render_image(sdf_net, codes[i, :], crop=True, radius=1.6, sdf_offset=-0.045), i)
+        plot.set_image(render_image(sdf_net, codes[i, :], crop=True, radius=1.6, sdf_offset=-0.045, vertical_cutoff=1), i)
 
     plot.save("plots/hybrid-gan-interpolation.pdf")
 
@@ -857,7 +857,7 @@ if "hybrid_gan_upscaling" in sys.argv:
     voxels_128 = sdf_net.get_voxels(code, 128, sphere_only=False)
     plot.set_voxels(voxels_128, 2)
 
-    plot.set_image(render_image(sdf_net, code, radius=1.41421, crop=True), 3)
+    plot.set_image(render_image(sdf_net, code, radius=1.41421, crop=True, vertical_cutoff=1), 3)
 
     plot.save("plots/hybrid-gan-upscaling.pdf")
 
