@@ -1,7 +1,7 @@
 import torch
 
 # Inception score of a sample from the dataset
-REFERENCE_INCEPTION_SCORE_VOXEL = 4.430443 # 14.33, factor 3.23444
+REFERENCE_INCEPTION_SCORE_VOXEL = 4.430443
 REFERENCE_INCEPTION_SCORE_POINTS = 4.283844
 
 class InceptionScore():

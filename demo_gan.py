@@ -26,7 +26,6 @@ WAIT_TIME = 0.8
 def get_random():
     return standard_normal_distribution.sample(sample_shape=SHAPE).to(device)
 
-
 previous_model = None
 next_model = get_random()
 

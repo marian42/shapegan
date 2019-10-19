@@ -128,5 +128,4 @@ def train():
         log_file.flush()
 
 
-train()                
-log_file.close()
+train()

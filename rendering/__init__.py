@@ -284,7 +284,7 @@ class MeshRenderer():
             [-size, 0, -size],
             [+size, 0, +size],
             [+size, 0, -size]
-            ], faces=[[0, 1, 2], [3, 4, 5]])
+        ], faces=[[0, 1, 2], [3, 4, 5]])
 
         vertices = np.array(mesh.triangles, dtype=np.float32).reshape(-1, 3)
         vertices = vertices.reshape((-1))
