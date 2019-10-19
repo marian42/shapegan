@@ -279,21 +279,34 @@ if __name__ == "__main__":
     if "stats" in sys.argv:
         dataset.load_labels()
         label_count = torch.sum(dataset.get_labels_onehot('cpu'), dim=0)
-        if "latex" in sys.argv:
-            for category in sorted(dataset.categories, key=lambda c: -c.count):
-                print('{:s} & \\SI{{{:d}}}{{}} & \\SI{{{:d}}}{{}} \\\\'.format(
-                    category.name.split(',')[0],
-                    category.count,
-                    int(label_count[category.label])))
+        for category in sorted(dataset.categories, key=lambda c: -c.count):
+            print('{:d}: {:s} - used {:d} / {:d}'.format(
+                category.label,
+                category.name,
+                int(label_count[category.label]),
+                category.count))
+    
+    if "show_meshes" in sys.argv:
+        import trimesh
+        import os
+        from rendering import MeshRenderer
+        import time
+        viewer = MeshRenderer()
 
-            print('\midrule\ntotal & \\SI{{{:d}}}{{}} & \\SI{{{:d}}}{{}} \\\\'.format(
-                    sum(c.count for c in dataset.categories),
-                    int(torch.sum(label_count))))
-        else:
-            for category in sorted(dataset.categories, key=lambda c: -c.count):
-                print('{:d}: {:s} - used {:d} / {:d}'.format(
-                    category.label,
-                    category.name,
-                    int(label_count[category.label]),
-                    category.count))
-
+        for directory in dataset.get_models():
+            model_filename = os.path.join(directory, 'model_normalized.obj')        
+            mesh = trimesh.load(model_filename)
+            viewer.set_mesh(mesh, center_and_scale=True)
+            time.sleep(0.5)
+    if "show_voxels" in sys.argv:
+        from rendering import MeshRenderer
+        import time
+        viewer = MeshRenderer()
+        dataset.load_voxels('cpu')
+        for i in tqdm(list(range(dataset.voxels.shape[0]))):
+            try:
+                viewer.set_voxels(dataset.voxels[i, :, :, :].squeeze().detach().cpu().numpy())
+                time.sleep(0.5)
+            except KeyboardInterrupt:
+                viewer.stop()
+                break
