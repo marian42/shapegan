@@ -139,6 +139,7 @@ class VoxelViewer():
             voxel_size = voxels.shape[1]
             try:
                 vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(1.0 / voxel_size, 1.0 / voxel_size, 1.0 / voxel_size))
+                #vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0.045, spacing=(1.0 / voxel_size, 1.0 / voxel_size, 1.0 / voxel_size))
                 vertices = vertices[faces, :].astype(np.float32) - 0.5
                 self.ground_level = np.min(vertices[:, 1]).item()         
 
@@ -254,7 +255,7 @@ class VoxelViewer():
         self.request_render = False
         self.render_lock.acquire()        
 
-        light_vp_matrix = get_camera_transform(6, 164, 50)
+        light_vp_matrix = get_camera_transform(6, self.rotation[0], 50)
         self._render_shadow_texture(light_vp_matrix)
         
         self.shader.use()
