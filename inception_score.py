@@ -1,30 +1,4 @@
 import torch
-from operator import mul
-from functools import reduce
-
-
-class VoxelReconstructionLoss():
-    def __init__(self):
-        self.value = 0.5
-
-    def __call__(self, input, target):
-        target_signs = target > 0        
-        loss_a = torch.mean(input[target_signs])
-        loss_b = torch.mean(input[~target_signs])
-
-        return loss_b - loss_a
-
-
-voxel_reconstruction_loss = VoxelReconstructionLoss()
-
-
-def voxel_difference(input, target):
-    wrong_signs = (input * target) < 0
-    return torch.sum(wrong_signs).item() / wrong_signs.nelement()
-
-
-def kld_loss(mean, log_variance):
-    return -0.5 * torch.sum(1 + log_variance - mean.pow(2) - log_variance.exp()) / mean.nelement()
 
 # Inception score of a sample from the dataset
 REFERENCE_INCEPTION_SCORE_VOXEL = 4.430443 # 14.33, factor 3.23444

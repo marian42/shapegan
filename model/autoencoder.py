@@ -1,5 +1,5 @@
 from model import *
-from loss import inception_score
+from inception_score import inception_score
 from util import standard_normal_distribution
 
 AUTOENCODER_MODEL_COMPLEXITY_MULTIPLIER = 24

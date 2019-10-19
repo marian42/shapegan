@@ -14,7 +14,7 @@ from model.gan import Generator, Discriminator
 from util import device
 
 from dataset import dataset as dataset
-from loss import inception_score
+from inception_score import inception_score
 from util import create_text_slice
 dataset.load_voxels(device)
 

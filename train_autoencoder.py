@@ -15,8 +15,6 @@ import time
 
 from model.autoencoder import Autoencoder
 
-from loss import voxel_difference, kld_loss
-
 from collections import deque
 
 from dataset import dataset as dataset
@@ -54,6 +52,13 @@ error_history = deque(maxlen = BATCH_SIZE)
 criterion = nn.functional.mse_loss
 
 log_file = open("plots/{:s}autoencoder_training.csv".format('variational_' if autoencoder.is_variational else ''), "a" if "continue" in sys.argv else "w")
+
+def voxel_difference(input, target):
+    wrong_signs = (input * target) < 0
+    return torch.sum(wrong_signs).item() / wrong_signs.nelement()
+
+def kld_loss(mean, log_variance):
+    return -0.5 * torch.sum(1 + log_variance - mean.pow(2) - log_variance.exp()) / mean.nelement()
 
 def create_batches():
     batch_count = int(len(training_indices) / BATCH_SIZE)

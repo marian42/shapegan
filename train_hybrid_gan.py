@@ -16,7 +16,7 @@ from model.gan import Discriminator, LATENT_CODE_SIZE
 from util import create_text_slice, device, standard_normal_distribution
 
 from dataset import dataset as dataset, VOXEL_SIZE, SDF_CLIPPING
-from loss import inception_score
+from inception_score import inception_score
 from util import create_text_slice
 dataset.rescale_sdf = False
 dataset.load_voxels(device)
