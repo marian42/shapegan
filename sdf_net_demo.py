@@ -116,7 +116,7 @@ def show_models():
                 progress = min((time.perf_counter() - start) / TRANSITION_TIME, 1.0)
                 model = previous_model * (1 - progress) + next_model * progress
                 
-                viewer.set_mesh(sdf_net.get_mesh(model, voxel_count=32, sphere_only=not USE_HYBRID_GAN))
+                viewer.set_mesh(sdf_net.get_mesh(model, voxel_count=48, sphere_only=not USE_HYBRID_GAN))
 
             time.sleep(WAIT_TIME)
             
