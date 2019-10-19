@@ -85,7 +85,7 @@ def show_models():
                 viewer.stop()
                 return
 
-if 'preview' in sys.argv:
-    show_models()
-else:
+if 'save' in sys.argv:
     create_image_sequence()
+else:
+    show_models()
