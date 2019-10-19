@@ -96,12 +96,12 @@ class SDFNet(SavableModule):
             voxels[1:-1, 1:-1, 1:-1] = distances.reshape(voxel_count, voxel_count, voxel_count)
         return voxels
 
-    def get_mesh(self, latent_code, voxel_count = 64, sphere_only = True, raise_on_empty=False):
+    def get_mesh(self, latent_code, voxel_count = 64, sphere_only = True, raise_on_empty=False, level=0):
         size = 2 if sphere_only else 1.41421
         
         voxels = self.get_voxels(latent_code, voxel_count=voxel_count, sphere_only=sphere_only)
         try:
-            vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(size / voxel_count, size / voxel_count, size / voxel_count))
+            vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=level, spacing=(size / voxel_count, size / voxel_count, size / voxel_count))
         except ValueError as value_error:
             if raise_on_empty:
                 raise value_error
