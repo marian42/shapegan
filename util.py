@@ -21,7 +21,7 @@ def create_text_slice(voxels):
 
 
 def get_points_in_unit_sphere(n, device):
-    x = torch.rand(int(n * 2.2), 3, device=device) * 2 - 1
+    x = torch.rand(int(n * 2.5), 3, device=device) * 2 - 1
     mask = (torch.norm(x, dim=1) < 1).nonzero().squeeze()
     mask = mask[:n]
     x = x[mask, :]

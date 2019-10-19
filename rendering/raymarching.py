@@ -8,23 +8,10 @@ import os
 
 from model.sdf_net import SDFNet, LATENT_CODES_FILENAME
 from util import device
+from rendering.math import get_camera_transform
 from scipy.spatial.transform import Rotation
 
 BATCH_SIZE = 100000
-
-def get_rotation_matrix(angle, axis='y'):
-    rotation = Rotation.from_euler(axis, angle, degrees=True)
-    matrix = np.identity(4)
-    matrix[:3, :3] = rotation.as_dcm()
-    return matrix
-
-def get_camera_transform(camera_distance, rotation_y, rotation_x):
-    camera_pose = np.identity(4)
-    camera_pose[2, 3] = -camera_distance
-    camera_pose = np.matmul(camera_pose, get_rotation_matrix(rotation_x, axis='x'))
-    camera_pose = np.matmul(camera_pose, get_rotation_matrix(rotation_y, axis='y'))
-
-    return camera_pose
 
 def get_default_coordinates():
     camera_pose = get_camera_transform(2.2, 147, 20)
@@ -77,7 +64,7 @@ def get_shadows(sdf_net, points, light_position, latent_code, threshold = 0.001,
     return shadows.cpu().numpy()
     
 
-def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, sdf_offset=0, iterations=1000, ssaa=2, radius=1.0, crop=False, color=(0.8, 0.1, 0.1), vertical_cutoff=None):
+def render_image(sdf_net, latent_code, resolution=800, threshold=0.0005, sdf_offset=0, iterations=1000, ssaa=2, radius=1.0, crop=False, color=(0.8, 0.1, 0.1), vertical_cutoff=None):
     camera_forward = camera_position / np.linalg.norm(camera_position) * -1
     camera_distance = np.linalg.norm(camera_position).item()
     up = np.array([0, 1, 0])
@@ -190,7 +177,6 @@ def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, sdf
         image = image.resize((resolution, resolution), Image.ANTIALIAS)
 
     return image
-
 
 
 def render_image_for_index(sdf_net, latent_codes, index, crop=False, resolution=800):

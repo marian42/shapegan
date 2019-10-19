@@ -19,37 +19,15 @@ import skimage
 from threading import Thread, Lock
 import torch
 import trimesh
-
-from scipy.spatial.transform import Rotation
 import cv2
 
 from util import crop_image
+from rendering.math import get_camera_transform
 
 CLAMP_TO_EDGE = 33071
 SHADOW_TEXTURE_SIZE = 1024
 
 DEFAULT_ROTATION = (147, 20)
-
-projection_matrix = np.array(
-    [[ 1.73205081, 0,           0,           0,         ],
-     [ 0,          1.73205081,  0,           0,         ],
-     [ 0,          0,          -1.02020202, -0.2020202, ],
-     [ 0,          0,          -1,           0,         ]], dtype=float)
-
-def get_rotation_matrix(angle, axis='y'):
-    rotation = Rotation.from_euler(axis, angle, degrees=True)
-    matrix = np.identity(4)
-    matrix[:3, :3] = rotation.as_dcm()
-    return matrix
-
-def get_camera_transform(camera_distance, rotation_y, rotation_x):
-    camera_pose = np.identity(4)
-    camera_pose[2, 3] = -camera_distance
-    camera_pose = np.matmul(camera_pose, get_rotation_matrix(rotation_x, axis='x'))
-    camera_pose = np.matmul(camera_pose, get_rotation_matrix(rotation_y, axis='y'))
-
-    camera_pose = np.matmul(projection_matrix, camera_pose)
-    return camera_pose
 
 def create_shadow_texture():
     texture_id = glGenTextures(1)
@@ -139,7 +117,6 @@ class MeshRenderer():
             voxel_size = voxels.shape[1]
             try:
                 vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(1.0 / voxel_size, 1.0 / voxel_size, 1.0 / voxel_size))
-                #vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0.045, spacing=(1.0 / voxel_size, 1.0 / voxel_size, 1.0 / voxel_size))
                 vertices = vertices[faces, :].astype(np.float32) - 0.5
                 self.ground_level = np.min(vertices[:, 1]).item()         
 
@@ -181,13 +158,7 @@ class MeshRenderer():
             normals = np.repeat(mesh.face_normals, 3, axis=0).astype(np.float32)
         
         self._update_buffers(vertices, normals)
-        self.model_size = 1.08
-
-    def set_dataset_mesh(self, index):
-        if self.dataset_directories is None:
-            self.dataset_directories = directories = open('data/models.txt', 'r').readlines()
-        mesh = trimesh.load(os.path.join(self.dataset_directories[index].strip(), 'model_normalized.obj'))
-        self.set_mesh(mesh, center_and_scale=True)
+        self.model_size = 1.08        
 
     def _poll_mouse(self):
         left_mouse, _, right_mouse = pygame.mouse.get_pressed()
@@ -255,14 +226,14 @@ class MeshRenderer():
         self.request_render = False
         self.render_lock.acquire()        
 
-        light_vp_matrix = get_camera_transform(6, self.rotation[0], 50)
+        light_vp_matrix = get_camera_transform(6, self.rotation[0], 50, project=True)
         self._render_shadow_texture(light_vp_matrix)
         
         self.shader.use()
         self.shader.set_floor(False)
         self.shader.set_color(self.model_color)
         self.shader.set_y_offset(0)
-        camera_vp_matrix = get_camera_transform(self.model_size * 2, self.rotation[0], self.rotation[1])
+        camera_vp_matrix = get_camera_transform(self.model_size * 2, self.rotation[0], self.rotation[1], project=True)
         self.shader.set_vp_matrix(camera_vp_matrix)
         self.shader.set_light_vp_matrix(light_vp_matrix)
         

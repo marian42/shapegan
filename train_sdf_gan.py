@@ -6,7 +6,7 @@ import random
 from collections import deque
 import numpy as np
 from rendering import MeshRenderer
-from util import device, standard_normal_distribution
+from util import device, standard_normal_distribution, get_points_in_unit_sphere
 
 points = torch.load("data/chairs-points.to").to(device)
 sdf = torch.load("data/chairs-sdf.to").to(device)
@@ -35,14 +35,7 @@ def create_latent_code(repeat=POINT_SAMPLE_COUNT):
     x = x.repeat(repeat, 1)
     return x
 
-def get_points_in_unit_sphere(n = POINT_SAMPLE_COUNT):
-    x = torch.rand(n * 3, 3, device=device) * 2 - 1
-    mask = (torch.norm(x, dim=1) < 1).nonzero().squeeze()
-    mask = mask[:n]
-    x = x[mask, :]
-    return x
-
-debug_points = get_points_in_unit_sphere(n = 10)
+debug_points = get_points_in_unit_sphere(n = 10, device=device)
 debug_latent_codes = create_latent_code(repeat=debug_points.shape[0])
 
 history_fake = deque(maxlen=50)
@@ -55,7 +48,7 @@ for step in count():
     discriminator_optimizer.zero_grad()
 
     code = create_latent_code()
-    test_points = get_points_in_unit_sphere()
+    test_points = get_points_in_unit_sphere(n = POINT_SAMPLE_COUNT, device=device)
     fake_sdf = generator.forward(test_points, code)
     fake_discriminator_assessment = discriminator.forward(test_points, fake_sdf)
     loss = -torch.log(fake_discriminator_assessment)
@@ -80,7 +73,7 @@ for step in count():
     discriminator_optimizer.zero_grad()
 
     code = create_latent_code()
-    test_points = get_points_in_unit_sphere()
+    test_points = get_points_in_unit_sphere(n = POINT_SAMPLE_COUNT, device=device)
     with torch.no_grad():
         fake_sdf = generator.forward(test_points, code)
     output = discriminator.forward(test_points, fake_sdf)

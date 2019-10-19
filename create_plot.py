@@ -117,13 +117,15 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf",
 
     if indices is not None:
         print("Creating images...")
+        dataset_directories = directories = open('data/models.txt', 'r').readlines()
         from rendering import MeshRenderer
         viewer = MeshRenderer(start_thread=False)
         import trimesh
         import logging
         logging.getLogger('trimesh').setLevel(1000000)
         for i in tqdm(range(len(indices))):
-            viewer.set_dataset_mesh(indices[i])
+            mesh = trimesh.load(os.path.join(dataset_directories[index].strip(), 'model_normalized.obj'))
+            viewer.set_mesh(mesh, center_and_scale=True)
             viewer.model_color = dataset.get_color(labels[i])
             image = viewer.get_image(crop=True, output_size=128)
             box = AnnotationBbox(OffsetImage(image, zoom = 0.5, cmap='gray'), (x[i], y[i]), frameon=True)
@@ -199,9 +201,11 @@ if "autodecoder-classes" in sys.argv:
     latent_codes = latent_codes[indices, :]
     
     plot = ImageGrid(COUNT, 2, create_viewer=False)
-
+    dataset_directories = directories = open('data/models.txt', 'r').readlines()
+        
     for i in range(COUNT):
-        viewer.set_dataset_mesh(indices[i])
+        mesh = trimesh.load(os.path.join(dataset_directories[index].strip(), 'model_normalized.obj'))
+        viewer.set_mesh(mesh, center_and_scale=True)
         viewer.model_color = dataset.get_color(i)
         image = viewer.get_image(crop=True)
         plot.set_image(image, i, 0)
