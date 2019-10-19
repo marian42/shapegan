@@ -181,7 +181,7 @@ if "autoencoder-classes" in sys.argv:
 if "autodecoder-classes" in sys.argv:
     from dataset import dataset as dataset
     dataset.load_labels(device='cpu')
-    from raymarching import render_image
+    from rendering.raymarching import render_image
     from rendering import MeshRenderer
     import logging
     logging.getLogger('trimesh').setLevel(1000000)
@@ -721,7 +721,7 @@ if "wgan-results" in sys.argv:
     plot.save('plots/wgan-results.pdf')
 
 if 'sdf_net_reconstruction' in sys.argv:
-    from raymarching import render_image_for_index
+    from rendering.raymarching import render_image_for_index
     from PIL import Image
     from util import crop_image
     sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
@@ -746,7 +746,7 @@ if 'sdf_net_reconstruction' in sys.argv:
     plot.save('plots/deepsdf-reconstruction.pdf')
 
 if "sdf_net_interpolation" in sys.argv:
-    from raymarching import render_image_for_index, render_image
+    from rendering.raymarching import render_image_for_index, render_image
     sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
     
     STEPS = 6
@@ -770,7 +770,7 @@ if "sdf_net_interpolation" in sys.argv:
     plot.save("plots/deepsdf-interpolation.pdf")
 
 if "sdf_net_sample" in sys.argv:
-    from raymarching import render_image    
+    from rendering.raymarching import render_image    
     sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
     latent_codes_flattened = latent_codes.detach().reshape(-1).cpu().numpy()
 
@@ -790,7 +790,7 @@ if "sdf_net_sample" in sys.argv:
     plot.save("plots/deepsdf-samples.pdf")
     
 if "hybrid_gan" in sys.argv:
-    from raymarching import render_image
+    from rendering.raymarching import render_image
     from util import standard_normal_distribution
     generator = load_sdf_net(filename='hybrid_gan_generator.to')
 
@@ -807,7 +807,7 @@ if "hybrid_gan" in sys.argv:
 
 
 if "hybrid_gan_interpolation" in sys.argv:
-    from raymarching import render_image_for_index, render_image
+    from rendering.raymarching import render_image_for_index, render_image
     from util import standard_normal_distribution
     import cv2
     sdf_net = load_sdf_net(filename='hybrid_gan_generator.to')
@@ -837,7 +837,7 @@ if "hybrid_gan_interpolation" in sys.argv:
     plot.save("plots/hybrid-gan-interpolation.pdf")
 
 if "hybrid_gan_upscaling" in sys.argv:
-    from raymarching import render_image_for_index, render_image
+    from rendering.raymarching import render_image_for_index, render_image
     from util import standard_normal_distribution
     sdf_net = load_sdf_net(filename='hybrid_gan_generator.to')
         
@@ -906,7 +906,7 @@ if 'vae_checkpoints' in sys.argv:
     plot.save('plots/vae-checkpoints.pdf')
 
 if 'sdf_checkpoints' in sys.argv:
-    from raymarching import render_image
+    from rendering.raymarching import render_image
     COUNT = 5
     checkpoints = os.listdir(CHECKPOINT_PATH)
     checkpoints_network = [i for i in checkpoints if i.startswith('sdf_net-epoch-')]
@@ -938,7 +938,7 @@ if 'sdf_checkpoints' in sys.argv:
 
 
 if "deepsdf-interpolation-stl" in sys.argv:
-    from raymarching import render_image_for_index, render_image
+    from rendering.raymarching import render_image_for_index, render_image
     sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
     
     STEPS = 5

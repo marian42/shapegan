@@ -193,27 +193,13 @@ def render_image(sdf_net, latent_code, resolution = 800, threshold = 0.0005, sdf
 
 
 
-def render_image_for_index(sdf_net, latent_codes, index, crop=False):
-    FILENAME = 'screenshots/raymarching-examples/image-{:d}.png'
-    filename = FILENAME.format(index)
+def render_image_for_index(sdf_net, latent_codes, index, crop=False, resolution=800):
+    FILENAME = 'screenshots/raymarching-examples/image-{:d}-{:d}.png'
+    filename = FILENAME.format(index, resolution)
 
     if os.path.isfile(filename):
         return Image.open(filename)
     
-    img = render_image(sdf_net, latent_codes[index], crop=crop)
+    img = render_image(sdf_net, latent_codes[index], resolution=resolution, crop=crop)
     img.save(filename)
     return img
-
-if __name__ == "__main__":
-    sdf_net = SDFNet()
-    sdf_net.load()
-    sdf_net.eval()
-    latent_codes = torch.load(LATENT_CODES_FILENAME).to(device)
-    latent_codes.requires_grad = False
-
-    codes = list(range(latent_codes.shape[0]))
-    random.shuffle(codes)
-
-    for i in codes:
-        img = render_image_for_index(sdf_net, latent_codes, i)
-        img.show()
