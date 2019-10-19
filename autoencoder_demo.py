@@ -42,7 +42,8 @@ def get_latent_distribution():
     print('Latent distribution: µ = {:.3f}, σ = {:.3f}'.format(mean, variance))
     return torch.distributions.normal.Normal(mean, variance)
 
-latent_distribution = get_latent_distribution()
+if SAMPLE_FROM_LATENT_DISTRIBUTION:
+    latent_distribution = get_latent_distribution()
 
 def get_random():
     if SAMPLE_FROM_LATENT_DISTRIBUTION:
