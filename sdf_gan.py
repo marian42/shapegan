@@ -5,7 +5,7 @@ import torch
 import random
 from collections import deque
 import numpy as np
-from voxel.viewer import VoxelViewer
+from rendering import MeshRenderer
 from util import device, standard_normal_distribution
 
 points = torch.load("data/chairs-points.to").to(device)
@@ -47,7 +47,7 @@ debug_latent_codes = create_latent_code(repeat=debug_points.shape[0])
 
 history_fake = deque(maxlen=50)
 history_real = deque(maxlen=50)
-viewer = VoxelViewer()
+viewer = MeshRenderer()
 
 for step in count():
     # train generator

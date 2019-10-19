@@ -3,7 +3,7 @@ from util import device, standard_normal_distribution
 from dataset import dataset
 import scipy
 import numpy as np
-from voxel.viewer import VoxelViewer
+from rendering import MeshRenderer
 import time
 import torch
 from tqdm import tqdm
@@ -43,7 +43,7 @@ spline = scipy.interpolate.CubicSpline(np.arange(SAMPLE_COUNT + 1), codes, axis=
 
 def create_image_sequence():
     frame_index = 0
-    viewer = VoxelViewer(size=1080, start_thread=False)
+    viewer = MeshRenderer(size=1080, start_thread=False)
     if CATEGORY is not None:
         viewer.model_color = dataset.get_color(CATEGORY)
     progress_bar = tqdm(total=SAMPLE_COUNT * TRANSITION_FRAMES)
@@ -64,7 +64,7 @@ def create_image_sequence():
 
 def show_models():
     TRANSITION_TIME = 2
-    viewer = VoxelViewer()
+    viewer = MeshRenderer()
 
     if CATEGORY is not None:
         viewer.model_color = dataset.get_color(CATEGORY)

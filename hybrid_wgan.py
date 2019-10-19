@@ -53,8 +53,8 @@ critic_optimizer = optim.RMSprop(critic.parameters(), lr=LEARN_RATE)
 show_viewer = "nogui" not in sys.argv
 
 if show_viewer:
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer()
+    from rendering import MeshRenderer
+    viewer = MeshRenderer()
 
 
 

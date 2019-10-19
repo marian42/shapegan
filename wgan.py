@@ -21,8 +21,8 @@ dataset.load_voxels(device)
 show_viewer = "nogui" not in sys.argv
 
 if show_viewer:
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer()
+    from rendering import MeshRenderer
+    viewer = MeshRenderer()
 
 generator = Generator()
 generator.filename = "wgan-generator.to"

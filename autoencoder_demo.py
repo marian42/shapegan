@@ -9,7 +9,7 @@ import random
 import numpy as np
 import sys
 
-from voxel.viewer import VoxelViewer
+from rendering import MeshRenderer
 from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
 from dataset import dataset as dataset
 from util import device
@@ -19,7 +19,7 @@ autoencoder = Autoencoder(is_variational='classic' not in sys.argv)
 autoencoder.load()
 autoencoder.eval()
 
-viewer = VoxelViewer()
+viewer = MeshRenderer()
 
 STEPS = 40
 

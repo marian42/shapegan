@@ -10,8 +10,8 @@ from OpenGL.GLU import *
 
 import numpy as np
 
-from voxel.viewer.voxels_to_mesh import create_vertices
-from voxel.viewer.shader import Shader
+from rendering.binary_voxels_to_mesh import create_binary_voxel_mesh
+from rendering.shader import Shader
 
 import cv2
 import skimage
@@ -73,7 +73,7 @@ def create_shadow_texture():
     glBindTexture(GL_TEXTURE_2D, 0)
     return texture_id
 
-class VoxelViewer():
+class MeshRenderer():
     def __init__(self, size = 800, start_thread = True, background_color = (1, 1, 1, 1)):
         self.size = size
         
@@ -154,7 +154,7 @@ class VoxelViewer():
             except ValueError:
                 pass # Voxel array contains no sign change
         else:
-            vertices, normals = create_vertices(voxels)
+            vertices, normals = create_binary_voxel_mesh(voxels)
             vertices -= (voxels.shape[0] + 1) / 2
             vertices /= voxels.shape[0] + 1
             self._update_buffers(vertices, normals)         
@@ -294,13 +294,13 @@ class VoxelViewer():
         self.window = pygame.display.set_mode((self.size, self.size), pygame.OPENGLBLIT)
 
         self.shader = Shader()
-        self.shader.initShader(open('voxel/viewer/vertex.glsl').read(), open('voxel/viewer/fragment.glsl').read())
+        self.shader.initShader(open('rendering/vertex.glsl').read(), open('rendering/fragment.glsl').read())
 
         self.shadow_framebuffer = glGenFramebuffers(1)
         self.shadow_texture = create_shadow_texture()
 
         self.depth_shader = Shader()
-        self.depth_shader.initShader(open('voxel/viewer/depth_vertex.glsl').read(), open('voxel/viewer/depth_fragment.glsl').read())
+        self.depth_shader.initShader(open('rendering/depth_vertex.glsl').read(), open('rendering/depth_fragment.glsl').read())
 
         self.prepare_floor()
 

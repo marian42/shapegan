@@ -6,7 +6,7 @@ import torch.optim as optim
 import random
 import numpy as np
 
-from voxel.viewer import VoxelViewer
+from rendering import MeshRenderer
 from model.gan import Generator
 from util import device
 
@@ -16,7 +16,7 @@ generator.load()
 generator_criterion = torch.nn.functional.binary_cross_entropy
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0025, betas = (0.5, 0.5))
 
-viewer = VoxelViewer()
+viewer = MeshRenderer()
 
 sample_plane = torch.load("data/airplane-32.to").to(device)
 zeros = torch.zeros([1, 200, 1, 1, 1], device = device)

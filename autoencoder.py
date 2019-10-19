@@ -46,8 +46,8 @@ optimizer = optim.Adam(autoencoder.parameters(), lr=0.00005)
 show_viewer = "nogui" not in sys.argv
 
 if show_viewer:
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer()
+    from rendering import MeshRenderer
+    viewer = MeshRenderer()
 
 error_history = deque(maxlen = BATCH_SIZE)
 

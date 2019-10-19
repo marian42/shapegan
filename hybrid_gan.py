@@ -47,8 +47,8 @@ discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.000005)
 show_viewer = "nogui" not in sys.argv
 
 if show_viewer:
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer()
+    from rendering import MeshRenderer
+    viewer = MeshRenderer()
 
 BATCH_SIZE = 8
 

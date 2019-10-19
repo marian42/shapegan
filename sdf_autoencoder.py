@@ -7,7 +7,7 @@ import numpy as np
 from itertools import count
 import time
 import random
-from voxel.viewer import VoxelViewer
+from rendering import MeshRenderer
 from tqdm import tqdm
 import sys
 
@@ -15,7 +15,7 @@ from model.sdf_autoencoder import SDFAutoencoder, LATENT_CODE_SIZE
 from util import device
 
 if "nogui" not in sys.argv:
-    viewer = VoxelViewer()
+    viewer = MeshRenderer()
 
 POINTCLOUD_SIZE = 100000
 LIMIT_MODEL_COUNT = 100

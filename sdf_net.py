@@ -18,8 +18,8 @@ dataset.load_labels(device=device)
 dataset.rescale_sdf = False
 
 if "nogui" not in sys.argv:
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer()
+    from rendering import MeshRenderer
+    viewer = MeshRenderer()
 
 POINTCLOUD_PART_SIZE = 200000 // dataset.sdf_part_count
 BATCH_SIZE = 20000

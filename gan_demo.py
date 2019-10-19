@@ -4,7 +4,7 @@ import time
 import numpy as np
 import sys
 
-from voxel.viewer import VoxelViewer
+from rendering import MeshRenderer
 from model.gan import Generator, LATENT_CODE_SIZE
 from util import device, standard_normal_distribution
 
@@ -14,7 +14,7 @@ if "wgan" in sys.argv:
 generator.load()
 generator.eval()
 
-viewer = VoxelViewer()
+viewer = MeshRenderer()
 
 STEPS = 20
 

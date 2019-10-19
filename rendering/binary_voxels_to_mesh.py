@@ -1,6 +1,7 @@
 import numpy as np
 
-def create_vertices(voxels_array, threshold = 0.0):
+# Creates a cube for every occupied (negative) voxel
+def create_binary_voxel_mesh(voxels_array, threshold = 0.0):
     voxels = np.pad(voxels_array, 1, mode = 'constant')
     mask = voxels < threshold
 

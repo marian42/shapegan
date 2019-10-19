@@ -23,8 +23,8 @@ class ImageGrid():
 
         self.crop = crop
         if create_viewer:
-            from voxel.viewer import VoxelViewer
-            self.viewer = VoxelViewer(start_thread=False)
+            from rendering import MeshRenderer
+            self.viewer = MeshRenderer(start_thread=False)
         else:
             self.viewer = None
 
@@ -106,8 +106,8 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf",
 
     if voxels is not None:
         print("Creating images...")
-        from voxel.viewer import VoxelViewer
-        viewer = VoxelViewer(start_thread=False)
+        from rendering import MeshRenderer
+        viewer = MeshRenderer(start_thread=False)
         for i in tqdm(range(voxels.shape[0])):
             viewer.set_voxels(voxels[i, :, :, :].cpu().numpy())
             viewer.model_color = dataset.get_color(labels[i])
@@ -117,8 +117,8 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf",
 
     if indices is not None:
         print("Creating images...")
-        from voxel.viewer import VoxelViewer
-        viewer = VoxelViewer(start_thread=False)
+        from rendering import MeshRenderer
+        viewer = MeshRenderer(start_thread=False)
         import trimesh
         import logging
         logging.getLogger('trimesh').setLevel(1000000)
@@ -182,11 +182,11 @@ if "autodecoder-classes" in sys.argv:
     from dataset import dataset as dataset
     dataset.load_labels(device='cpu')
     from raymarching import render_image
-    from voxel.viewer import VoxelViewer
+    from rendering import MeshRenderer
     import logging
     logging.getLogger('trimesh').setLevel(1000000)
 
-    viewer = VoxelViewer(start_thread=False)
+    viewer = MeshRenderer(start_thread=False)
 
     COUNT = dataset.label_count
 
@@ -293,8 +293,8 @@ if "autoencoder_examples" in sys.argv:
     from dataset import dataset as dataset
     dataset.load_voxels(device)
 
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer(start_thread=False)
+    from rendering import MeshRenderer
+    viewer = MeshRenderer(start_thread=False)
     
     indices = random.sample(list(range(dataset.size)), 20)
     voxels = dataset.voxels[indices, :, :, :]
@@ -684,8 +684,8 @@ if "voxel_occupancy" in sys.argv:
     plt.savefig("plots/voxel-occupancy-histogram.pdf")
 
 if "model_images" in sys.argv:
-    from voxel.viewer import VoxelViewer
-    viewer = VoxelViewer(start_thread=False)
+    from rendering import MeshRenderer
+    viewer = MeshRenderer(start_thread=False)
     import trimesh
     import cv2
     import logging

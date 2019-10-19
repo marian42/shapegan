@@ -4,11 +4,11 @@ import time
 import sys
 from tqdm import tqdm
 
-from voxel.viewer import VoxelViewer
+from rendering import MeshRenderer
 
 PATH = 'data/shapenet/03001627/'
 
-viewer = VoxelViewer()
+viewer = MeshRenderer()
 from dataset import dataset as dataset
 
 
