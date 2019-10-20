@@ -1,7 +1,7 @@
 ### Wrapper around the pyrender library that allows to
 ### 1. disable antialiasing
 ### 2. render a normal buffer
-
+### This needs to be imported before pyrender is imported anywhere
 
 # Disable antialiasing:
 import OpenGL.GL

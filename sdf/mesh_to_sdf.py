@@ -1,105 +1,15 @@
 import trimesh
 import logging
 logging.getLogger("trimesh").setLevel(9000)
-
 import numpy as np
-np.set_printoptions(suppress=True)
-from PIL import Image
-from scipy.spatial.transform import Rotation
-import time
 from sklearn.neighbors import KDTree
 import skimage
-from threading import Lock
-from tqdm import tqdm
 import math
-import random
-
-from rendering.math import get_rotation_matrix
-from sdf.pyrender_wrapper import render_normal_and_depth_buffers
-
+from sdf.scan import create_scans
 import pyrender
-
-CAMERA_DISTANCE = 2
-VIEWPORT_SIZE = 512
-render_lock = Lock()
-
-def get_camera_transform(rotation_y, rotation_x = 0):
-    camera_pose = np.identity(4)
-    camera_pose[2, 3] = CAMERA_DISTANCE
-    camera_pose = np.matmul(get_rotation_matrix(rotation_x, axis='x'), camera_pose)
-    camera_pose = np.matmul(get_rotation_matrix(rotation_y, axis='y'), camera_pose)
-    return camera_pose
 
 class BadMeshException(Exception):
     pass
-
-class Scan():
-    def __init__(self, mesh, camera_pose):
-        self.camera_pose = camera_pose
-        self.camera_direction = np.matmul(camera_pose, np.array([0, 0, 1, 0]))[:3]
-        self.camera_position = np.matmul(camera_pose, np.array([0, 0, 0, 1]))[:3]
-        
-        camera = pyrender.PerspectiveCamera(yfov=2 * math.asin(1.0 / CAMERA_DISTANCE), aspectRatio=1.0, znear = CAMERA_DISTANCE - 1.0, zfar = CAMERA_DISTANCE + 1.0)
-        self.projection_matrix = camera.get_projection_matrix()
-
-        color, depth = render_normal_and_depth_buffers(mesh, camera, camera_pose, VIEWPORT_SIZE)
-
-        self.depth = depth * 2 - 1
-        indices = np.argwhere(self.depth != 1)
-
-        points = np.ones((indices.shape[0], 4))
-        points[:, [1, 0]] = indices.astype(float) / VIEWPORT_SIZE * 2 - 1
-        points[:, 1] *= -1
-        points[:, 2] = self.depth[indices[:, 0], indices[:, 1]]
-        
-        clipping_to_world = np.matmul(camera_pose, np.linalg.inv(self.projection_matrix))
-
-        points = np.matmul(points, clipping_to_world.transpose())
-        points /= points[:, 3][:, np.newaxis]
-        self.points = points[:, :3]
-
-        normals = color[indices[:, 0], indices[:, 1]] / 255 * 2 - 1
-        camera_to_points = self.camera_position - self.points
-        normal_orientation = np.einsum('ij,ij->i', camera_to_points, normals)
-        normals[normal_orientation < 0] *= -1
-        self.normals = normals
-
-    def convert_world_space_to_viewport(self, points):
-        half_viewport_size = 0.5 * VIEWPORT_SIZE
-        clipping_to_viewport = np.array([
-            [half_viewport_size, 0.0, 0.0, half_viewport_size],
-            [0.0, -half_viewport_size, 0.0, half_viewport_size],
-            [0.0, 0.0, 1.0, 0.0],
-            [0, 0, 0.0, 1.0]
-        ])
-
-        world_to_clipping = np.matmul(self.projection_matrix, np.linalg.inv(self.camera_pose))
-        world_to_viewport = np.matmul(clipping_to_viewport, world_to_clipping)
-        
-        world_space_points = np.concatenate([points, np.ones((points.shape[0], 1))], axis=1)
-        viewport_points = np.matmul(world_space_points, world_to_viewport.transpose())
-        viewport_points /= viewport_points[:, 3][:, np.newaxis]
-        return viewport_points
-
-    def is_visible(self, points):
-        viewport_points = self.convert_world_space_to_viewport(points)
-        pixels = viewport_points[:, :2].astype(int)
-        pixels = np.clip(pixels, 0, VIEWPORT_SIZE - 1)
-        return viewport_points[:, 2] < self.depth[pixels[:, 1], pixels[:, 0]]
-
-def create_scans(mesh, camera_count = 20):
-    scans = []
-
-    render_lock.acquire()
-    scans.append(Scan(mesh, get_camera_transform(0, 90)))
-    scans.append(Scan(mesh, get_camera_transform(0, -90)))
-
-    for i in range(camera_count):
-        camera_pose = get_camera_transform(360.0 * i / camera_count, random.uniform(-60, 60))
-        scans.append(Scan(mesh, camera_pose))
-
-    render_lock.release()
-    return scans
 
 def scale_to_unit_sphere(mesh):
     origin = mesh.bounding_box.centroid
@@ -136,7 +46,7 @@ class MeshSDF:
 
     def get_sdf_in_batches(self, points, batch_size=100000):
         result = np.zeros(points.shape[0])
-        for i in tqdm(range(int(math.ceil(points.shape[0] / batch_size)))):
+        for i in range(int(math.ceil(points.shape[0] / batch_size))):
             start = i * batch_size
             end = min(result.shape[0], (i + 1) * batch_size)
             result[start:end] = self.get_sdf(points[start:end, :])
