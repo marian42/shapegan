@@ -12,7 +12,7 @@ from threading import Lock
 from tqdm import tqdm
 import math
 import random
-from rendering.math import get_camera_transform
+from rendering.math import get_rotation_matrix
 
 CAMERA_DISTANCE = 2
 VIEWPORT_SIZE = 512
@@ -20,6 +20,13 @@ VIEWPORT_SIZE = 512
 logging.getLogger("trimesh").setLevel(9000)
 
 render_lock = Lock()
+
+def get_camera_transform(rotation_y, rotation_x = 0):
+    camera_pose = np.identity(4)
+    camera_pose[2, 3] = CAMERA_DISTANCE
+    camera_pose = np.matmul(get_rotation_matrix(rotation_x, axis='x'), camera_pose)
+    camera_pose = np.matmul(get_rotation_matrix(rotation_y, axis='y'), camera_pose)
+    return camera_pose
 
 class BadMeshException(Exception):
     pass
@@ -96,8 +103,8 @@ def create_scans(mesh, camera_count = 20):
     scans = []
 
     render_lock.acquire()
-    scans.append(Scan(mesh, get_camera_transform(CAMERA_DISTANCE, 0, 90)))
-    scans.append(Scan(mesh, get_camera_transform(CAMERA_DISTANCE, 0, -90)))
+    scans.append(Scan(mesh, get_camera_transform(0, 90)))
+    scans.append(Scan(mesh, get_camera_transform(0, -90)))
 
     for i in range(camera_count):
         camera_pose = get_camera_transform(360.0 * i / camera_count, random.uniform(-60, 60))
