@@ -7,6 +7,7 @@ import skimage
 import math
 from sdf.scan import create_scans
 import pyrender
+from util import get_voxel_coordinates
 
 class BadMeshException(Exception):
     pass
@@ -22,7 +23,6 @@ def scale_to_unit_sphere(mesh):
 class MeshSDF:
     def __init__(self, mesh):
         self.mesh = mesh
-        self.bounding_box = mesh.bounding_box
         self.scans = create_scans(mesh)
 
         self.points = np.concatenate([scan.points for scan in self.scans], axis=0)
@@ -56,21 +56,12 @@ class MeshSDF:
         return pyrender.Mesh.from_points(self.points, normals=self.normals)
 
     def get_voxel_sdf(self, voxel_count = 32):
-        voxels = self.get_sdf(self.get_voxel_coordinates(voxel_count=voxel_count))
+        center = self.mesh.bounding_box.centroid
+        size = np.max(self.mesh.bounding_box.extents) / 2
+        voxels = self.get_sdf(get_voxel_coordinates(voxel_count, size, center))
         voxels = voxels.reshape(voxel_count, voxel_count, voxel_count)
         self.check_voxels(voxels)
         return voxels
-
-    def get_voxel_coordinates(self, voxel_count = 32):
-        centroid = self.bounding_box.centroid
-        size = np.max(self.bounding_box.extents) / 2
-        points = np.meshgrid(
-            np.linspace(centroid[0] - size, centroid[0] + size, voxel_count),
-            np.linspace(centroid[1] - size, centroid[1] + size, voxel_count),
-            np.linspace(centroid[2] - size, centroid[2] + size, voxel_count)
-        )
-        points = np.stack(points)
-        return points.reshape(3, -1).transpose()
 
     def get_sample_points(self, number_of_points = 200000):
         ''' Use sample points as described in the DeepSDF paper '''

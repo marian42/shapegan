@@ -1,19 +1,12 @@
 from model import *
 import trimesh
 import skimage
-from util import get_points_in_unit_sphere
+from util import get_points_in_unit_sphere, get_voxel_coordinates
 import numpy as np
 
 class SDFVoxelizationHelperData():
     def __init__(self, device, voxel_count, sphere_only=True):
-        sample_points = np.meshgrid(
-            np.linspace(-1, 1, voxel_count),
-            np.linspace(-1, 1, voxel_count),
-            np.linspace(-1, 1, voxel_count)
-        )
-        sample_points = np.stack(sample_points).astype(np.float32)
-        sample_points = np.swapaxes(sample_points, 1, 2)
-        sample_points = sample_points.reshape(3, -1).transpose()
+        sample_points = get_voxel_coordinates(voxel_count)
 
         if sphere_only:
             unit_sphere_mask = np.linalg.norm(sample_points, axis=1) < 1

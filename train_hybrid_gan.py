@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 from model.sdf_net import SDFNet
 from model.gan import Discriminator, LATENT_CODE_SIZE
-from util import create_text_slice, device, standard_normal_distribution
+from util import create_text_slice, device, standard_normal_distribution, get_voxel_coordinates
 
 from dataset import dataset as dataset, VOXEL_SIZE, SDF_CLIPPING
 from inception_score import inception_score
@@ -66,25 +66,12 @@ def create_batches(sample_count, batch_size):
         yield indices[i * batch_size:(i+1)*batch_size]
     yield indices[(batch_count - 1) * batch_size:]
 
-def create_grid_points():
-    sample_points = np.meshgrid(
-        np.linspace(-1, 1, VOXEL_SIZE),
-        np.linspace(-1, 1, VOXEL_SIZE),
-        np.linspace(-1, 1, VOXEL_SIZE)
-    )
-    sample_points = np.stack(sample_points).astype(np.float32)
-    sample_points = np.swapaxes(sample_points, 1, 2)
-    sample_points = sample_points.reshape(3, -1).transpose()
-    sample_points = torch.tensor(sample_points, device=device)
-    return sample_points
-
 def sample_latent_codes(current_batch_size):
     latent_codes = standard_normal_distribution.sample(sample_shape=[current_batch_size, LATENT_CODE_SIZE]).to(device)
     latent_codes = latent_codes.repeat((1, 1, grid_points.shape[0])).reshape(-1, LATENT_CODE_SIZE)
     return latent_codes
 
-
-grid_points = create_grid_points()
+grid_points = get_voxel_coordinates(VOXEL_SIZE, return_torch_tensor=True)
 history_fake = deque(maxlen=50)
 history_real = deque(maxlen=50)
 

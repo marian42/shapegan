@@ -16,7 +16,7 @@ from util import create_text_slice, device, standard_normal_distribution
 
 from dataset import dataset as dataset, VOXEL_SIZE, SDF_CLIPPING
 from inception_score import inception_score
-from util import create_text_slice
+from util import create_text_slice, get_voxel_coordinates
 
 dataset.rescale_sdf = False
 dataset.load_voxels(device)
@@ -56,8 +56,6 @@ if show_viewer:
     from rendering import MeshRenderer
     viewer = MeshRenderer()
 
-
-
 valid_target = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
 fake_target = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
 
@@ -68,25 +66,13 @@ def create_batches(sample_count):
     for i in range(batch_count - 1):
         yield indices[i * BATCH_SIZE:(i+1)*BATCH_SIZE]
 
-def create_grid_points():
-    sample_points = np.meshgrid(
-        np.linspace(-1, 1, VOXEL_SIZE),
-        np.linspace(-1, 1, VOXEL_SIZE),
-        np.linspace(-1, 1, VOXEL_SIZE)
-    )
-    sample_points = np.stack(sample_points).astype(np.float32)
-    sample_points = np.swapaxes(sample_points, 1, 2)
-    sample_points = sample_points.reshape(3, -1).transpose()
-    sample_points = torch.tensor(sample_points, device=device)
-    return sample_points
-
 def sample_latent_codes():
     latent_codes = standard_normal_distribution.sample(sample_shape=[BATCH_SIZE, LATENT_CODE_SIZE]).to(device)
     latent_codes = latent_codes.repeat((1, 1, VOXEL_SIZE**3)).reshape(-1, LATENT_CODE_SIZE)
     return latent_codes
 
 
-grid_points = create_grid_points().repeat((BATCH_SIZE, 1))
+grid_points = get_voxel_coordinates(VOXEL_SIZE, return_torch_tensor=True).repeat((BATCH_SIZE, 1))
 history_fake = deque(maxlen=50)
 history_real = deque(maxlen=50)
 

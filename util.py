@@ -47,3 +47,19 @@ def crop_image(image, background=255):
     if half_size > 100:
         image = image[center[0] - half_size : center[0] + half_size, center[1] - half_size : center[1] + half_size]
     return image
+
+def get_voxel_coordinates(resolution = 32, size=1, center=0, return_torch_tensor=False):
+    if type(center) == int:
+        center = (center, center, center)
+    points = np.meshgrid(
+        np.linspace(center[0] - size, center[0] + size, resolution),
+        np.linspace(center[1] - size, center[1] + size, resolution),
+        np.linspace(center[2] - size, center[2] + size, resolution)
+    )
+    points = np.stack(points)
+    points = np.swapaxes(points, 1, 2)
+    points = points.reshape(3, -1).transpose()
+    if return_torch_tensor:
+        return torch.tensor(points, dtype=torch.float32, device=device)
+    else:
+        return points.astype(np.float32)

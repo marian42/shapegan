@@ -141,7 +141,6 @@ class Dataset():
         
         print("Stacking...")
         tensor = torch.stack(models)
-        tensor = torch.transpose(tensor, 1, 2)
         print("Saving...")
         torch.save(tensor, VOXELS_SDF_FILENAME)        
         print("Done.")
