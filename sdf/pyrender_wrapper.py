@@ -6,10 +6,11 @@
 # Disable antialiasing:
 import OpenGL.GL
 
+suppress_multisampling = False
 old_gl_enable = OpenGL.GL.glEnable
 
 def new_gl_enable(value):
-    if value == OpenGL.GL.GL_MULTISAMPLE:
+    if suppress_multisampling and value == OpenGL.GL.GL_MULTISAMPLE:
         OpenGL.GL.glDisable(value)
     else:
         old_gl_enable(value)
@@ -30,6 +31,8 @@ class CustomShaderCache():
 
 
 def render_normal_and_depth_buffers(mesh, camera, camera_pose, resolution):
+    global suppress_multisampling
+    suppress_multisampling = True
     scene = pyrender.Scene()
     scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
     scene.add(camera, pose=camera_pose)
@@ -38,4 +41,5 @@ def render_normal_and_depth_buffers(mesh, camera, camera_pose, resolution):
     renderer._renderer._program_cache = CustomShaderCache()
 
     color, depth = renderer.render(scene)
+    suppress_multisampling = False
     return color, depth
