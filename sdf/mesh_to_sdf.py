@@ -40,7 +40,6 @@ class MeshSDF:
     def get_sdf(self, query_points):
         distances, _ = self.kd_tree.query(query_points)
         distances = distances.astype(np.float32).reshape(-1) * -1
-        end = time.time()
         distances[self.is_outside(query_points)] *= -1
         return distances
 
@@ -103,12 +102,12 @@ class MeshSDF:
 
         max_distance = max(np.max(d1), np.max(d2), np.max(d3))
         if max_distance > 2.0 / voxels.shape[0] * 1.5:
-            raise BadMeshException()        
+            raise BadMeshException()
     
     def show_pointcloud(self):
         scene = pyrender.Scene()
         scene.add(self.get_pyrender_pointcloud())
-        viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
+        pyrender.Viewer(scene, use_raymond_lighting=True)
 
     def show_reconstructed_mesh(self, voxel_size=64):
         scene = pyrender.Scene()
@@ -118,7 +117,7 @@ class MeshSDF:
         reconstructed = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
         reconstructed_pyrender = pyrender.Mesh.from_trimesh(reconstructed, smooth=False)
         scene.add(reconstructed_pyrender)
-        viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
+        pyrender.Viewer(scene, use_raymond_lighting=True)
         
     def is_outside(self, points):
         result = None
@@ -128,32 +127,3 @@ class MeshSDF:
             else:
                 result = np.logical_or(result, scan.is_visible(points))
         return result
-
-def show_mesh(mesh):
-    scene = pyrender.Scene()
-    scene.add(pyrender.Mesh.from_trimesh(mesh, smooth=False))
-    viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
-
-if __name__ == "__main__":
-    PATH = 'data/shapenet/03001627/6ae8076b0f9c74199c2009e4fd70d135/models/model_normalized.obj'
-    
-    mesh = trimesh.load(PATH)
-    mesh = scale_to_unit_sphere(mesh)
-
-
-    show_mesh(mesh)
-    mesh_sdf = MeshSDF(mesh)
-
-    mesh_sdf.show_pointcloud()
-    mesh_sdf.show_reconstructed_mesh()
-
-    points, sdf = mesh_sdf.get_sample_points()
-
-    scene = pyrender.Scene()
-    colors = np.zeros((points.shape[0], 3))
-    colors[sdf < 0, 2] = 1
-    colors[sdf > 0, 0] = 1
-    cloud = pyrender.Mesh.from_points(points, colors=colors)
-
-    scene.add(cloud)    
-    viewer = pyrender.Viewer(scene, use_raymond_lighting=True, point_size=2)
