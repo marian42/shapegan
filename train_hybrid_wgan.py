@@ -137,12 +137,6 @@ def train():
         generator.save(epoch=epoch)
         critic.save(epoch=epoch)
 
-        if "show_slice" in sys.argv:
-            latent_code = sample_latent_codes(1)
-            voxels = generator.forward(grid_points, latent_code)
-            voxels = voxels.reshape(VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
-            print(create_text_slice(voxels / SDF_CLIPPING))
-
         score = generator.get_inception_score()
         prediction_fake = np.mean(history_fake)
         prediction_real = np.mean(history_real)
