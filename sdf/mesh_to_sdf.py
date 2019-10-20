@@ -1,5 +1,7 @@
 import trimesh
-import pyrender
+import logging
+logging.getLogger("trimesh").setLevel(9000)
+
 import numpy as np
 np.set_printoptions(suppress=True)
 from PIL import Image
@@ -7,18 +9,18 @@ from scipy.spatial.transform import Rotation
 import time
 from sklearn.neighbors import KDTree
 import skimage
-import logging
 from threading import Lock
 from tqdm import tqdm
 import math
 import random
+
 from rendering.math import get_rotation_matrix
+from sdf.pyrender_wrapper import render_normal_and_depth_buffers
+
+import pyrender
 
 CAMERA_DISTANCE = 2
 VIEWPORT_SIZE = 512
-
-logging.getLogger("trimesh").setLevel(9000)
-
 render_lock = Lock()
 
 def get_camera_transform(rotation_y, rotation_x = 0):
@@ -31,31 +33,17 @@ def get_camera_transform(rotation_y, rotation_x = 0):
 class BadMeshException(Exception):
     pass
 
-class CustomShaderCache():
-    def __init__(self):
-        self.program = None
-
-    def get_program(self, vertex_shader, fragment_shader, geometry_shader=None, defines=None):
-        if self.program is None:
-            self.program = pyrender.shader_program.ShaderProgram("sdf/shaders/mesh.vert", "sdf/shaders/mesh.frag", defines=defines)
-        return self.program
-
 class Scan():
     def __init__(self, mesh, camera_pose):
         self.camera_pose = camera_pose
         self.camera_direction = np.matmul(camera_pose, np.array([0, 0, 1, 0]))[:3]
         self.camera_position = np.matmul(camera_pose, np.array([0, 0, 0, 1]))[:3]
         
-        scene = pyrender.Scene()
-        scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
         camera = pyrender.PerspectiveCamera(yfov=2 * math.asin(1.0 / CAMERA_DISTANCE), aspectRatio=1.0, znear = CAMERA_DISTANCE - 1.0, zfar = CAMERA_DISTANCE + 1.0)
-        scene.add(camera, pose=camera_pose)
         self.projection_matrix = camera.get_projection_matrix()
 
-        renderer = pyrender.OffscreenRenderer(VIEWPORT_SIZE, VIEWPORT_SIZE)
-        renderer._renderer._program_cache = CustomShaderCache()
+        color, depth = render_normal_and_depth_buffers(mesh, camera, camera_pose, VIEWPORT_SIZE)
 
-        color, depth = renderer.render(scene)
         self.depth = depth * 2 - 1
         indices = np.argwhere(self.depth != 1)
 
@@ -64,7 +52,7 @@ class Scan():
         points[:, 1] *= -1
         points[:, 2] = self.depth[indices[:, 0], indices[:, 1]]
         
-        clipping_to_world = np.matmul(camera_pose, np.linalg.inv(camera.get_projection_matrix()))
+        clipping_to_world = np.matmul(camera_pose, np.linalg.inv(self.projection_matrix))
 
         points = np.matmul(points, clipping_to_world.transpose())
         points /= points[:, 3][:, np.newaxis]
