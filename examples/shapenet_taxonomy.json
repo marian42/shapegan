@@ -1,0 +1,2513 @@
+[
+  {
+    "synsetId": "02691156",
+    "name": "airplane,aeroplane,plane",
+    "children": [
+      "02690373",
+      "02842573",
+      "02867715",
+      "03174079",
+      "03335030",
+      "03595860",
+      "04012084",
+      "04160586",
+      "20000000",
+      "20000001",
+      "20000002"
+    ],
+    "numInstances": 4045
+  },
+  {
+    "synsetId": "02690373",
+    "name": "airliner",
+    "children": [
+      "03809312",
+      "04583620"
+    ],
+    "numInstances": 1490
+  },
+  {
+    "synsetId": "03809312",
+    "name": "narrowbody aircraft,narrow-body aircraft,narrow-body",
+    "children": [],
+    "numInstances": 14
+  },
+  {
+    "synsetId": "04583620",
+    "name": "widebody aircraft,wide-body aircraft,wide-body,twin-aisle airplane",
+    "children": [],
+    "numInstances": 26
+  },
+  {
+    "synsetId": "02842573",
+    "name": "biplane",
+    "children": [],
+    "numInstances": 10
+  },
+  {
+    "synsetId": "02867715",
+    "name": "bomber",
+    "children": [],
+    "numInstances": 178
+  },
+  {
+    "synsetId": "03174079",
+    "name": "delta wing",
+    "children": [],
+    "numInstances": 121
+  },
+  {
+    "synsetId": "03335030",
+    "name": "fighter,fighter aircraft,attack aircraft",
+    "children": [],
+    "numInstances": 745
+  },
+  {
+    "synsetId": "03595860",
+    "name": "jet,jet plane,jet-propelled plane",
+    "children": [
+      "03321419",
+      "03604311"
+    ],
+    "numInstances": 1235
+  },
+  {
+    "synsetId": "03321419",
+    "name": "fanjet,fan-jet,turbofan,turbojet",
+    "children": [],
+    "numInstances": 55
+  },
+  {
+    "synsetId": "03604311",
+    "name": "jumbojet,jumbo jet",
+    "children": [],
+    "numInstances": 33
+  },
+  {
+    "synsetId": "04012084",
+    "name": "propeller plane",
+    "children": [],
+    "numInstances": 150
+  },
+  {
+    "synsetId": "04160586",
+    "name": "seaplane,hydroplane",
+    "children": [
+      "03373611"
+    ],
+    "numInstances": 10
+  },
+  {
+    "synsetId": "03373611",
+    "name": "flying boat",
+    "children": [],
+    "numInstances": 10
+  },
+  {
+    "synsetId": "20000000",
+    "name": "straight wing",
+    "children": [],
+    "numInstances": 157
+  },
+  {
+    "synsetId": "20000001",
+    "name": "swept wing",
+    "children": [],
+    "numInstances": 281
+  },
+  {
+    "synsetId": "20000002",
+    "name": "transport airplane",
+    "children": [],
+    "numInstances": 338
+  },
+  {
+    "synsetId": "02747177",
+    "name": "ashcan,trash can,garbage can,wastebin,ash bin,ash-bin,ashbin,dustbin,trash barrel,trash bin",
+    "children": [],
+    "numInstances": 343
+  },
+  {
+    "synsetId": "02773838",
+    "name": "bag,traveling bag,travelling bag,grip,suitcase",
+    "children": [
+      "03986949"
+    ],
+    "numInstances": 83
+  },
+  {
+    "synsetId": "03986949",
+    "name": "portmanteau,Gladstone,Gladstone bag",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "02801938",
+    "name": "basket,handbasket",
+    "children": [
+      "03482405",
+      "04582349"
+    ],
+    "numInstances": 113
+  },
+  {
+    "synsetId": "03482405",
+    "name": "hamper",
+    "children": [
+      "03050864"
+    ],
+    "numInstances": 16
+  },
+  {
+    "synsetId": "03050864",
+    "name": "clothes hamper,laundry basket,clothes basket,voider",
+    "children": [],
+    "numInstances": 16
+  },
+  {
+    "synsetId": "04582349",
+    "name": "wicker basket",
+    "children": [],
+    "numInstances": 20
+  },
+  {
+    "synsetId": "02808440",
+    "name": "bathtub,bathing tub,bath,tub",
+    "children": [],
+    "numInstances": 856
+  },
+  {
+    "synsetId": "02818832",
+    "name": "bed",
+    "children": [
+      "02831724",
+      "02920083",
+      "02920259",
+      "03114504",
+      "03115762",
+      "03388549",
+      "03482252",
+      "03962852",
+      "04222210",
+      "20000004",
+      "20000005",
+      "20000006",
+      "20000007"
+    ],
+    "numInstances": 233
+  },
+  {
+    "synsetId": "02831724",
+    "name": "berth,bunk,built in bed",
+    "children": [],
+    "numInstances": 71
+  },
+  {
+    "synsetId": "02920083",
+    "name": "bunk",
+    "children": [],
+    "numInstances": 86
+  },
+  {
+    "synsetId": "02920259",
+    "name": "bunk bed,bunk",
+    "children": [],
+    "numInstances": 89
+  },
+  {
+    "synsetId": "03114504",
+    "name": "cot,camp bed",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "03115762",
+    "name": "couch",
+    "children": [],
+    "numInstances": 14
+  },
+  {
+    "synsetId": "03388549",
+    "name": "four-poster",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "03482252",
+    "name": "hammock,sack",
+    "children": [],
+    "numInstances": 7
+  },
+  {
+    "synsetId": "03962852",
+    "name": "platform bed",
+    "children": [],
+    "numInstances": 73
+  },
+  {
+    "synsetId": "04222210",
+    "name": "single bed",
+    "children": [
+      "03540914"
+    ],
+    "numInstances": 3
+  },
+  {
+    "synsetId": "03540914",
+    "name": "hospital bed",
+    "children": [],
+    "numInstances": 3
+  },
+  {
+    "synsetId": "20000004",
+    "name": "headboard beds",
+    "children": [],
+    "numInstances": 19
+  },
+  {
+    "synsetId": "20000005",
+    "name": "headless beds",
+    "children": [],
+    "numInstances": 4
+  },
+  {
+    "synsetId": "20000006",
+    "name": "king size beds",
+    "children": [],
+    "numInstances": 11
+  },
+  {
+    "synsetId": "20000007",
+    "name": "misc beds",
+    "children": [],
+    "numInstances": 27
+  },
+  {
+    "synsetId": "02828884",
+    "name": "bench",
+    "children": [
+      "03360622",
+      "03891251",
+      "03920867",
+      "04177820",
+      "04590021"
+    ],
+    "numInstances": 1813
+  },
+  {
+    "synsetId": "03360622",
+    "name": "flat bench",
+    "children": [],
+    "numInstances": 7
+  },
+  {
+    "synsetId": "03891251",
+    "name": "park bench",
+    "children": [],
+    "numInstances": 853
+  },
+  {
+    "synsetId": "03920867",
+    "name": "pew,church bench",
+    "children": [],
+    "numInstances": 29
+  },
+  {
+    "synsetId": "04177820",
+    "name": "settle,settee",
+    "children": [],
+    "numInstances": 23
+  },
+  {
+    "synsetId": "04590021",
+    "name": "window seat",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "02834778",
+    "name": "bicycle,bike,wheel,cycle",
+    "children": [],
+    "numInstances": 59
+  },
+  {
+    "synsetId": "02843684",
+    "name": "birdhouse",
+    "children": [],
+    "numInstances": 73
+  },
+  {
+    "synsetId": "02871439",
+    "name": "bookshelf",
+    "children": [],
+    "numInstances": 452
+  },
+  {
+    "synsetId": "02876657",
+    "name": "bottle",
+    "children": [
+      "02823428",
+      "03359566",
+      "03603722",
+      "03923379",
+      "03983396",
+      "04591713"
+    ],
+    "numInstances": 498
+  },
+  {
+    "synsetId": "02823428",
+    "name": "beer bottle",
+    "children": [],
+    "numInstances": 42
+  },
+  {
+    "synsetId": "03359566",
+    "name": "flask",
+    "children": [
+      "02952374"
+    ],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "02952374",
+    "name": "canteen",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "03603722",
+    "name": "jug",
+    "children": [],
+    "numInstances": 34
+  },
+  {
+    "synsetId": "03923379",
+    "name": "phial,vial,ampule,ampul,ampoule",
+    "children": [],
+    "numInstances": 4
+  },
+  {
+    "synsetId": "03983396",
+    "name": "pop bottle,soda bottle",
+    "children": [],
+    "numInstances": 19
+  },
+  {
+    "synsetId": "04591713",
+    "name": "wine bottle",
+    "children": [],
+    "numInstances": 140
+  },
+  {
+    "synsetId": "02880940",
+    "name": "bowl",
+    "children": [
+      "04263257"
+    ],
+    "numInstances": 186
+  },
+  {
+    "synsetId": "04263257",
+    "name": "soup bowl",
+    "children": [],
+    "numInstances": 3
+  },
+  {
+    "synsetId": "02924116",
+    "name": "bus,autobus,coach,charabanc,double-decker,jitney,motorbus,motorcoach,omnibus,passenger vehi",
+    "children": [
+      "04146614",
+      "04487081"
+    ],
+    "numInstances": 939
+  },
+  {
+    "synsetId": "04146614",
+    "name": "school bus",
+    "children": [],
+    "numInstances": 62
+  },
+  {
+    "synsetId": "04487081",
+    "name": "trolleybus,trolley coach,trackless trolley",
+    "children": [],
+    "numInstances": 31
+  },
+  {
+    "synsetId": "02933112",
+    "name": "cabinet",
+    "children": [
+      "03018349",
+      "03237340",
+      "03742115",
+      "20000008",
+      "20000009",
+      "20000010",
+      "20000011",
+      "20000012",
+      "20000013"
+    ],
+    "numInstances": 1571
+  },
+  {
+    "synsetId": "03018349",
+    "name": "china cabinet,china closet",
+    "children": [],
+    "numInstances": 49
+  },
+  {
+    "synsetId": "03237340",
+    "name": "dresser",
+    "children": [],
+    "numInstances": 500
+  },
+  {
+    "synsetId": "03742115",
+    "name": "medicine chest,medicine cabinet",
+    "children": [],
+    "numInstances": 6
+  },
+  {
+    "synsetId": "20000008",
+    "name": "bed cabinet",
+    "children": [],
+    "numInstances": 41
+  },
+  {
+    "synsetId": "20000009",
+    "name": "box cabinet",
+    "children": [],
+    "numInstances": 81
+  },
+  {
+    "synsetId": "20000010",
+    "name": "desk cabinet",
+    "children": [],
+    "numInstances": 358
+  },
+  {
+    "synsetId": "20000011",
+    "name": "garage cabinet",
+    "children": [],
+    "numInstances": 309
+  },
+  {
+    "synsetId": "20000012",
+    "name": "tall cabinet",
+    "children": [],
+    "numInstances": 116
+  },
+  {
+    "synsetId": "20000013",
+    "name": "two-door cabinet",
+    "children": [],
+    "numInstances": 79
+  },
+  {
+    "synsetId": "02942699",
+    "name": "camera,photographic camera",
+    "children": [
+      "02884994",
+      "03196062",
+      "03358726",
+      "03789171"
+    ],
+    "numInstances": 113
+  },
+  {
+    "synsetId": "02884994",
+    "name": "box camera,box Kodak",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "03196062",
+    "name": "digital camera",
+    "children": [
+      "04569063"
+    ],
+    "numInstances": 31
+  },
+  {
+    "synsetId": "04569063",
+    "name": "webcam",
+    "children": [],
+    "numInstances": 31
+  },
+  {
+    "synsetId": "03358726",
+    "name": "flash camera",
+    "children": [],
+    "numInstances": 17
+  },
+  {
+    "synsetId": "03789171",
+    "name": "motion-picture camera,movie camera,cine-camera",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "02946921",
+    "name": "can,tin,tin can",
+    "children": [
+      "02823510",
+      "04255586"
+    ],
+    "numInstances": 108
+  },
+  {
+    "synsetId": "02823510",
+    "name": "beer can",
+    "children": [],
+    "numInstances": 11
+  },
+  {
+    "synsetId": "04255586",
+    "name": "soda can",
+    "children": [],
+    "numInstances": 73
+  },
+  {
+    "synsetId": "02954340",
+    "name": "cap",
+    "children": [
+      "02799323",
+      "03049924",
+      "03610682",
+      "04387095"
+    ],
+    "numInstances": 56
+  },
+  {
+    "synsetId": "02799323",
+    "name": "baseball cap,jockey cap,golf cap",
+    "children": [],
+    "numInstances": 11
+  },
+  {
+    "synsetId": "03049924",
+    "name": "cloth cap,flat cap",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "03610682",
+    "name": "kepi,peaked cap,service cap,yachting cap",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "04387095",
+    "name": "tam,tam-o'-shanter,tammy",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "02958343",
+    "name": "car,auto,automobile,machine,motorcar",
+    "children": [
+      "02701002",
+      "02814533",
+      "02930766",
+      "03100240",
+      "03119396",
+      "03141065",
+      "03498781",
+      "03543394",
+      "03594945",
+      "03670208",
+      "03770679",
+      "03870105",
+      "04037443",
+      "04097373",
+      "04166281",
+      "04285008",
+      "04285965",
+      "04459122"
+    ],
+    "numInstances": 3533
+  },
+  {
+    "synsetId": "02701002",
+    "name": "ambulance",
+    "children": [],
+    "numInstances": 74
+  },
+  {
+    "synsetId": "02814533",
+    "name": "beach wagon,station wagon,wagon,estate car,beach waggon,station waggon,waggon",
+    "children": [],
+    "numInstances": 126
+  },
+  {
+    "synsetId": "02930766",
+    "name": "cab,hack,taxi,taxicab",
+    "children": [],
+    "numInstances": 11
+  },
+  {
+    "synsetId": "03100240",
+    "name": "convertible",
+    "children": [],
+    "numInstances": 273
+  },
+  {
+    "synsetId": "03119396",
+    "name": "coupe",
+    "children": [],
+    "numInstances": 643
+  },
+  {
+    "synsetId": "03141065",
+    "name": "cruiser,police cruiser,patrol car,police car,prowl car,squad car",
+    "children": [
+      "03881534"
+    ],
+    "numInstances": 192
+  },
+  {
+    "synsetId": "03881534",
+    "name": "panda car",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "03498781",
+    "name": "hatchback",
+    "children": [],
+    "numInstances": 17
+  },
+  {
+    "synsetId": "03543394",
+    "name": "hot rod,hot-rod",
+    "children": [],
+    "numInstances": 28
+  },
+  {
+    "synsetId": "03594945",
+    "name": "jeep,landrover",
+    "children": [],
+    "numInstances": 97
+  },
+  {
+    "synsetId": "03670208",
+    "name": "limousine,limo",
+    "children": [],
+    "numInstances": 66
+  },
+  {
+    "synsetId": "03770679",
+    "name": "minivan",
+    "children": [],
+    "numInstances": 20
+  },
+  {
+    "synsetId": "03870105",
+    "name": "pace car",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "04037443",
+    "name": "racer,race car,racing car",
+    "children": [
+      "04322801"
+    ],
+    "numInstances": 416
+  },
+  {
+    "synsetId": "04322801",
+    "name": "stock car",
+    "children": [],
+    "numInstances": 78
+  },
+  {
+    "synsetId": "04097373",
+    "name": "roadster,runabout,two-seater",
+    "children": [],
+    "numInstances": 95
+  },
+  {
+    "synsetId": "04166281",
+    "name": "sedan,saloon",
+    "children": [],
+    "numInstances": 559
+  },
+  {
+    "synsetId": "04285008",
+    "name": "sports car,sport car",
+    "children": [],
+    "numInstances": 204
+  },
+  {
+    "synsetId": "04285965",
+    "name": "sport utility,sport utility vehicle,S.U.V.,SUV",
+    "children": [],
+    "numInstances": 372
+  },
+  {
+    "synsetId": "04459122",
+    "name": "touring car,phaeton,tourer",
+    "children": [],
+    "numInstances": 59
+  },
+  {
+    "synsetId": "03001627",
+    "name": "chair",
+    "children": [
+      "02738535",
+      "03002210",
+      "03002711",
+      "03260849",
+      "03376595",
+      "03632729",
+      "03649674",
+      "04099969",
+      "04331277",
+      "04373704",
+      "04576002",
+      "20000015",
+      "20000016",
+      "20000018",
+      "20000019",
+      "20000020",
+      "20000021",
+      "20000022",
+      "20000023",
+      "20000024",
+      "20000025",
+      "20000026",
+      "20000027"
+    ],
+    "numInstances": 6778
+  },
+  {
+    "synsetId": "02738535",
+    "name": "armchair",
+    "children": [
+      "02957862",
+      "03262932",
+      "03786621",
+      "04062428"
+    ],
+    "numInstances": 1974
+  },
+  {
+    "synsetId": "02957862",
+    "name": "captain's chair",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "03262932",
+    "name": "easy chair,lounge chair,overstuffed chair",
+    "children": [
+      "04593077"
+    ],
+    "numInstances": 411
+  },
+  {
+    "synsetId": "04593077",
+    "name": "wing chair",
+    "children": [],
+    "numInstances": 22
+  },
+  {
+    "synsetId": "03786621",
+    "name": "Morris chair",
+    "children": [],
+    "numInstances": 31
+  },
+  {
+    "synsetId": "04062428",
+    "name": "recliner,reclining chair,lounger",
+    "children": [],
+    "numInstances": 44
+  },
+  {
+    "synsetId": "03002210",
+    "name": "chair of state",
+    "children": [
+      "04429376"
+    ],
+    "numInstances": 6
+  },
+  {
+    "synsetId": "04429376",
+    "name": "throne",
+    "children": [],
+    "numInstances": 6
+  },
+  {
+    "synsetId": "03002711",
+    "name": "chaise longue,chaise,daybed",
+    "children": [],
+    "numInstances": 56
+  },
+  {
+    "synsetId": "03260849",
+    "name": "Eames chair",
+    "children": [],
+    "numInstances": 5
+  },
+  {
+    "synsetId": "03376595",
+    "name": "folding chair",
+    "children": [
+      "02946270",
+      "03168217"
+    ],
+    "numInstances": 119
+  },
+  {
+    "synsetId": "02946270",
+    "name": "camp chair",
+    "children": [],
+    "numInstances": 6
+  },
+  {
+    "synsetId": "03168217",
+    "name": "deck chair,beach chair",
+    "children": [],
+    "numInstances": 50
+  },
+  {
+    "synsetId": "03632729",
+    "name": "ladder-back,ladder-back chair",
+    "children": [],
+    "numInstances": 7
+  },
+  {
+    "synsetId": "03649674",
+    "name": "lawn chair,garden chair",
+    "children": [],
+    "numInstances": 82
+  },
+  {
+    "synsetId": "04099969",
+    "name": "rocking chair,rocker",
+    "children": [],
+    "numInstances": 96
+  },
+  {
+    "synsetId": "04331277",
+    "name": "straight chair,side chair",
+    "children": [
+      "04590933"
+    ],
+    "numInstances": 1995
+  },
+  {
+    "synsetId": "04590933",
+    "name": "Windsor chair",
+    "children": [],
+    "numInstances": 224
+  },
+  {
+    "synsetId": "04373704",
+    "name": "swivel chair",
+    "children": [],
+    "numInstances": 408
+  },
+  {
+    "synsetId": "04576002",
+    "name": "wheelchair",
+    "children": [],
+    "numInstances": 8
+  },
+  {
+    "synsetId": "20000015",
+    "name": "ball chair",
+    "children": [],
+    "numInstances": 20
+  },
+  {
+    "synsetId": "20000016",
+    "name": "barcelona chair",
+    "children": [],
+    "numInstances": 23
+  },
+  {
+    "synsetId": "20000018",
+    "name": "bean chair",
+    "children": [],
+    "numInstances": 6
+  },
+  {
+    "synsetId": "20000019",
+    "name": "butterfly chair",
+    "children": [],
+    "numInstances": 5
+  },
+  {
+    "synsetId": "20000020",
+    "name": "cantilever chair",
+    "children": [],
+    "numInstances": 140
+  },
+  {
+    "synsetId": "20000021",
+    "name": "NO. 14 chair",
+    "children": [],
+    "numInstances": 11
+  },
+  {
+    "synsetId": "20000022",
+    "name": "rex chair",
+    "children": [],
+    "numInstances": 82
+  },
+  {
+    "synsetId": "20000023",
+    "name": "tulip chair",
+    "children": [],
+    "numInstances": 26
+  },
+  {
+    "synsetId": "20000024",
+    "name": "wassily chair",
+    "children": [],
+    "numInstances": 8
+  },
+  {
+    "synsetId": "20000025",
+    "name": "X chair",
+    "children": [],
+    "numInstances": 13
+  },
+  {
+    "synsetId": "20000026",
+    "name": "zigzag chair",
+    "children": [],
+    "numInstances": 82
+  },
+  {
+    "synsetId": "20000027",
+    "name": "club chair",
+    "children": [],
+    "numInstances": 778
+  },
+  {
+    "synsetId": "03046257",
+    "name": "clock",
+    "children": [
+      "02694662",
+      "03909406",
+      "04548280"
+    ],
+    "numInstances": 651
+  },
+  {
+    "synsetId": "02694662",
+    "name": "alarm clock,alarm",
+    "children": [],
+    "numInstances": 48
+  },
+  {
+    "synsetId": "03909406",
+    "name": "pendulum clock",
+    "children": [
+      "03452594"
+    ],
+    "numInstances": 138
+  },
+  {
+    "synsetId": "03452594",
+    "name": "grandfather clock,longcase clock",
+    "children": [],
+    "numInstances": 54
+  },
+  {
+    "synsetId": "04548280",
+    "name": "wall clock",
+    "children": [],
+    "numInstances": 28
+  },
+  {
+    "synsetId": "03085013",
+    "name": "computer keyboard,keypad",
+    "children": [],
+    "numInstances": 65
+  },
+  {
+    "synsetId": "03207941",
+    "name": "dishwasher,dish washer,dishwashing machine",
+    "children": [],
+    "numInstances": 93
+  },
+  {
+    "synsetId": "03211117",
+    "name": "display,video display",
+    "children": [
+      "03196598",
+      "03211616",
+      "03361380",
+      "03782190",
+      "04152593"
+    ],
+    "numInstances": 1093
+  },
+  {
+    "synsetId": "03196598",
+    "name": "digital display,alphanumeric display",
+    "children": [
+      "03676759"
+    ],
+    "numInstances": 471
+  },
+  {
+    "synsetId": "03676759",
+    "name": "liquid crystal display,LCD",
+    "children": [],
+    "numInstances": 471
+  },
+  {
+    "synsetId": "03211616",
+    "name": "display panel,display board,board",
+    "children": [],
+    "numInstances": 23
+  },
+  {
+    "synsetId": "03361380",
+    "name": "flat panel display,FPD",
+    "children": [],
+    "numInstances": 12
+  },
+  {
+    "synsetId": "03782190",
+    "name": "monitor,monitoring device",
+    "children": [
+      "03085219"
+    ],
+    "numInstances": 565
+  },
+  {
+    "synsetId": "03085219",
+    "name": "computer monitor",
+    "children": [],
+    "numInstances": 212
+  },
+  {
+    "synsetId": "04152593",
+    "name": "screen,CRT screen",
+    "children": [
+      "02769075",
+      "03085602"
+    ],
+    "numInstances": 663
+  },
+  {
+    "synsetId": "02769075",
+    "name": "background,desktop,screen background",
+    "children": [],
+    "numInstances": 44
+  },
+  {
+    "synsetId": "03085602",
+    "name": "computer screen,computer display",
+    "children": [],
+    "numInstances": 173
+  },
+  {
+    "synsetId": "03261776",
+    "name": "earphone,earpiece,headphone,phone",
+    "children": [],
+    "numInstances": 73
+  },
+  {
+    "synsetId": "03325088",
+    "name": "faucet,spigot",
+    "children": [
+      "03775636",
+      "04559451"
+    ],
+    "numInstances": 744
+  },
+  {
+    "synsetId": "03775636",
+    "name": "mixing faucet",
+    "children": [],
+    "numInstances": 19
+  },
+  {
+    "synsetId": "04559451",
+    "name": "water faucet,water tap,tap,hydrant",
+    "children": [],
+    "numInstances": 247
+  },
+  {
+    "synsetId": "03337140",
+    "name": "file,file cabinet,filing cabinet",
+    "children": [
+      "04529681"
+    ],
+    "numInstances": 298
+  },
+  {
+    "synsetId": "04529681",
+    "name": "vertical file",
+    "children": [],
+    "numInstances": 88
+  },
+  {
+    "synsetId": "03467517",
+    "name": "guitar",
+    "children": [
+      "02676566"
+    ],
+    "numInstances": 797
+  },
+  {
+    "synsetId": "02676566",
+    "name": "acoustic guitar",
+    "children": [],
+    "numInstances": 49
+  },
+  {
+    "synsetId": "03513137",
+    "name": "helmet",
+    "children": [
+      "03379051",
+      "03492922",
+      "04265428"
+    ],
+    "numInstances": 162
+  },
+  {
+    "synsetId": "03379051",
+    "name": "football helmet",
+    "children": [],
+    "numInstances": 10
+  },
+  {
+    "synsetId": "03492922",
+    "name": "hard hat,tin hat,safety hat",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "04265428",
+    "name": "space helmet",
+    "children": [],
+    "numInstances": 5
+  },
+  {
+    "synsetId": "03593526",
+    "name": "jar",
+    "children": [
+      "04522168"
+    ],
+    "numInstances": 596
+  },
+  {
+    "synsetId": "04522168",
+    "name": "vase",
+    "children": [],
+    "numInstances": 485
+  },
+  {
+    "synsetId": "03624134",
+    "name": "knife",
+    "children": [
+      "02812949",
+      "03158885"
+    ],
+    "numInstances": 424
+  },
+  {
+    "synsetId": "02812949",
+    "name": "bayonet",
+    "children": [],
+    "numInstances": 20
+  },
+  {
+    "synsetId": "03158885",
+    "name": "dagger,sticker",
+    "children": [],
+    "numInstances": 83
+  },
+  {
+    "synsetId": "03636649",
+    "name": "lamp",
+    "children": [
+      "03367059",
+      "04380533"
+    ],
+    "numInstances": 2318
+  },
+  {
+    "synsetId": "03367059",
+    "name": "floor lamp",
+    "children": [],
+    "numInstances": 65
+  },
+  {
+    "synsetId": "04380533",
+    "name": "table lamp",
+    "children": [],
+    "numInstances": 466
+  },
+  {
+    "synsetId": "03642806",
+    "name": "laptop,laptop computer",
+    "children": [],
+    "numInstances": 460
+  },
+  {
+    "synsetId": "03691459",
+    "name": "loudspeaker,speaker,speaker unit,loudspeaker system,speaker system",
+    "children": [
+      "04349401",
+      "04502670",
+      "04599124"
+    ],
+    "numInstances": 1597
+  },
+  {
+    "synsetId": "04349401",
+    "name": "subwoofer",
+    "children": [],
+    "numInstances": 475
+  },
+  {
+    "synsetId": "04502670",
+    "name": "tweeter",
+    "children": [],
+    "numInstances": 142
+  },
+  {
+    "synsetId": "04599124",
+    "name": "woofer",
+    "children": [],
+    "numInstances": 198
+  },
+  {
+    "synsetId": "03710193",
+    "name": "mailbox,letter box",
+    "children": [],
+    "numInstances": 94
+  },
+  {
+    "synsetId": "03759954",
+    "name": "microphone,mike",
+    "children": [],
+    "numInstances": 67
+  },
+  {
+    "synsetId": "03761084",
+    "name": "microwave,microwave oven",
+    "children": [],
+    "numInstances": 152
+  },
+  {
+    "synsetId": "03790512",
+    "name": "motorcycle,bike",
+    "children": [
+      "03769722",
+      "04466871"
+    ],
+    "numInstances": 337
+  },
+  {
+    "synsetId": "03769722",
+    "name": "minibike,motorbike",
+    "children": [
+      "03785016"
+    ],
+    "numInstances": 21
+  },
+  {
+    "synsetId": "03785016",
+    "name": "moped",
+    "children": [],
+    "numInstances": 21
+  },
+  {
+    "synsetId": "04466871",
+    "name": "trail bike,dirt bike,scrambler",
+    "children": [],
+    "numInstances": 23
+  },
+  {
+    "synsetId": "03797390",
+    "name": "mug",
+    "children": [
+      "02824058",
+      "03063599"
+    ],
+    "numInstances": 214
+  },
+  {
+    "synsetId": "02824058",
+    "name": "beer mug,stein",
+    "children": [],
+    "numInstances": 5
+  },
+  {
+    "synsetId": "03063599",
+    "name": "coffee mug",
+    "children": [],
+    "numInstances": 75
+  },
+  {
+    "synsetId": "03928116",
+    "name": "piano,pianoforte,forte-piano",
+    "children": [
+      "03452741",
+      "04515003"
+    ],
+    "numInstances": 239
+  },
+  {
+    "synsetId": "03452741",
+    "name": "grand piano,grand",
+    "children": [
+      "03086457"
+    ],
+    "numInstances": 79
+  },
+  {
+    "synsetId": "03086457",
+    "name": "concert grand,concert piano",
+    "children": [],
+    "numInstances": 10
+  },
+  {
+    "synsetId": "04515003",
+    "name": "upright,upright piano",
+    "children": [],
+    "numInstances": 63
+  },
+  {
+    "synsetId": "03938244",
+    "name": "pillow",
+    "children": [],
+    "numInstances": 96
+  },
+  {
+    "synsetId": "03948459",
+    "name": "pistol,handgun,side arm,shooting iron",
+    "children": [
+      "04086273"
+    ],
+    "numInstances": 307
+  },
+  {
+    "synsetId": "04086273",
+    "name": "revolver,six-gun,six-shooter",
+    "children": [],
+    "numInstances": 128
+  },
+  {
+    "synsetId": "03991062",
+    "name": "pot,flowerpot",
+    "children": [
+      "03957315"
+    ],
+    "numInstances": 602
+  },
+  {
+    "synsetId": "03957315",
+    "name": "planter",
+    "children": [],
+    "numInstances": 300
+  },
+  {
+    "synsetId": "04004475",
+    "name": "printer,printing machine",
+    "children": [
+      "03280644"
+    ],
+    "numInstances": 166
+  },
+  {
+    "synsetId": "03280644",
+    "name": "electrostatic printer",
+    "children": [
+      "03643737"
+    ],
+    "numInstances": 16
+  },
+  {
+    "synsetId": "03643737",
+    "name": "laser printer",
+    "children": [],
+    "numInstances": 16
+  },
+  {
+    "synsetId": "04074963",
+    "name": "remote control,remote",
+    "children": [],
+    "numInstances": 66
+  },
+  {
+    "synsetId": "04090263",
+    "name": "rifle",
+    "children": [
+      "02961451",
+      "04250224"
+    ],
+    "numInstances": 2373
+  },
+  {
+    "synsetId": "02961451",
+    "name": "carbine",
+    "children": [],
+    "numInstances": 173
+  },
+  {
+    "synsetId": "04250224",
+    "name": "sniper rifle,precision rifle",
+    "children": [],
+    "numInstances": 729
+  },
+  {
+    "synsetId": "04099429",
+    "name": "rocket,projectile",
+    "children": [
+      "03773504"
+    ],
+    "numInstances": 85
+  },
+  {
+    "synsetId": "03773504",
+    "name": "missile",
+    "children": [
+      "02693413",
+      "02781338",
+      "03466162"
+    ],
+    "numInstances": 58
+  },
+  {
+    "synsetId": "02693413",
+    "name": "air-to-air missile",
+    "children": [],
+    "numInstances": 26
+  },
+  {
+    "synsetId": "02781338",
+    "name": "ballistic missile",
+    "children": [],
+    "numInstances": 8
+  },
+  {
+    "synsetId": "03466162",
+    "name": "guided missile",
+    "children": [
+      "02929923",
+      "04363210"
+    ],
+    "numInstances": 13
+  },
+  {
+    "synsetId": "02929923",
+    "name": "buzz bomb,robot bomb,flying bomb,doodlebug,V-1",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "04363210",
+    "name": "surface-to-air missile,SAM",
+    "children": [],
+    "numInstances": 11
+  },
+  {
+    "synsetId": "04225987",
+    "name": "skateboard",
+    "children": [],
+    "numInstances": 152
+  },
+  {
+    "synsetId": "04256520",
+    "name": "sofa,couch,lounge",
+    "children": [
+      "03100346",
+      "03165096",
+      "03693474",
+      "04177755",
+      "20000028",
+      "20000029",
+      "20000030"
+    ],
+    "numInstances": 3173
+  },
+  {
+    "synsetId": "03100346",
+    "name": "convertible,sofa bed",
+    "children": [
+      "03164605",
+      "04344873"
+    ],
+    "numInstances": 145
+  },
+  {
+    "synsetId": "03164605",
+    "name": "davenport",
+    "children": [
+      "03015149"
+    ],
+    "numInstances": 22
+  },
+  {
+    "synsetId": "03015149",
+    "name": "chesterfield",
+    "children": [],
+    "numInstances": 22
+  },
+  {
+    "synsetId": "04344873",
+    "name": "studio couch,day bed",
+    "children": [],
+    "numInstances": 23
+  },
+  {
+    "synsetId": "03165096",
+    "name": "daybed,divan bed",
+    "children": [],
+    "numInstances": 13
+  },
+  {
+    "synsetId": "03693474",
+    "name": "love seat,loveseat,tete-a-tete,vis-a-vis",
+    "children": [],
+    "numInstances": 144
+  },
+  {
+    "synsetId": "04177755",
+    "name": "settee",
+    "children": [],
+    "numInstances": 24
+  },
+  {
+    "synsetId": "20000028",
+    "name": "double couch",
+    "children": [],
+    "numInstances": 186
+  },
+  {
+    "synsetId": "20000029",
+    "name": "L-shaped couch",
+    "children": [],
+    "numInstances": 188
+  },
+  {
+    "synsetId": "20000030",
+    "name": "leather couch",
+    "children": [],
+    "numInstances": 19
+  },
+  {
+    "synsetId": "04330267",
+    "name": "stove",
+    "children": [],
+    "numInstances": 218
+  },
+  {
+    "synsetId": "04379243",
+    "name": "table",
+    "children": [
+      "02699629",
+      "02874214",
+      "02894337",
+      "02964075",
+      "02964196",
+      "03063968",
+      "03090000",
+      "03092883",
+      "03116530",
+      "03179701",
+      "03238586",
+      "03246933",
+      "03620967",
+      "03850492",
+      "03904060",
+      "03982430",
+      "04301000",
+      "04381587",
+      "04398951",
+      "04603729",
+      "20000036",
+      "20000037",
+      "20000038",
+      "20000039",
+      "20000040",
+      "20000041"
+    ],
+    "numInstances": 8436
+  },
+  {
+    "synsetId": "02699629",
+    "name": "altar,communion table,Lord's table",
+    "children": [],
+    "numInstances": 12
+  },
+  {
+    "synsetId": "02874214",
+    "name": "booth",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "02894337",
+    "name": "breakfast table",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "02964075",
+    "name": "card table",
+    "children": [],
+    "numInstances": 16
+  },
+  {
+    "synsetId": "02964196",
+    "name": "card table",
+    "children": [],
+    "numInstances": 5
+  },
+  {
+    "synsetId": "03063968",
+    "name": "coffee table,cocktail table",
+    "children": [],
+    "numInstances": 1068
+  },
+  {
+    "synsetId": "03090000",
+    "name": "conference table,council table,council board",
+    "children": [],
+    "numInstances": 17
+  },
+  {
+    "synsetId": "03092883",
+    "name": "console table,console",
+    "children": [],
+    "numInstances": 336
+  },
+  {
+    "synsetId": "03116530",
+    "name": "counter",
+    "children": [
+      "02789487",
+      "03011741",
+      "04061681"
+    ],
+    "numInstances": 72
+  },
+  {
+    "synsetId": "02789487",
+    "name": "bar",
+    "children": [
+      "04255768",
+      "04591631"
+    ],
+    "numInstances": 16
+  },
+  {
+    "synsetId": "04255768",
+    "name": "soda fountain",
+    "children": [],
+    "numInstances": 3
+  },
+  {
+    "synsetId": "04591631",
+    "name": "wine bar",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "03011741",
+    "name": "checkout,checkout counter",
+    "children": [],
+    "numInstances": 3
+  },
+  {
+    "synsetId": "04061681",
+    "name": "reception desk",
+    "children": [],
+    "numInstances": 13
+  },
+  {
+    "synsetId": "03179701",
+    "name": "desk",
+    "children": [
+      "04164868",
+      "04608329"
+    ],
+    "numInstances": 1633
+  },
+  {
+    "synsetId": "04164868",
+    "name": "secretary,writing table,escritoire,secretaire",
+    "children": [],
+    "numInstances": 73
+  },
+  {
+    "synsetId": "04608329",
+    "name": "writing desk",
+    "children": [],
+    "numInstances": 24
+  },
+  {
+    "synsetId": "03238586",
+    "name": "dressing table,dresser,vanity,toilet table",
+    "children": [],
+    "numInstances": 6
+  },
+  {
+    "synsetId": "03246933",
+    "name": "drop-leaf table",
+    "children": [],
+    "numInstances": 21
+  },
+  {
+    "synsetId": "03620967",
+    "name": "kitchen table",
+    "children": [],
+    "numInstances": 73
+  },
+  {
+    "synsetId": "03850492",
+    "name": "operating table",
+    "children": [],
+    "numInstances": 3
+  },
+  {
+    "synsetId": "03904060",
+    "name": "pedestal table",
+    "children": [
+      "04436012"
+    ],
+    "numInstances": 41
+  },
+  {
+    "synsetId": "04436012",
+    "name": "tilt-top table,tip-top table,tip table",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "03982430",
+    "name": "pool table,billiard table,snooker table",
+    "children": [],
+    "numInstances": 84
+  },
+  {
+    "synsetId": "04301000",
+    "name": "stand",
+    "children": [
+      "03653583"
+    ],
+    "numInstances": 10
+  },
+  {
+    "synsetId": "03653583",
+    "name": "lectern,reading desk",
+    "children": [],
+    "numInstances": 8
+  },
+  {
+    "synsetId": "04381587",
+    "name": "table-tennis table,ping-pong table,pingpong table",
+    "children": [],
+    "numInstances": 61
+  },
+  {
+    "synsetId": "04398951",
+    "name": "tea table",
+    "children": [],
+    "numInstances": 26
+  },
+  {
+    "synsetId": "04603729",
+    "name": "worktable,work table",
+    "children": [
+      "03231368",
+      "04600486"
+    ],
+    "numInstances": 370
+  },
+  {
+    "synsetId": "03231368",
+    "name": "drafting table,drawing table",
+    "children": [],
+    "numInstances": 66
+  },
+  {
+    "synsetId": "04600486",
+    "name": "workbench,work bench,bench",
+    "children": [
+      "03630262"
+    ],
+    "numInstances": 9
+  },
+  {
+    "synsetId": "03630262",
+    "name": "lab bench,laboratory bench",
+    "children": [],
+    "numInstances": 9
+  },
+  {
+    "synsetId": "20000036",
+    "name": "cabinet table",
+    "children": [],
+    "numInstances": 28
+  },
+  {
+    "synsetId": "20000037",
+    "name": "rectangular table",
+    "children": [],
+    "numInstances": 471
+  },
+  {
+    "synsetId": "20000038",
+    "name": "round table",
+    "children": [],
+    "numInstances": 52
+  },
+  {
+    "synsetId": "20000039",
+    "name": "short table",
+    "children": [],
+    "numInstances": 157
+  },
+  {
+    "synsetId": "20000040",
+    "name": "side table",
+    "children": [],
+    "numInstances": 321
+  },
+  {
+    "synsetId": "20000041",
+    "name": "workshop table",
+    "children": [],
+    "numInstances": 402
+  },
+  {
+    "synsetId": "04401088",
+    "name": "telephone,phone,telephone set",
+    "children": [
+      "03179910",
+      "03488438",
+      "04044498"
+    ],
+    "numInstances": 1089
+  },
+  {
+    "synsetId": "03179910",
+    "name": "desk phone",
+    "children": [],
+    "numInstances": 31
+  },
+  {
+    "synsetId": "03488438",
+    "name": "handset,French telephone",
+    "children": [],
+    "numInstances": 16
+  },
+  {
+    "synsetId": "04044498",
+    "name": "radiotelephone,radiophone,wireless telephone",
+    "children": [
+      "02992529"
+    ],
+    "numInstances": 831
+  },
+  {
+    "synsetId": "02992529",
+    "name": "cellular telephone,cellular phone,cellphone,cell,mobile phone",
+    "children": [],
+    "numInstances": 831
+  },
+  {
+    "synsetId": "04460130",
+    "name": "tower",
+    "children": [
+      "02814860",
+      "02826886",
+      "03029197",
+      "03047052",
+      "03519387",
+      "04028581",
+      "04206790",
+      "04220250",
+      "04312432",
+      "04361260",
+      "04501947",
+      "04556948"
+    ],
+    "numInstances": 133
+  },
+  {
+    "synsetId": "02814860",
+    "name": "beacon,lighthouse,beacon light,pharos",
+    "children": [],
+    "numInstances": 9
+  },
+  {
+    "synsetId": "02826886",
+    "name": "bell tower",
+    "children": [],
+    "numInstances": 7
+  },
+  {
+    "synsetId": "03029197",
+    "name": "church tower",
+    "children": [],
+    "numInstances": 9
+  },
+  {
+    "synsetId": "03047052",
+    "name": "clock tower",
+    "children": [],
+    "numInstances": 11
+  },
+  {
+    "synsetId": "03519387",
+    "name": "high-rise,tower block",
+    "children": [],
+    "numInstances": 4
+  },
+  {
+    "synsetId": "04028581",
+    "name": "pylon,power pylon",
+    "children": [],
+    "numInstances": 5
+  },
+  {
+    "synsetId": "04206790",
+    "name": "shot tower",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "04220250",
+    "name": "silo",
+    "children": [],
+    "numInstances": 35
+  },
+  {
+    "synsetId": "04312432",
+    "name": "steeple,spire",
+    "children": [],
+    "numInstances": 33
+  },
+  {
+    "synsetId": "04361260",
+    "name": "supporting tower",
+    "children": [],
+    "numInstances": 7
+  },
+  {
+    "synsetId": "04501947",
+    "name": "turret",
+    "children": [],
+    "numInstances": 4
+  },
+  {
+    "synsetId": "04556948",
+    "name": "watchtower",
+    "children": [
+      "03347617"
+    ],
+    "numInstances": 16
+  },
+  {
+    "synsetId": "03347617",
+    "name": "fire tower",
+    "children": [],
+    "numInstances": 5
+  },
+  {
+    "synsetId": "04468005",
+    "name": "train,railroad train",
+    "children": [
+      "02971579",
+      "03394480",
+      "03896233",
+      "04349306"
+    ],
+    "numInstances": 389
+  },
+  {
+    "synsetId": "02971579",
+    "name": "car train",
+    "children": [],
+    "numInstances": 11
+  },
+  {
+    "synsetId": "03394480",
+    "name": "freight train,rattler",
+    "children": [],
+    "numInstances": 34
+  },
+  {
+    "synsetId": "03896233",
+    "name": "passenger train",
+    "children": [
+      "03078802"
+    ],
+    "numInstances": 23
+  },
+  {
+    "synsetId": "03078802",
+    "name": "commuter,commuter train",
+    "children": [],
+    "numInstances": 4
+  },
+  {
+    "synsetId": "04349306",
+    "name": "subway train",
+    "children": [],
+    "numInstances": 23
+  },
+  {
+    "synsetId": "04530566",
+    "name": "vessel,watercraft",
+    "children": [
+      "02858304",
+      "03351262",
+      "03900194",
+      "04128837",
+      "04194289",
+      "04567746",
+      "04610013"
+    ],
+    "numInstances": 1939
+  },
+  {
+    "synsetId": "02858304",
+    "name": "boat",
+    "children": [
+      "02792552",
+      "02947660",
+      "03329663",
+      "03464628",
+      "03790230",
+      "03939178",
+      "03977592",
+      "04024983",
+      "04095210",
+      "04158807",
+      "04244997",
+      "04409128"
+    ],
+    "numInstances": 1316
+  },
+  {
+    "synsetId": "02792552",
+    "name": "barge,flatboat,hoy,lighter",
+    "children": [
+      "03545470",
+      "03981566"
+    ],
+    "numInstances": 28
+  },
+  {
+    "synsetId": "03545470",
+    "name": "houseboat",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "03981566",
+    "name": "pontoon",
+    "children": [],
+    "numInstances": 18
+  },
+  {
+    "synsetId": "02947660",
+    "name": "canal boat,narrow boat,narrowboat",
+    "children": [],
+    "numInstances": 9
+  },
+  {
+    "synsetId": "03329663",
+    "name": "ferry,ferryboat",
+    "children": [],
+    "numInstances": 83
+  },
+  {
+    "synsetId": "03464628",
+    "name": "guard boat",
+    "children": [],
+    "numInstances": 10
+  },
+  {
+    "synsetId": "03790230",
+    "name": "motorboat,powerboat",
+    "children": [
+      "02932891",
+      "03859170",
+      "04273569"
+    ],
+    "numInstances": 155
+  },
+  {
+    "synsetId": "02932891",
+    "name": "cabin cruiser,cruiser,pleasure boat,pleasure craft",
+    "children": [],
+    "numInstances": 79
+  },
+  {
+    "synsetId": "03859170",
+    "name": "outboard motorboat,outboard",
+    "children": [],
+    "numInstances": 30
+  },
+  {
+    "synsetId": "04273569",
+    "name": "speedboat",
+    "children": [],
+    "numInstances": 53
+  },
+  {
+    "synsetId": "03939178",
+    "name": "pilot boat",
+    "children": [],
+    "numInstances": 3
+  },
+  {
+    "synsetId": "03977592",
+    "name": "police boat",
+    "children": [],
+    "numInstances": 7
+  },
+  {
+    "synsetId": "04024983",
+    "name": "punt",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "04095210",
+    "name": "river boat",
+    "children": [],
+    "numInstances": 23
+  },
+  {
+    "synsetId": "04158807",
+    "name": "sea boat",
+    "children": [],
+    "numInstances": 108
+  },
+  {
+    "synsetId": "04244997",
+    "name": "small boat",
+    "children": [
+      "02951358",
+      "03199901"
+    ],
+    "numInstances": 159
+  },
+  {
+    "synsetId": "02951358",
+    "name": "canoe",
+    "children": [
+      "03254374",
+      "03609235"
+    ],
+    "numInstances": 51
+  },
+  {
+    "synsetId": "03254374",
+    "name": "dugout canoe,dugout,pirogue",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "03609235",
+    "name": "kayak",
+    "children": [],
+    "numInstances": 19
+  },
+  {
+    "synsetId": "03199901",
+    "name": "dinghy,dory,rowboat",
+    "children": [
+      "04115456"
+    ],
+    "numInstances": 35
+  },
+  {
+    "synsetId": "04115456",
+    "name": "rowing boat",
+    "children": [],
+    "numInstances": 17
+  },
+  {
+    "synsetId": "04409128",
+    "name": "tender,ship's boat,pinnace,cutter",
+    "children": [],
+    "numInstances": 398
+  },
+  {
+    "synsetId": "03351262",
+    "name": "fishing boat,fishing smack,fishing vessel",
+    "children": [],
+    "numInstances": 82
+  },
+  {
+    "synsetId": "03900194",
+    "name": "patrol boat,patrol ship",
+    "children": [],
+    "numInstances": 29
+  },
+  {
+    "synsetId": "04128837",
+    "name": "sailing vessel,sailing ship",
+    "children": [
+      "02793199",
+      "03045228",
+      "04128499"
+    ],
+    "numInstances": 206
+  },
+  {
+    "synsetId": "02793199",
+    "name": "bark,barque",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "03045228",
+    "name": "clipper,clipper ship",
+    "children": [],
+    "numInstances": 7
+  },
+  {
+    "synsetId": "04128499",
+    "name": "sailboat,sailing boat",
+    "children": [
+      "02981792"
+    ],
+    "numInstances": 164
+  },
+  {
+    "synsetId": "02981792",
+    "name": "catamaran",
+    "children": [],
+    "numInstances": 36
+  },
+  {
+    "synsetId": "04194289",
+    "name": "ship",
+    "children": [
+      "02965300",
+      "03541269",
+      "03896103",
+      "03947888",
+      "04146862",
+      "04224543",
+      "04309348",
+      "04409011",
+      "04552696"
+    ],
+    "numInstances": 798
+  },
+  {
+    "synsetId": "02965300",
+    "name": "cargo ship,cargo vessel",
+    "children": [
+      "03095699",
+      "03845190"
+    ],
+    "numInstances": 101
+  },
+  {
+    "synsetId": "03095699",
+    "name": "container ship,containership,container vessel",
+    "children": [],
+    "numInstances": 26
+  },
+  {
+    "synsetId": "03845190",
+    "name": "oil tanker,oiler,tanker,tank ship",
+    "children": [],
+    "numInstances": 41
+  },
+  {
+    "synsetId": "03541269",
+    "name": "hospital ship",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "03896103",
+    "name": "passenger ship",
+    "children": [
+      "03673027"
+    ],
+    "numInstances": 163
+  },
+  {
+    "synsetId": "03673027",
+    "name": "liner,ocean liner",
+    "children": [
+      "03141327"
+    ],
+    "numInstances": 151
+  },
+  {
+    "synsetId": "03141327",
+    "name": "cruise ship,cruise liner",
+    "children": [],
+    "numInstances": 121
+  },
+  {
+    "synsetId": "03947888",
+    "name": "pirate,pirate ship",
+    "children": [],
+    "numInstances": 36
+  },
+  {
+    "synsetId": "04146862",
+    "name": "school ship,training ship",
+    "children": [],
+    "numInstances": 1
+  },
+  {
+    "synsetId": "04224543",
+    "name": "sister ship",
+    "children": [],
+    "numInstances": 6
+  },
+  {
+    "synsetId": "04309348",
+    "name": "steamer,steamship",
+    "children": [],
+    "numInstances": 12
+  },
+  {
+    "synsetId": "04409011",
+    "name": "tender,supply ship",
+    "children": [],
+    "numInstances": 16
+  },
+  {
+    "synsetId": "04552696",
+    "name": "warship,war vessel,combat ship",
+    "children": [
+      "02687172",
+      "02956393",
+      "03140900",
+      "03180504",
+      "03180732",
+      "03465151",
+      "03718212",
+      "04348184",
+      "04363082"
+    ],
+    "numInstances": 259
+  },
+  {
+    "synsetId": "02687172",
+    "name": "aircraft carrier,carrier,flattop,attack aircraft carrier",
+    "children": [],
+    "numInstances": 47
+  },
+  {
+    "synsetId": "02956393",
+    "name": "capital ship",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "03140900",
+    "name": "cruiser",
+    "children": [
+      "02811618"
+    ],
+    "numInstances": 18
+  },
+  {
+    "synsetId": "02811618",
+    "name": "battle cruiser",
+    "children": [],
+    "numInstances": 12
+  },
+  {
+    "synsetId": "03180504",
+    "name": "destroyer,guided missile destroyer",
+    "children": [],
+    "numInstances": 52
+  },
+  {
+    "synsetId": "03180732",
+    "name": "destroyer escort",
+    "children": [],
+    "numInstances": 5
+  },
+  {
+    "synsetId": "03465151",
+    "name": "guard ship",
+    "children": [],
+    "numInstances": 7
+  },
+  {
+    "synsetId": "03718212",
+    "name": "man-of-war,ship of the line",
+    "children": [],
+    "numInstances": 30
+  },
+  {
+    "synsetId": "04348184",
+    "name": "submersible,submersible warship",
+    "children": [
+      "04347754"
+    ],
+    "numInstances": 67
+  },
+  {
+    "synsetId": "04347754",
+    "name": "submarine,pigboat,sub,U-boat",
+    "children": [
+      "02755529",
+      "03811295"
+    ],
+    "numInstances": 67
+  },
+  {
+    "synsetId": "02755529",
+    "name": "attack submarine",
+    "children": [],
+    "numInstances": 3
+  },
+  {
+    "synsetId": "03811295",
+    "name": "nautilus,nuclear submarine,nuclear-powered submarine",
+    "children": [],
+    "numInstances": 7
+  },
+  {
+    "synsetId": "04363082",
+    "name": "surface ship",
+    "children": [],
+    "numInstances": 7
+  },
+  {
+    "synsetId": "04567746",
+    "name": "weather ship",
+    "children": [],
+    "numInstances": 2
+  },
+  {
+    "synsetId": "04610013",
+    "name": "yacht,racing yacht",
+    "children": [],
+    "numInstances": 224
+  },
+  {
+    "synsetId": "04554684",
+    "name": "washer,automatic washer,washing machine",
+    "children": [],
+    "numInstances": 169
+  },
+  {
+    "synsetId": "04591713",
+    "name": "wine bottle",
+    "children": [],
+    "numInstances": 140
+  }
+]

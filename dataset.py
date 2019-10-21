@@ -85,6 +85,8 @@ class Dataset():
 
     def load_categories(self):
         taxonomy_filename = os.path.join(DATASET_DIRECTORY, "taxonomy.json")
+        if not os.path.isfile(taxonomy_filename):
+            taxonomy_filename = 'examples/shapenet_taxonomy.json'
         file_content = open(taxonomy_filename).read()
         taxonomy = json.loads(file_content)
         categories = dict()
