@@ -7,7 +7,7 @@ import time
 import sys
 
 from dataset import dataset as dataset
-from dataset import VOXEL_FILENAME, SDF_CLOUD_FILENAME, SURFACE_POINTCLOUD_FILENAME, VOXEL_SIZE
+from dataset import VOXEL_FILENAME, SDF_CLOUD_FILENAME, SURFACE_POINTCLOUD_FILENAME, VOXEL_RESOLUTION
 
 BAD_MODEL_FILENAME = "bad_model"
 MODEL_FILENAME = "model_normalized.obj"
@@ -40,7 +40,7 @@ def process_directory(directory):
 
     if not os.path.isfile(voxels_filename):
         try:
-            voxels = mesh_sdf.get_voxel_sdf(voxel_count=VOXEL_SIZE)
+            voxels = mesh_sdf.get_voxel_sdf(voxel_resolution=VOXEL_RESOLUTION)
             np.save(voxels_filename, voxels)
         except BadMeshException:
             mark_bad_model(directory)

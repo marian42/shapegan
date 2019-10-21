@@ -5,13 +5,13 @@ from util import get_points_in_unit_sphere, get_voxel_coordinates
 import numpy as np
 
 class SDFVoxelizationHelperData():
-    def __init__(self, device, voxel_count, sphere_only=True):
-        sample_points = get_voxel_coordinates(voxel_count)
+    def __init__(self, device, voxel_resolution, sphere_only=True):
+        sample_points = get_voxel_coordinates(voxel_resolution)
 
         if sphere_only:
             unit_sphere_mask = np.linalg.norm(sample_points, axis=1) < 1
             sample_points = sample_points[unit_sphere_mask, :]
-            self.unit_sphere_mask = unit_sphere_mask.reshape(voxel_count, voxel_count, voxel_count)
+            self.unit_sphere_mask = unit_sphere_mask.reshape(voxel_resolution, voxel_resolution, voxel_resolution)
         
         self.sample_points = torch.tensor(sample_points, device=device)
         self.point_count = self.sample_points.shape[0]
@@ -71,30 +71,30 @@ class SDFNet(SavableModule):
             result[batch_size * batch_count:] = self.forward(points[batch_size * batch_count:, :], latent_codes[:remainder, :])
         return result
 
-    def get_voxels(self, latent_code, voxel_count, sphere_only=True):
-        if not (voxel_count, sphere_only) in sdf_voxelization_helper:
-            helper_data = SDFVoxelizationHelperData(self.device, voxel_count, sphere_only)
-            sdf_voxelization_helper[(voxel_count, sphere_only)] = helper_data
+    def get_voxels(self, latent_code, voxel_resolution, sphere_only=True):
+        if not (voxel_resolution, sphere_only) in sdf_voxelization_helper:
+            helper_data = SDFVoxelizationHelperData(self.device, voxel_resolution, sphere_only)
+            sdf_voxelization_helper[(voxel_resolution, sphere_only)] = helper_data
         else:
-            helper_data = sdf_voxelization_helper[(voxel_count, sphere_only)]
+            helper_data = sdf_voxelization_helper[(voxel_resolution, sphere_only)]
 
         with torch.no_grad():
             distances = self.evaluate_in_batches(helper_data.sample_points, latent_code).numpy()
         
         if sphere_only:
-            voxels = np.ones((voxel_count, voxel_count, voxel_count))
+            voxels = np.ones((voxel_resolution, voxel_resolution, voxel_resolution))
             voxels[helper_data.unit_sphere_mask] = distances
         else:
-            voxels = np.ones((voxel_count + 2, voxel_count + 2, voxel_count + 2))
-            voxels[1:-1, 1:-1, 1:-1] = distances.reshape(voxel_count, voxel_count, voxel_count)
+            voxels = np.ones((voxel_resolution + 2, voxel_resolution + 2, voxel_resolution + 2))
+            voxels[1:-1, 1:-1, 1:-1] = distances.reshape(voxel_resolution, voxel_resolution, voxel_resolution)
         return voxels
 
-    def get_mesh(self, latent_code, voxel_count = 64, sphere_only = True, raise_on_empty=False, level=0):
+    def get_mesh(self, latent_code, voxel_resolution = 64, sphere_only = True, raise_on_empty=False, level=0):
         size = 2 if sphere_only else 1.41421
         
-        voxels = self.get_voxels(latent_code, voxel_count=voxel_count, sphere_only=sphere_only)
+        voxels = self.get_voxels(latent_code, voxel_resolution=voxel_resolution, sphere_only=sphere_only)
         try:
-            vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=level, spacing=(size / voxel_count, size / voxel_count, size / voxel_count))
+            vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=level, spacing=(size / voxel_resolution, size / voxel_resolution, size / voxel_resolution))
         except ValueError as value_error:
             if raise_on_empty:
                 raise value_error

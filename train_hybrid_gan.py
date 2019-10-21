@@ -15,7 +15,7 @@ from model.sdf_net import SDFNet
 from model.gan import Discriminator, LATENT_CODE_SIZE
 from util import create_text_slice, device, standard_normal_distribution, get_voxel_coordinates
 
-from dataset import dataset as dataset, VOXEL_SIZE, SDF_CLIPPING
+from dataset import dataset as dataset, VOXEL_RESOLUTION, SDF_CLIPPING
 from inception_score import inception_score
 from util import create_text_slice
 dataset.rescale_sdf = False
@@ -68,7 +68,7 @@ def sample_latent_codes(current_batch_size):
     latent_codes = latent_codes.repeat((1, 1, grid_points.shape[0])).reshape(-1, LATENT_CODE_SIZE)
     return latent_codes
 
-grid_points = get_voxel_coordinates(VOXEL_SIZE, return_torch_tensor=True)
+grid_points = get_voxel_coordinates(VOXEL_RESOLUTION, return_torch_tensor=True)
 history_fake = deque(maxlen=50)
 history_real = deque(maxlen=50)
 
@@ -87,7 +87,7 @@ def train():
                 
                 latent_codes = sample_latent_codes(current_batch_size)
                 fake_sample = generator.forward(batch_grid_points, latent_codes)
-                fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+                fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
                 if batch_index % 20 == 0 and show_viewer:
                     viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                 if batch_index % 20 == 0 and "show_slice" in sys.argv:
@@ -106,7 +106,7 @@ def train():
                 discriminator_optimizer.zero_grad()                
                 latent_codes = sample_latent_codes(current_batch_size)
                 fake_sample = generator.forward(batch_grid_points, latent_codes)
-                fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+                fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
                 discriminator_output_fake = discriminator.forward(fake_sample)
                 fake_loss = discriminator_criterion(discriminator_output_fake, fake_target)
                 fake_loss.backward()
@@ -153,7 +153,7 @@ def train():
         if "show_slice" in sys.argv:
             latent_code = sample_latent_codes(1)
             voxels = generator.forward(grid_points, latent_code)
-            voxels = voxels.reshape(VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+            voxels = voxels.reshape(VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
             print(create_text_slice(voxels / SDF_CLIPPING))
         
         log_file.write('{:d} {:.1f} {:.4f} {:.4f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))

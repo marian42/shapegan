@@ -960,5 +960,5 @@ if "deepsdf-interpolation-stl" in sys.argv:
     
     for i in range(STEPS):
         print(i)
-        mesh = sdf_net.get_mesh(codes[i, :], voxel_count=256, sphere_only=False)
+        mesh = sdf_net.get_mesh(codes[i, :], voxel_resolution=256, sphere_only=False)
         mesh.export('plots/mesh-{:d}.stl'.format(i))

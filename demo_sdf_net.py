@@ -53,7 +53,7 @@ def create_image_sequence():
             code = torch.tensor(spline(float(sample_index) + step / TRANSITION_FRAMES), dtype=torch.float32, device=device)
             if ROTATE_MODEL:
                 viewer.rotation = (147 + frame_index / (SAMPLE_COUNT * TRANSITION_FRAMES) * 360 * 6, 40)
-            viewer.set_mesh(sdf_net.get_mesh(code, voxel_count=128, sphere_only=True, level=SURFACE_LEVEL))
+            viewer.set_mesh(sdf_net.get_mesh(code, voxel_resolution=128, sphere_only=True, level=SURFACE_LEVEL))
             image = viewer.get_image(flip_red_blue=True)
             cv2.imwrite("images/frame-{:05d}.png".format(frame_index), image)
             frame_index += 1
@@ -79,7 +79,7 @@ def show_models():
                     if ROTATE_MODEL:
                         viewer.rotation = (147 + (sample_index + progress) / SAMPLE_COUNT * 360 * 6, 40)
                     code = torch.tensor(spline(float(sample_index) + progress), dtype=torch.float32, device=device)
-                    viewer.set_mesh(sdf_net.get_mesh(code, voxel_count=32, sphere_only=False, level=SURFACE_LEVEL))
+                    viewer.set_mesh(sdf_net.get_mesh(code, voxel_resolution=32, sphere_only=False, level=SURFACE_LEVEL))
                 
             except KeyboardInterrupt:
                 viewer.stop()

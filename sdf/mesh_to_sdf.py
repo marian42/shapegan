@@ -54,11 +54,11 @@ class MeshSDF:
     def get_pyrender_pointcloud(self):
         return pyrender.Mesh.from_points(self.points, normals=self.normals)
 
-    def get_voxel_sdf(self, voxel_count = 32):
+    def get_voxel_sdf(self, voxel_resolution = 32):
         center = self.mesh.bounding_box.centroid
         size = np.max(self.mesh.bounding_box.extents) / 2
-        voxels = self.get_sdf(get_voxel_coordinates(voxel_count, size, center))
-        voxels = voxels.reshape(voxel_count, voxel_count, voxel_count)
+        voxels = self.get_sdf(get_voxel_coordinates(voxel_resolution, size, center))
+        voxels = voxels.reshape(voxel_resolution, voxel_resolution, voxel_resolution)
         self.check_voxels(voxels)
         return voxels
 
@@ -109,11 +109,11 @@ class MeshSDF:
         scene.add(self.get_pyrender_pointcloud())
         pyrender.Viewer(scene, use_raymond_lighting=True)
 
-    def show_reconstructed_mesh(self, voxel_size=64):
+    def show_reconstructed_mesh(self, voxel_resolution=64):
         scene = pyrender.Scene()
-        voxels = self.get_voxel_sdf(voxel_count=voxel_size)
+        voxels = self.get_voxel_sdf(voxel_resolution=voxel_resolution)
         voxels = np.pad(voxels, 1, mode='constant', constant_values=1)
-        vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(voxel_size, voxel_size, voxel_size))
+        vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(voxel_resolution, voxel_resolution, voxel_resolution))
         reconstructed = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
         reconstructed_pyrender = pyrender.Mesh.from_trimesh(reconstructed, smooth=False)
         scene.add(reconstructed_pyrender)

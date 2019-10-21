@@ -14,7 +14,7 @@ from model.sdf_net import SDFNet
 from model.gan import Discriminator, LATENT_CODE_SIZE
 from util import create_text_slice, device, standard_normal_distribution
 
-from dataset import dataset as dataset, VOXEL_SIZE, SDF_CLIPPING
+from dataset import dataset as dataset, VOXEL_RESOLUTION, SDF_CLIPPING
 from inception_score import inception_score
 from util import create_text_slice, get_voxel_coordinates
 
@@ -68,11 +68,11 @@ def create_batches(sample_count):
 
 def sample_latent_codes():
     latent_codes = standard_normal_distribution.sample(sample_shape=[BATCH_SIZE, LATENT_CODE_SIZE]).to(device)
-    latent_codes = latent_codes.repeat((1, 1, VOXEL_SIZE**3)).reshape(-1, LATENT_CODE_SIZE)
+    latent_codes = latent_codes.repeat((1, 1, VOXEL_RESOLUTION**3)).reshape(-1, LATENT_CODE_SIZE)
     return latent_codes
 
 
-grid_points = get_voxel_coordinates(VOXEL_SIZE, return_torch_tensor=True).repeat((BATCH_SIZE, 1))
+grid_points = get_voxel_coordinates(VOXEL_RESOLUTION, return_torch_tensor=True).repeat((BATCH_SIZE, 1))
 history_fake = deque(maxlen=50)
 history_real = deque(maxlen=50)
 
@@ -88,7 +88,7 @@ def train():
                 critic_optimizer.zero_grad()                
                 latent_codes = sample_latent_codes()
                 fake_sample = generator.forward(grid_points, latent_codes)
-                fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+                fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
                 valid_sample = dataset.voxels[indices, :, :, :]
 
                 critic_output_fake = critic.forward(fake_sample)
@@ -106,7 +106,7 @@ def train():
                     
                     latent_codes = sample_latent_codes()
                     fake_sample = generator.forward(grid_points, latent_codes)
-                    fake_sample = fake_sample.reshape(-1, VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE)
+                    fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
                     if batch_index % 20 == 0 and show_viewer:
                         viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                     if batch_index % 20 == 0 and "show_slice" in sys.argv:

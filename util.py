@@ -6,17 +6,17 @@ import numpy as np
 CHARACTERS = '      `.-:/+osyhdmm###############'
 
 def create_text_slice(voxels):
-    voxel_size = voxels.shape[-1]
+    voxel_resolution = voxels.shape[-1]
     center = voxels.shape[-1] // 4
     data = voxels[center, :, :]
     data = torch.clamp(data * -0.5 + 0.5, 0, 1) * (len(CHARACTERS) - 1)
     data = data.type(torch.int).cpu()
     lines = ['|' + ''.join([CHARACTERS[i] for i in line]) + '|' for line in data]
     result = []
-    for i in range(voxel_size):
+    for i in range(voxel_resolution):
         if len(result) < i / 2.2:
             result.append(lines[i])
-    frame = '+' + '—' * voxel_size + '+\n'
+    frame = '+' + '—' * voxel_resolution + '+\n'
     return frame + '\n'.join(reversed(result)) + '\n' + frame
 
 

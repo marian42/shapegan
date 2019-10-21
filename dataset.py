@@ -8,15 +8,15 @@ import sys
 
 DATASET_DIRECTORY = "data/shapenet/"
 MIN_SAMPLES_PER_CATEGORY = 2000
-VOXEL_SIZE = 32
+VOXEL_RESOLUTION = 32
 
-VOXELS_SDF_FILENAME = "data/voxels-{:d}.to".format(VOXEL_SIZE)
+VOXELS_SDF_FILENAME = "data/voxels-{:d}.to".format(VOXEL_RESOLUTION)
 SDF_POINTS_FILENAME = "data/sdf-points-{:d}.to"
 SDF_VALUES_FILENAME = "data/sdf-values-{:d}.to"
 SURFACE_POINTCLOUDS_FILENAME = "data/surface-pointclouds.to"
 LABELS_FILENAME = "data/labels.to"
 
-VOXEL_FILENAME = "sdf-{:d}.npy".format(VOXEL_SIZE)
+VOXEL_FILENAME = "sdf-{:d}.npy".format(VOXEL_RESOLUTION)
 SDF_CLOUD_FILENAME = "sdf-pointcloud.npy"
 SURFACE_POINTCLOUD_FILENAME = "surface-pointcloud.npy"
 

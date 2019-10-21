@@ -62,7 +62,7 @@ print("Now showing a slice through the SDF of the model.\nClose the window to co
 show_image(image)
 
 print("Now showing a voxel volume reconstructed with Marching Cubes.\nClose the window to continue.")
-mesh_sdf.show_reconstructed_mesh(voxel_size=64)
+mesh_sdf.show_reconstructed_mesh(voxel_resolution=64)
 
 points, sdf = mesh_sdf.get_sample_points()
 scene = pyrender.Scene()
