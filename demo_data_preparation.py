@@ -26,9 +26,9 @@ scene.add(pyrender.Mesh.from_trimesh(mesh, smooth=False))
 print("Now showing the input model as a triangle mesh.\nClose the window to continue.")
 pyrender.Viewer(scene, use_raymond_lighting=True)
 
-camera_pose = get_camera_transform(-140, -20)
+camera_transform = get_camera_transform(-140, -20)
 camera = pyrender.PerspectiveCamera(yfov=2 * math.asin(1.0 / 2) * 0.97, aspectRatio=1.0, znear = 2 - 1.0, zfar = 2 + 1.0)
-normal_buffer, depth_buffer = render_normal_and_depth_buffers(mesh, camera, camera_pose, 1080)
+normal_buffer, depth_buffer = render_normal_and_depth_buffers(mesh, camera, camera_transform, 1080)
 print("Now showing the normal map of a render of the mesh.\nClose the window to continue.")
 show_image(normal_buffer)
 

@@ -14,8 +14,8 @@ from scipy.spatial.transform import Rotation
 BATCH_SIZE = 100000
 
 def get_default_coordinates():
-    camera_pose = get_camera_transform(2.2, 147, 20)
-    camera_position = np.matmul(np.linalg.inv(camera_pose), np.array([0, 0, 0, 1]))[:3]
+    camera_transform = get_camera_transform(2.2, 147, 20)
+    camera_position = np.matmul(np.linalg.inv(camera_transform), np.array([0, 0, 0, 1]))[:3]
     light_matrix = get_camera_transform(6, 164, 50)
     light_position = np.matmul(np.linalg.inv(light_matrix), np.array([0, 0, 0, 1]))[:3]
     return camera_position, light_position

@@ -30,12 +30,12 @@ class CustomShaderCache():
         return self.program
 
 
-def render_normal_and_depth_buffers(mesh, camera, camera_pose, resolution):
+def render_normal_and_depth_buffers(mesh, camera, camera_transform, resolution):
     global suppress_multisampling
     suppress_multisampling = True
     scene = pyrender.Scene()
     scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
-    scene.add(camera, pose=camera_pose)
+    scene.add(camera, pose=camera_transform)
 
     renderer = pyrender.OffscreenRenderer(resolution, resolution)
     renderer._renderer._program_cache = CustomShaderCache()

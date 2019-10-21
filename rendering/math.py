@@ -15,11 +15,11 @@ def get_rotation_matrix(angle, axis='y'):
     return matrix
 
 def get_camera_transform(camera_distance, rotation_y, rotation_x=0, project=False):
-    camera_pose = np.identity(4)
-    camera_pose[2, 3] = -camera_distance
-    camera_pose = np.matmul(camera_pose, get_rotation_matrix(rotation_x, axis='x'))
-    camera_pose = np.matmul(camera_pose, get_rotation_matrix(rotation_y, axis='y'))
+    camera_transform = np.identity(4)
+    camera_transform[2, 3] = -camera_distance
+    camera_transform = np.matmul(camera_transform, get_rotation_matrix(rotation_x, axis='x'))
+    camera_transform = np.matmul(camera_transform, get_rotation_matrix(rotation_y, axis='y'))
 
     if project:
-        camera_pose = np.matmul(PROJECTION_MATRIX, camera_pose)
-    return camera_pose
+        camera_transform = np.matmul(PROJECTION_MATRIX, camera_transform)
+    return camera_transform

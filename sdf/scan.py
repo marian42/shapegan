@@ -10,11 +10,11 @@ CAMERA_DISTANCE = 2
 VIEWPORT_SIZE = 512
 
 def get_camera_transform(rotation_y, rotation_x = 0):
-    camera_pose = np.identity(4)
-    camera_pose[2, 3] = CAMERA_DISTANCE
-    camera_pose = np.matmul(get_rotation_matrix(rotation_x, axis='x'), camera_pose)
-    camera_pose = np.matmul(get_rotation_matrix(rotation_y, axis='y'), camera_pose)
-    return camera_pose
+    camera_transform = np.identity(4)
+    camera_transform[2, 3] = CAMERA_DISTANCE
+    camera_transform = np.matmul(get_rotation_matrix(rotation_x, axis='x'), camera_transform)
+    camera_transform = np.matmul(get_rotation_matrix(rotation_y, axis='y'), camera_transform)
+    return camera_transform
 
 '''
 A virtual laser scan of an object from one point in space.
@@ -23,14 +23,14 @@ The resulting point cloud contains a point for every pixel in the buffer that hi
 '''
 class Scan():
     def __init__(self, mesh, rotation_y, rotation_x):
-        self.camera_pose = get_camera_transform(rotation_y, rotation_x)
-        self.camera_direction = np.matmul(self.camera_pose, np.array([0, 0, 1, 0]))[:3]
-        self.camera_position = np.matmul(self.camera_pose, np.array([0, 0, 0, 1]))[:3]
+        self.camera_transform = get_camera_transform(rotation_y, rotation_x)
+        self.camera_direction = np.matmul(self.camera_transform, np.array([0, 0, 1, 0]))[:3]
+        self.camera_position = np.matmul(self.camera_transform, np.array([0, 0, 0, 1]))[:3]
         
         camera = pyrender.PerspectiveCamera(yfov=2 * math.asin(1.0 / CAMERA_DISTANCE), aspectRatio=1.0, znear = CAMERA_DISTANCE - 1.0, zfar = CAMERA_DISTANCE + 1.0)
         self.projection_matrix = camera.get_projection_matrix()
 
-        color, depth = render_normal_and_depth_buffers(mesh, camera, self.camera_pose, VIEWPORT_SIZE)
+        color, depth = render_normal_and_depth_buffers(mesh, camera, self.camera_transform, VIEWPORT_SIZE)
 
         self.depth = depth * 2 - 1
         indices = np.argwhere(self.depth != 1)
@@ -40,7 +40,7 @@ class Scan():
         points[:, 1] *= -1
         points[:, 2] = self.depth[indices[:, 0], indices[:, 1]]
         
-        clipping_to_world = np.matmul(self.camera_pose, np.linalg.inv(self.projection_matrix))
+        clipping_to_world = np.matmul(self.camera_transform, np.linalg.inv(self.projection_matrix))
 
         points = np.matmul(points, clipping_to_world.transpose())
         points /= points[:, 3][:, np.newaxis]
@@ -61,7 +61,7 @@ class Scan():
             [0, 0, 0.0, 1.0]
         ])
 
-        world_to_clipping = np.matmul(self.projection_matrix, np.linalg.inv(self.camera_pose))
+        world_to_clipping = np.matmul(self.projection_matrix, np.linalg.inv(self.camera_transform))
         world_to_viewport = np.matmul(clipping_to_viewport, world_to_clipping)
         
         world_space_points = np.concatenate([points, np.ones((points.shape[0], 1))], axis=1)
