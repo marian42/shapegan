@@ -22,7 +22,7 @@ SURFACE_LEVEL = 0.048 if USE_HYBRID_GAN else 0.011
 
 sdf_net = SDFNet()
 if USE_HYBRID_GAN:
-    sdf_net.filename = 'hybrid_gan_generator.to'
+    sdf_net.filename = 'hybrid_progressive_gan_generator.to'
 sdf_net.load()
 sdf_net.eval()
 
