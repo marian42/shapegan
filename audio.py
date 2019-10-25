@@ -3,22 +3,31 @@ from scipy import signal
 from scipy.io import wavfile
 import numpy as np
 from skimage.measure import block_reduce
+from scipy.ndimage import gaussian_filter
 
-sample_rate, samples = wavfile.read('wire-and-flashing-lights.wav')
-frequencies, times, spectrogram = signal.spectrogram(samples, sample_rate, nfft=128, nperseg=128)
+from sklearn.decomposition import PCA
 
-#spectrogram = np.log(spectrogram)
+sample_rate, samples = wavfile.read('blood-dragon.wav')
+_, _, spectrogram = signal.spectrogram(samples, sample_rate)
+print(spectrogram.shape)
+
 spectrogram = block_reduce(spectrogram, (1, 5), np.max)
+spectrogram = PCA(n_components=64).fit_transform(spectrogram.T).T
+print(spectrogram.shape)
 
-spectrogram = spectrogram[:-1, :]
+spectrogram = block_reduce(spectrogram, (1, 5), np.max)
+smooth_spectrogram = gaussian_filter(spectrogram.reshape(-1), sigma=5, order=0).reshape(spectrogram.shape)
+spectrogram -= smooth_spectrogram
+
 mean = np.mean(spectrogram, axis=1)
-
 spectrogram -= mean[:, np.newaxis]
+print(mean)
 
 variance = np.std(spectrogram, axis=1)
 spectrogram /= variance[:, np.newaxis]
 spectrogram = np.nan_to_num(spectrogram)
-spectrogram *= 0.4
+
+spectrogram *= 0.9
 
 duration = samples.shape[0] / sample_rate
 spectrogram_sample_rate = spectrogram.shape[1] / duration
@@ -66,16 +75,17 @@ while True:
     try:
         time_elapsed = (datetime.datetime.now() - start).total_seconds()
         index = int(time_elapsed * spectrogram_sample_rate)
+        print(index)
         code = spectrogram[:, index]
         code = torch.tensor(code, dtype=torch.float32, device=device)
-        old_new[0, :] = last_code_raw * 0.95
+        old_new[0, :] = last_code_raw * 0.9
         old_new[1, :] = code
         old_new_abs = torch.abs(old_new)
         _, indices = torch.max(old_new_abs, dim=0)
         code = old_new[indices, r]
         last_code_raw = code
 
-        code = last_code * 0.8 + code * 0.2
+        code = last_code * 0.7 + code * 0.3
         last_code = code
         
         viewer.set_mesh(sdf_net.get_mesh(code, voxel_resolution=32, sphere_only=False, level=SURFACE_LEVEL))
