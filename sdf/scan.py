@@ -7,7 +7,7 @@ import pyrender
 import random
 
 CAMERA_DISTANCE = 2
-VIEWPORT_SIZE = 512
+VIEWPORT_SIZE = 2048
 
 def get_camera_transform(rotation_y, rotation_x = 0):
     camera_transform = np.identity(4)
