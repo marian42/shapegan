@@ -9,7 +9,7 @@ class SDFVoxelizationHelperData():
         sample_points = get_voxel_coordinates(voxel_resolution)
 
         if sphere_only:
-            unit_sphere_mask = np.linalg.norm(sample_points, axis=1) < 1
+            unit_sphere_mask = np.linalg.norm(sample_points, axis=1) < 1.1
             sample_points = sample_points[unit_sphere_mask, :]
             self.unit_sphere_mask = unit_sphere_mask.reshape(voxel_resolution, voxel_resolution, voxel_resolution)
         
