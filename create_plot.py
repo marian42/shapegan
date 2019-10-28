@@ -82,7 +82,6 @@ def load_sdf_net(filename=None, return_latent_codes = False):
 def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf", indices=None):
     from sklearn.manifold import TSNE
     from matplotlib.offsetbox import OffsetImage, AnnotationBbox
-    import colorsys
 
     width, height = 40, 52
 
@@ -137,7 +136,6 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf",
     plt.savefig(filename, bbox_inches=extent, dpi=200)
 
 if "color-test" in sys.argv:
-    import colorsys
     from dataset import dataset as dataset
     dataset.load_voxels('cpu')
     voxels = dataset.voxels
