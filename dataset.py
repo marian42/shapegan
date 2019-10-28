@@ -229,6 +229,7 @@ class Dataset():
                 labels = labels.to(device)
             self.labels = labels
             self.size = self.labels.shape[0]
+        return self.labels
 
     def load_surface_clouds(self, device):
         self.surface_pointclouds = torch.load(SURFACE_POINTCLOUDS_FILENAME).to(device)
