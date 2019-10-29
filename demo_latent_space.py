@@ -1,17 +1,17 @@
-from model.sdf_net import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
-from util import device, standard_normal_distribution
+from model.sdf_net import SDFNet, LATENT_CODES_FILENAME
+from util import device
 from dataset import dataset
 import scipy
 import numpy as np
 from rendering import MeshRenderer
-import time
 import torch
 from tqdm import tqdm
 import cv2
 import random
-import sys
 import matplotlib.pyplot as plt
-from dataset import dataset
+from sklearn.manifold import TSNE
+from matplotlib.offsetbox import Bbox
+from sklearn.cluster import KMeans
 
 SAMPLE_COUNT = 30 # Number of distinct objects to generate and interpolate between
 TRANSITION_FRAMES = 60
@@ -26,10 +26,46 @@ progress = np.arange(FRAMES, dtype=float) / TRANSITION_FRAMES
 latent_codes = torch.load(LATENT_CODES_FILENAME).detach().cpu().numpy()
 labels = dataset.load_labels().detach().cpu().numpy()
 
+latent_codes_embedded = TSNE(n_components=2).fit(latent_codes)
+kmeans = KMeans(n_clusters=SAMPLE_COUNT).fit(latent_codes_embedded)
+
+indices = np.zeros(SAMPLE_COUNT, dtype=int)
+for i in range(SAMPLE_COUNT):
+    center = kmeans.cluster_centers_[i, :]
+    dist = np.linalg.norm(latent_codes_embedded - center[np.newaxis, :], axis=1)
+    indices[i] = np.argmin(dist)
+
+def try_find_shortest_roundtrip(indices):
+    best_order = indices
+    best_distance = None
+    for _ in range(5000):
+        candiate = best_order.copy()
+        a = random.randint(0, SAMPLE_COUNT-1)
+        b = random.randint(0, SAMPLE_COUNT-1)
+        candiate[a] = best_order[b]
+        candiate[b] = best_order[a]
+        dist = np.sum(np.linalg.norm(latent_codes_embedded[candiate, :] - latent_codes_embedded[np.roll(candiate, 1), :], axis=1)).item()
+        if best_distance is None or dist < best_distance:
+            best_distance = dist
+            best_order = candiate
+
+    return best_order, best_distance
+
+def find_shortest_roundtrip(indices):
+    best_order, best_distance = try_find_shortest_roundtrip(indices)
+
+    for _ in tqdm(range(100)):
+        np.random.shuffle(indices)
+        order, distance = try_find_shortest_roundtrip(indices)
+        if distance < best_distance:
+            best_order = order
+    return best_order
+
+indices = find_shortest_roundtrip(indices)
+indices = np.concatenate((indices, indices[0][np.newaxis]))
+
 SIZE = latent_codes.shape[0]
 
-indices = random.sample(list(range(SIZE)), SAMPLE_COUNT + 1)
-indices[0] = indices[-1] # Make animation periodic
 stop_latent_codes = latent_codes[indices, :]
 
 colors = np.zeros((labels.shape[0], 3))
@@ -43,28 +79,22 @@ color_spline = scipy.interpolate.CubicSpline(np.arange(SAMPLE_COUNT + 1), colors
 frame_colors = color_spline(progress)
 frame_colors = np.clip(frame_colors, 0, 1)
 
-from sklearn.manifold import TSNE
-from matplotlib.offsetbox import OffsetImage, AnnotationBbox, Bbox
+frame_colors = np.zeros((progress.shape[0], 3))
+for i in range(SAMPLE_COUNT):
+    frame_colors[i*TRANSITION_FRAMES:(i+1)*TRANSITION_FRAMES, :] = np.linspace(colors[indices[i]], colors[indices[i+1]], num=TRANSITION_FRAMES)
+
+embedded_spline = scipy.interpolate.CubicSpline(np.arange(SAMPLE_COUNT + 1), latent_codes_embedded[indices, :], axis=0, bc_type='periodic')
+frame_latent_codes_embedded = embedded_spline(progress)
+frame_latent_codes_embedded[0, :] = frame_latent_codes_embedded[-1, :]
 
 width, height = 40, 40
-
-print("Calculating t-sne embedding...")
-tsne = TSNE(n_components=2)
-x = np.concatenate((latent_codes[:SIZE, :], frame_latent_codes), axis=0)
-y = tsne.fit_transform(x)
-latent_codes_embedded = y[:SIZE, :]
-print("Done calculating t-sne")
-
-frame_latent_codes_embedded = y[SIZE:, :]
-frame_latent_codes_embedded[0, :] = frame_latent_codes_embedded[-1, :]
 
 PLOT_FILE_NAME = 'tsne.png'
 
 margin = 2
-range_x = (y[:, 0].min() - margin, y[:, 0].max() + margin)
-range_y = (y[:, 1].min() - margin, y[:, 1].max() + margin)
+range_x = (latent_codes_embedded[:, 0].min() - margin, latent_codes_embedded[:, 0].max() + margin)
+range_y = (latent_codes_embedded[:, 1].min() - margin, latent_codes_embedded[:, 1].max() + margin)
 
-del x, y, tsne
 plt.ioff()
 
 def create_plot(index, resolution=1080, filename=PLOT_FILE_NAME, dpi=100):
@@ -79,7 +109,7 @@ def create_plot(index, resolution=1080, filename=PLOT_FILE_NAME, dpi=100):
     ax.set_xlim(range_x)
     ax.set_ylim(range_y)
 
-    ax.plot(frame_latent_codes_embedded[:, 0], frame_latent_codes_embedded[:, 1], c=(0.2, 0.2, 0.2, 1.0), zorder=1)
+    ax.plot(frame_latent_codes_embedded[:, 0], frame_latent_codes_embedded[:, 1], c=(0.2, 0.2, 0.2, 1.0), zorder=1, linewidth=2)
     ax.scatter(latent_codes_embedded[:, 0], latent_codes_embedded[:, 1], c=colors[:SIZE], s = 10, zorder=0)
     ax.scatter(frame_latent_codes_embedded[index, 0], frame_latent_codes_embedded[index, 1], facecolors=frame_color, s = 200, linewidths=2, edgecolors=(0.1, 0.1, 0.1, 1.0), zorder=2)
     ax.scatter(latent_codes_embedded[indices, 0], latent_codes_embedded[indices, 1], facecolors=colors[indices, :], s = 140, linewidths=1, edgecolors=(0.1, 0.1, 0.1, 1.0), zorder=3)
