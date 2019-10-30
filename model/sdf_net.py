@@ -71,7 +71,7 @@ class SDFNet(SavableModule):
             result[batch_size * batch_count:] = self.forward(points[batch_size * batch_count:, :], latent_codes[:remainder, :])
         return result
 
-    def get_voxels(self, latent_code, voxel_resolution, sphere_only=True):
+    def get_voxels(self, latent_code, voxel_resolution, sphere_only=True, pad=True):
         if not (voxel_resolution, sphere_only) in sdf_voxelization_helper:
             helper_data = SDFVoxelizationHelperData(self.device, voxel_resolution, sphere_only)
             sdf_voxelization_helper[(voxel_resolution, sphere_only)] = helper_data
@@ -85,8 +85,10 @@ class SDFNet(SavableModule):
             voxels = np.ones((voxel_resolution, voxel_resolution, voxel_resolution), dtype=np.float32)
             voxels[helper_data.unit_sphere_mask] = distances
         else:
-            voxels = np.ones((voxel_resolution + 2, voxel_resolution + 2, voxel_resolution + 2))
-            voxels[1:-1, 1:-1, 1:-1] = distances.reshape(voxel_resolution, voxel_resolution, voxel_resolution)
+            voxels = distances.reshape(voxel_resolution, voxel_resolution, voxel_resolution)
+            if pad:
+                voxels = np.pad(voxels, 1, mode='constant', constant_values=1)
+
         return voxels
 
     def get_mesh(self, latent_code, voxel_resolution = 64, sphere_only = True, raise_on_empty=False, level=0):
