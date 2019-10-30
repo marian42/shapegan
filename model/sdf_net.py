@@ -82,7 +82,7 @@ class SDFNet(SavableModule):
             distances = self.evaluate_in_batches(helper_data.sample_points, latent_code).numpy()
         
         if sphere_only:
-            voxels = np.ones((voxel_resolution, voxel_resolution, voxel_resolution))
+            voxels = np.ones((voxel_resolution, voxel_resolution, voxel_resolution), dtype=np.float32)
             voxels[helper_data.unit_sphere_mask] = distances
         else:
             voxels = np.ones((voxel_resolution + 2, voxel_resolution + 2, voxel_resolution + 2))
