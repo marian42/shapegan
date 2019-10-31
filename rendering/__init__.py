@@ -21,7 +21,7 @@ import torch
 import trimesh
 import cv2
 
-from util import crop_image
+from util import crop_image, ensure_directory
 from rendering.math import get_camera_transform
 
 CLAMP_TO_EDGE = 33071
@@ -348,6 +348,7 @@ class MeshRenderer():
         return array
 
     def save_screenshot(self):
+        ensure_directory('screenshots')
         FILENAME_FORMAT = "screenshots/{:04d}.png"
 
         index = 0

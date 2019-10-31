@@ -2,7 +2,7 @@ from sdf.mesh_to_sdf import MeshSDF, scale_to_unit_sphere
 import numpy as np
 import trimesh
 import torch
-from util import device
+from util import device, ensure_directory
 
 from model.sdf_net import SDFNet
 from rendering import MeshRenderer
@@ -21,6 +21,7 @@ save_images = 'save' in sys.argv
 
 if save_images:
     viewer = MeshRenderer(start_thread=False, size=1080)
+    ensure_directory('images')
 else:
     viewer = MeshRenderer()
 

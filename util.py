@@ -2,6 +2,15 @@ import torch
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 standard_normal_distribution = torch.distributions.normal.Normal(0, 1)
 import numpy as np
+import os
+
+def ensure_directory(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+ensure_directory('plots')
+ensure_directory('models')
+ensure_directory('data')
 
 CHARACTERS = '      `.-:/+osyhdmm###############'
 

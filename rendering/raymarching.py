@@ -7,7 +7,7 @@ from PIL import Image
 import os
 
 from model.sdf_net import SDFNet, LATENT_CODES_FILENAME
-from util import device
+from util import device, ensure_directory
 from rendering.math import get_camera_transform
 from scipy.spatial.transform import Rotation
 
@@ -180,6 +180,7 @@ def render_image(sdf_net, latent_code, resolution=800, threshold=0.0005, sdf_off
 
 
 def render_image_for_index(sdf_net, latent_codes, index, crop=False, resolution=800):
+    ensure_directory('screenshots')
     FILENAME = 'screenshots/raymarching-examples/image-{:d}-{:d}.png'
     filename = FILENAME.format(index, resolution)
 

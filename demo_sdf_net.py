@@ -1,5 +1,5 @@
 from model.sdf_net import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
-from util import device, standard_normal_distribution
+from util import device, standard_normal_distribution, ensure_directory
 from dataset import dataset
 import scipy
 import numpy as np
@@ -42,6 +42,7 @@ codes[0, :] = codes[-1, :] # Make animation periodic
 spline = scipy.interpolate.CubicSpline(np.arange(SAMPLE_COUNT + 1), codes, axis=0, bc_type='periodic')
 
 def create_image_sequence():
+    ensure_directory('images')
     frame_index = 0
     viewer = MeshRenderer(size=1080, start_thread=False)
     if CATEGORY is not None:

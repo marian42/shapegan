@@ -1,5 +1,5 @@
 from model.sdf_net import SDFNet, LATENT_CODES_FILENAME
-from util import device
+from util import device, ensure_directory
 from dataset import dataset
 import scipy
 import numpy as np
@@ -90,6 +90,7 @@ frame_latent_codes_embedded[0, :] = frame_latent_codes_embedded[-1, :]
 width, height = 40, 40
 
 PLOT_FILE_NAME = 'tsne.png'
+ensure_directory('images')
 
 margin = 2
 range_x = (latent_codes_embedded[:, 0].min() - margin, latent_codes_embedded[:, 0].max() + margin)
