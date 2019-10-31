@@ -13,7 +13,7 @@ from collections import deque
 from model.gan import Generator, Discriminator
 
 from dataset import dataset as dataset
-from inception_score import inception_score
+import inception_score
 from util import create_text_slice, device
 dataset.load_voxels(device)
 
@@ -26,8 +26,9 @@ if "continue" in sys.argv:
 
 log_file = open("plots/gan_training.csv", "a" if "continue" in sys.argv else "w")
 
-print('Inception score of the dataset: {:.4f}'.format(inception_score(dataset.voxels[:1400, :, :, :])))
-print('Inception score at start: {:.4f}'.format(generator.get_inception_score()))
+if inception_score.available:
+    print('Inception score of the dataset: {:.4f}'.format(inception_score.inception_score(dataset.voxels[:1400, :, :, :])))
+    print('Inception score at start: {:.4f}'.format(generator.get_inception_score()))
 
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.001)
 

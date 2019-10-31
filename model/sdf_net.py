@@ -158,12 +158,13 @@ class SDFNet(SavableModule):
         return result
 
     def get_inception_score(self, sample_size=1000, latent_variance=1):
-        from tqdm import tqdm
+        import inception_score
+        if not inception_score.available_for_points:
+            return 0
         POINTCLOUD_SIZE = 1000
         points = torch.zeros((sample_size * POINTCLOUD_SIZE, 3), device=self.device)
         distribution = torch.distributions.normal.Normal(0, latent_variance)
         latent_codes = distribution.sample([sample_size, LATENT_CODE_SIZE]).to(self.device)
         for i in range(sample_size):
             points[i * POINTCLOUD_SIZE:(i+1)*POINTCLOUD_SIZE, :] = self.get_surface_points_in_batches(latent_codes[i, :], amount=POINTCLOUD_SIZE)
-        from inception_score import inception_score_points
-        return inception_score_points(points, sample_size)
+        return inception_score.inception_score_points(points, sample_size)

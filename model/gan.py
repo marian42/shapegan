@@ -1,5 +1,4 @@
 from model import *
-from inception_score import inception_score
 from util import standard_normal_distribution
 
 class Generator(SavableModule):
@@ -41,13 +40,16 @@ class Generator(SavableModule):
         raise Exception("Not implemented.")        
 
     def get_inception_score(self, sample_size = 1000):
+        import inception_score
+        if not inception_score.available:
+            return 0
         with torch.no_grad():
             if sample_size not in self.inception_score_latent_codes:
                 shape = torch.Size([sample_size, LATENT_CODE_SIZE, 1, 1, 1])
                 self.inception_score_latent_codes[sample_size] = standard_normal_distribution.sample(shape).to(self.device)
 
             sample = self.forward(self.inception_score_latent_codes[sample_size])
-            return inception_score(sample)
+            return inception_score.inception_score(sample)
 
 
 class Discriminator(SavableModule):

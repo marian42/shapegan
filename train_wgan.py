@@ -14,7 +14,7 @@ from model.gan import Generator, Discriminator
 from util import device
 
 from dataset import dataset as dataset
-from inception_score import inception_score
+import inception_score
 from util import create_text_slice
 dataset.load_voxels(device)
 
@@ -43,8 +43,9 @@ CRITIC_WEIGHT_LIMIT = 0.01
 generator_optimizer = optim.RMSprop(generator.parameters(), lr=LEARN_RATE)
 critic_optimizer = optim.RMSprop(critic.parameters(), lr=LEARN_RATE)
 
-print('Inception score of the dataset: {:.4f}'.format(inception_score(dataset.voxels[:1400, :, :, :])))
-print('Inception score at start: {:.4f}'.format(generator.get_inception_score()))
+if inception_score.available:
+    print('Inception score of the dataset: {:.4f}'.format(inception_score.inception_score(dataset.voxels[:1400, :, :, :])))
+    print('Inception score at start: {:.4f}'.format(generator.get_inception_score()))
 
 log_file = open("plots/wgan_training.csv", "a" if "continue" in sys.argv else "w")
 

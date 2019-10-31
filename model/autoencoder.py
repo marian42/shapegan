@@ -1,5 +1,4 @@
 from model import *
-from inception_score import inception_score
 from util import standard_normal_distribution
 
 AUTOENCODER_MODEL_COMPLEXITY_MULTIPLIER = 24
@@ -110,8 +109,11 @@ class Autoencoder(SavableModule):
         return x, mean, log_variance
 
     def get_inception_score(self, sample_size = 1000):
+        import inception_score
+        if not inception_score.available:
+            return 0
         with torch.no_grad():
             shape = torch.Size([sample_size, LATENT_CODE_SIZE])
             inception_score_latent_codes = standard_normal_distribution.sample(shape).to(self.device)
             sample = self.decode(inception_score_latent_codes)
-            return inception_score(sample)
+            return inception_score.inception_score(sample)

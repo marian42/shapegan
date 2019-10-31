@@ -1,4 +1,6 @@
 import torch
+from model.classifier import Classifier
+from dataset import dataset
 
 # Inception score of a sample from the dataset
 REFERENCE_INCEPTION_SCORE_VOXEL = 4.430443
@@ -6,14 +8,10 @@ REFERENCE_INCEPTION_SCORE_POINTS = 4.283844
 
 class InceptionScore():
     def __init__(self):
-        self.classifier = None
+        self.classifier = Classifier()
+        self.classifier.load()
 
     def __call__(self, input):
-        if self.classifier is None:
-            from model.classifier import Classifier
-            self.classifier = Classifier()
-            self.classifier.load()
-
         with torch.no_grad():
             label_distribution = self.classifier.forward(input)
             marginal_distribution = torch.mean(label_distribution, dim = 0)
@@ -25,15 +23,12 @@ class InceptionScore():
 
 class PointcloudInceptionScore():
     def __init__(self):
-        self.classifier = None
+        from model.pointcloud_classifier import PointcloudClassifier
+        self.classifier = PointcloudClassifier()
+        self.classifier.load()
 
     def __call__(self, points, object_count):
         pointcloud_size = points.shape[0] // object_count
-        from dataset import dataset
-        if self.classifier is None:
-            from model.pointcloud_classifier import PointcloudClassifier
-            self.classifier = PointcloudClassifier()
-            self.classifier.load()
 
         with torch.no_grad():
             label_distribution = torch.zeros(object_count, dataset.label_count)
@@ -45,8 +40,27 @@ class PointcloudInceptionScore():
             score = torch.exp(torch.mean(kld[torch.isfinite(kld)]))
         return score.item() / REFERENCE_INCEPTION_SCORE_POINTS
 
-inception_score = InceptionScore()
-inception_score_points = PointcloudInceptionScore()
+try:
+    inception_score = InceptionScore()
+    available = True
+except FileNotFoundError:
+    print("Warning: No classifier was found, disabling inception score.")
+    available = False
+    inception_score = lambda _: 0
+
+try:    
+    inception_score_points = PointcloudInceptionScore()
+    available_for_points = True
+except FileNotFoundError:
+    print("Warning: No point cloud classifier was found, disabling point cloud inception score.")
+    available_for_points = False
+    inception_score_points = lambda _0, _1: 0
+except ImportError as error:
+    if error.name != 'torch_geometric':
+        raise    
+    print("Warning: PyTorch Geometric is not available, disabling point inception score.")
+    available_for_points = False
+    inception_score_points = lambda _0, _1: 0
 
 if __name__ == '__main__':
     from dataset import dataset as dataset
