@@ -219,8 +219,6 @@ class Dataset():
             torch.clamp_(self.voxels, -SDF_CLIPPING, SDF_CLIPPING)
             if self.rescale_sdf:
                 self.voxels /= SDF_CLIPPING
-
-        self.load_labels(device=device)        
         
     def load_labels(self, device = None):
         if self.labels is None:

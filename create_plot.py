@@ -138,6 +138,7 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf",
 if "color-test" in sys.argv:
     from dataset import dataset as dataset
     dataset.load_voxels('cpu')
+    dataset.load_labels()
     voxels = dataset.voxels
 
     COUNT = dataset.label_count
@@ -155,6 +156,7 @@ if "color-test" in sys.argv:
 if "autoencoder-classes" in sys.argv:
     from dataset import dataset as dataset
     dataset.load_voxels(device)
+    dataset.load_labels()
 
     COUNT = dataset.label_count
 
@@ -229,6 +231,7 @@ if "autoencoder" in sys.argv:
 if "autodecoder_tsne" in sys.argv:
     from dataset import dataset as dataset
     dataset.load_labels('cpu')
+    dataset.load_labels()
     from model.sdf_net import LATENT_CODES_FILENAME
     latent_codes = torch.load(LATENT_CODES_FILENAME).detach().cpu().numpy()
     
