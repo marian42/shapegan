@@ -214,6 +214,7 @@ class Dataset():
     def load_voxels(self, device):
         print("Loading dataset...")
         self.voxels = torch.load(VOXELS_SDF_FILENAME).to(device).float()
+        self.size = self.voxels.shape[0]
 
         if self.clip_sdf:
             torch.clamp_(self.voxels, -SDF_CLIPPING, SDF_CLIPPING)
