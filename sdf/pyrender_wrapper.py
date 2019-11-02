@@ -17,6 +17,16 @@ def new_gl_enable(value):
 
 OpenGL.GL.glEnable = new_gl_enable
 
+old_glRenderbufferStorageMultisample = OpenGL.GL.glRenderbufferStorageMultisample
+
+def new_glRenderbufferStorageMultisample(target, samples, internalformat, width, height):
+    if suppress_multisampling:
+        OpenGL.GL.glRenderbufferStorage(target, internalformat, width, height)
+    else:
+        old_glRenderbufferStorageMultisample(target, samples, internalformat, width, height)
+
+OpenGL.GL.glRenderbufferStorageMultisample = new_glRenderbufferStorageMultisample
+
 import pyrender
 
 # Render a normal buffer instead of a color buffer
