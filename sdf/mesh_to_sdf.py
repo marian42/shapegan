@@ -8,6 +8,7 @@ import math
 from sdf.scan import create_scans
 import pyrender
 from util import get_voxel_coordinates
+import time
 
 class BadMeshException(Exception):
     pass
@@ -37,11 +38,26 @@ class MeshSDF:
         else:
             return self.mesh.sample(count)
 
-    def get_sdf(self, query_points):
-        distances, _ = self.kd_tree.query(query_points)
-        distances = distances.astype(np.float32).reshape(-1) * -1
-        distances[self.is_outside(query_points)] *= -1
-        return distances
+    def get_sdf(self, query_points, use_depth_buffer=False, sample_count=11):
+        if use_depth_buffer:
+            distances, _ = self.kd_tree.query(query_points)
+            distances = distances.astype(np.float32).reshape(-1) * -1
+            distances[self.is_outside(query_points)] *= -1
+            return distances
+        else:
+            start = time.time()
+            distances, indices = self.kd_tree.query(query_points, k=sample_count)
+            distances = distances.astype(np.float32)
+            end = time.time()
+            print('Time for KD-Tree query: {:.1f}s'.format(end - start))
+
+            closest_points = self.points[indices]
+            direction_to_surface = query_points[:, np.newaxis, :] - closest_points
+            inside = np.einsum('ijk,ijk->ij', direction_to_surface, self.normals[indices]) < 0
+            inside = np.sum(inside, axis=1) > sample_count * 0.5
+            distances = distances[:, 0]
+            distances[inside] *= -1
+            return distances
 
     def get_sdf_in_batches(self, points, batch_size=100000):
         result = np.zeros(points.shape[0])
