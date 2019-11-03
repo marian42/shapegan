@@ -7,7 +7,7 @@ import pyrender
 import random
 
 CAMERA_DISTANCE = 2
-VIEWPORT_SIZE = 2048
+VIEWPORT_SIZE = 1024
 
 def get_camera_transform(rotation_y, rotation_x = 0):
     camera_transform = np.identity(4)
@@ -77,16 +77,19 @@ class Scan():
 
 render_lock = Lock()
 
-def create_scans(mesh, camera_count = 22):
+def get_camera_angles(count):
+    increment = math.pi * (3 - math.sqrt(5))
+    for i in range(count):
+        theta = math.asin(-1 + 2 * i / (count - 1))
+        phi = ((i + 1) * increment) % (2 * math.pi)
+        yield phi, theta
+
+def create_scans(mesh, camera_count = 40):
     scans = []
-
     render_lock.acquire()
-    scans.append(Scan(mesh, 0, 90))
-    scans.append(Scan(mesh, 0, -90))
-    camera_count -= 2
 
-    for i in range(camera_count):
-        scans.append(Scan(mesh, 360.0 * i / camera_count, random.uniform(-60, 60)))
+    for phi, theta in get_camera_angles(camera_count):
+        scans.append(Scan(mesh, math.degrees(phi), math.degrees(theta)))
 
     render_lock.release()
     return scans
