@@ -36,7 +36,7 @@ class Scan():
         indices = np.argwhere(self.depth != 1)
 
         points = np.ones((indices.shape[0], 4))
-        points[:, [1, 0]] = indices.astype(float) / VIEWPORT_SIZE * 2 - 1
+        points[:, [1, 0]] = indices.astype(float) / (VIEWPORT_SIZE -1) * 2 - 1
         points[:, 1] *= -1
         points[:, 2] = self.depth[indices[:, 0], indices[:, 1]]
         
