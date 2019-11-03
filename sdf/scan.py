@@ -84,7 +84,7 @@ def get_camera_angles(count):
         phi = ((i + 1) * increment) % (2 * math.pi)
         yield phi, theta
 
-def create_scans(mesh, camera_count = 40):
+def create_scans(mesh, camera_count=100):
     scans = []
     render_lock.acquire()
 
