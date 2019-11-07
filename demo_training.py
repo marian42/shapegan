@@ -45,7 +45,6 @@ image_index = 0
 
 while True:
     try:
-        #indices.random_(points.shape[0] - 1)
         indices[:BATCH_SIZE//2] = torch.tensor(np.random.choice(positive_indices, BATCH_SIZE//2), device=device)
         indices[BATCH_SIZE//2:] = torch.tensor(np.random.choice(negative_indices, BATCH_SIZE//2), device=device)
 
