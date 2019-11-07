@@ -22,12 +22,18 @@ def scale_to_unit_sphere(mesh):
     return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
 
 class MeshSDF:
-    def __init__(self, mesh):
+    def __init__(self, mesh, use_scans=True):
         self.mesh = mesh
-        self.scans = create_scans(mesh)
+        
+        if use_scans:
+            self.scans = create_scans(mesh)
 
-        self.points = np.concatenate([scan.points for scan in self.scans], axis=0)
-        self.normals = np.concatenate([scan.normals for scan in self.scans], axis=0)
+            self.points = np.concatenate([scan.points for scan in self.scans], axis=0)
+            self.normals = np.concatenate([scan.normals for scan in self.scans], axis=0)
+        else:
+            points, indices = mesh.sample(10000000, return_index=True)
+            self.points = points
+            self.normals = mesh.face_normals[indices]
 
         self.kd_tree = KDTree(self.points)
 
