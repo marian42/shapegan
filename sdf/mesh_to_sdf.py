@@ -129,7 +129,7 @@ class MeshSDF:
     def show_pointcloud(self):
         scene = pyrender.Scene()
         scene.add(self.get_pyrender_pointcloud())
-        pyrender.Viewer(scene, use_raymond_lighting=True)
+        pyrender.Viewer(scene, use_raymond_lighting=True, point_size=2)
 
     def show_reconstructed_mesh(self, voxel_resolution=64):
         scene = pyrender.Scene()
