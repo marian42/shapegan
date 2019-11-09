@@ -26,13 +26,20 @@ progress = np.arange(FRAMES, dtype=float) / TRANSITION_FRAMES
 latent_codes = torch.load(LATENT_CODES_FILENAME).detach().cpu().numpy()
 labels = dataset.load_labels().detach().cpu().numpy()
 
-latent_codes_embedded = TSNE(n_components=2).fit(latent_codes)
-kmeans = KMeans(n_clusters=SAMPLE_COUNT).fit(latent_codes_embedded)
+print("Calculating embedding...")
+tsne = TSNE(n_components=2)
+latent_codes_embedded = tsne.fit_transform(latent_codes)
+print("Calculating clusters...")
+kmeans = KMeans(n_clusters=SAMPLE_COUNT)
 
 indices = np.zeros(SAMPLE_COUNT, dtype=int)
+kmeans_clusters = kmeans.fit_predict(latent_codes_embedded)
 for i in range(SAMPLE_COUNT):
     center = kmeans.cluster_centers_[i, :]
+    cluster_classes = labels[kmeans_clusters == i]
+    cluster_class = np.bincount(cluster_classes).argmax()
     dist = np.linalg.norm(latent_codes_embedded - center[np.newaxis, :], axis=1)
+    dist[labels != cluster_class] = float('inf')
     indices[i] = np.argmin(dist)
 
 def try_find_shortest_roundtrip(indices):
@@ -61,6 +68,7 @@ def find_shortest_roundtrip(indices):
             best_order = order
     return best_order
 
+print("Calculating trip...")
 indices = find_shortest_roundtrip(indices)
 indices = np.concatenate((indices, indices[0][np.newaxis]))
 
@@ -124,6 +132,7 @@ sdf_net.eval()
 
 frame_latent_codes = torch.tensor(frame_latent_codes, dtype=torch.float32, device=device)
 
+print("Rendering...")
 viewer = MeshRenderer(size=1080, start_thread=False)
 
 def render_frame(frame_index):
