@@ -1,4 +1,3 @@
-from model.sdf_net import SDFNet, LATENT_CODES_FILENAME
 from util import device, ensure_directory
 from dataset import dataset
 import scipy
@@ -16,14 +15,41 @@ from sklearn.cluster import KMeans
 SAMPLE_COUNT = 30 # Number of distinct objects to generate and interpolate between
 TRANSITION_FRAMES = 60
 
-ROTATE_MODEL = False
+USE_VAE = False
 
 SURFACE_LEVEL = 0.011
 
 FRAMES = SAMPLE_COUNT * TRANSITION_FRAMES
 progress = np.arange(FRAMES, dtype=float) / TRANSITION_FRAMES
 
-latent_codes = torch.load(LATENT_CODES_FILENAME).detach().cpu().numpy()
+
+if USE_VAE:
+    print("Loading voxels...")
+    dataset.load_voxels(device)
+
+    from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
+    vae = Autoencoder()
+    vae.load()
+    vae.eval()
+    print("Calculating latent codes...")
+
+    latent_codes = torch.zeros((dataset.size, LATENT_CODE_SIZE))
+    batch_size = 1000
+    with torch.no_grad():
+        for i in tqdm(range(dataset.size // batch_size + 1)):
+            start = i * batch_size
+            end = min((i + 1) * batch_size, dataset.size)
+            latent_codes[start:end, :] = vae.encode(dataset.voxels[start:end, :, :, :]).detach().cpu()
+    del dataset.voxels
+    latent_codes = latent_codes.numpy()
+else:
+    from model.sdf_net import SDFNet, LATENT_CODES_FILENAME
+    latent_codes = torch.load(LATENT_CODES_FILENAME).detach().cpu().numpy()
+
+    sdf_net = SDFNet()
+    sdf_net.load()
+    sdf_net.eval()
+
 labels = dataset.load_labels().detach().cpu().numpy()
 
 print("Calculating embedding...")
@@ -126,10 +152,6 @@ def create_plot(index, resolution=1080, filename=PLOT_FILE_NAME, dpi=100):
     fig.savefig(filename, bbox_inches=Bbox([[0, 0], [size_inches, size_inches]]), dpi=dpi)
     plt.close(fig)
 
-sdf_net = SDFNet()
-sdf_net.load()
-sdf_net.eval()
-
 frame_latent_codes = torch.tensor(frame_latent_codes, dtype=torch.float32, device=device)
 
 print("Rendering...")
@@ -137,7 +159,11 @@ viewer = MeshRenderer(size=1080, start_thread=False)
 
 def render_frame(frame_index):
     viewer.model_color = frame_colors[frame_index, :]
-    viewer.set_mesh(sdf_net.get_mesh(frame_latent_codes[frame_index, :], voxel_resolution=128, sphere_only=True, level=SURFACE_LEVEL))
+    with torch.no_grad():
+        if USE_VAE:
+            viewer.set_voxels(vae.decode(frame_latent_codes[frame_index, :]))
+        else:
+            viewer.set_mesh(sdf_net.get_mesh(frame_latent_codes[frame_index, :], voxel_resolution=128, sphere_only=True, level=SURFACE_LEVEL))
     image_mesh = viewer.get_image(flip_red_blue=True)
 
     create_plot(frame_index)
