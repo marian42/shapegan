@@ -12,18 +12,21 @@ from collections import deque
 from tqdm import tqdm
 
 from model.sdf_net import SDFNet
-from model.progressive_gan import Discriminator, LATENT_CODE_SIZE
+from model.progressive_gan import Discriminator, LATENT_CODE_SIZE, RESOLUTIONS
 from util import create_text_slice, device, standard_normal_distribution, get_voxel_coordinates
 
 from dataset import dataset as dataset, SDF_CLIPPING
 from inception_score import inception_score
 from util import create_text_slice
 
-VOXEL_RESOLUTION = 8
+
+ITERATION = 0
+
+VOXEL_RESOLUTION = RESOLUTIONS[ITERATION]
 
 voxels = torch.load('data/chairs-voxels-32.to')
 
-pool = torch.nn.MaxPool3d(4)
+pool = torch.nn.MaxPool3d(32 // VOXEL_RESOLUTION)
 
 voxels = pool(voxels * -1).clone().detach().to(device)
 voxels.clamp_(-0.1, 0.1)
@@ -32,11 +35,11 @@ voxels *= -1
 SIZE = voxels.shape[0]
 
 generator = SDFNet()
-generator.filename = 'hybrid_progressive_gan_generator.to'
+generator.filename = 'hybrid_progressive_gan_generator_{:d}.to'.format(ITERATION)
 
 discriminator = Discriminator()
 discriminator.to(device)
-discriminator.filename = 'hybrid_progressive_gan_discriminator.to'
+discriminator.set_iteration(ITERATION)
 
 if "continue" in sys.argv:
     generator.load()
@@ -53,7 +56,7 @@ log_file = open(LOG_FILE_NAME, "a" if "continue" in sys.argv else "w")
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.0001)
 
 discriminator_criterion = torch.nn.functional.binary_cross_entropy
-discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00005)
+discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.00002)
 
 show_viewer = "nogui" not in sys.argv
 
@@ -61,7 +64,7 @@ if show_viewer:
     from rendering import MeshRenderer
     viewer = MeshRenderer()
 
-BATCH_SIZE = 64
+BATCH_SIZE = 8
 
 valid_target_default = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
 fake_target_default = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
@@ -99,9 +102,9 @@ def train():
                 latent_codes = sample_latent_codes(current_batch_size)
                 fake_sample = generator.forward(batch_grid_points, latent_codes)
                 fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
-                if batch_index % 20 == 0 and show_viewer:
+                if batch_index % 50 == 0 and show_viewer:
                     viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
-                if batch_index % 20 == 0 and "show_slice" in sys.argv:
+                if batch_index % 50 == 0 and "show_slice" in sys.argv:
                     print(create_text_slice(fake_sample[0, :, :, :] / SDF_CLIPPING))
                 
                 fake_discriminator_output = discriminator.forward(fake_sample)
@@ -135,7 +138,7 @@ def train():
                 history_real.append(torch.mean(discriminator_output_valid).item())
                 batch_index += 1
 
-                if "verbose" in sys.argv and batch_index % 10 == 0:
+                if "verbose" in sys.argv and batch_index % 50 == 0:
                     tqdm.write("Epoch " + str(epoch) + ", batch " + str(batch_index) +
                         ": prediction on fake samples: " + '{0:.4f}'.format(history_fake[-1]) +
                         ", prediction on valid samples: " + '{0:.4f}'.format(history_real[-1]))

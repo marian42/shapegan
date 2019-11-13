@@ -2,51 +2,56 @@ from model import *
 from inception_score import inception_score
 from util import standard_normal_distribution
 
-def test(x):
-    #print(x.shape)
+RESOLUTIONS = [8, 16, 32]
+FEATURE_COUNTS = [128, 64, 1]
+FINAL_LAYER_FEATURES = 256
+
+def fromSDF(x, iteration):
+    resolution = RESOLUTIONS[iteration]
+    target_feature_count = FEATURE_COUNTS[iteration]
+    
+    x = x.reshape((-1, 1, resolution, resolution, resolution))
+    batch_size = x.shape[0]
+    x = torch.cat((x, torch.zeros((batch_size, target_feature_count - 1, resolution, resolution, resolution), device=x.device)), dim=1)
     return x
 
 class Discriminator(SavableModule):
     def __init__(self):
-        super(Discriminator, self).__init__(filename="discriminator.to")
+        self.iteration = 0
+        self.filename_base="hybrid_progressive_gan_discriminator_{:d}.to"
+        super(Discriminator, self).__init__(filename=self.filename_base.format(self.iteration))
 
-        self.layers = nn.Sequential(
-            nn.Conv3d(in_channels = 1, out_channels = 8, kernel_size = 1),
-            nn.LeakyReLU(negative_slope=0.2),
+        self.fade_in_progress = 1
 
-            Lambda(test),
-            nn.Conv3d(in_channels = 8, out_channels = 16, kernel_size = 3, padding=1),
-            nn.LeakyReLU(negative_slope=0.2),
-            Lambda(test),
-            nn.Conv3d(in_channels = 16, out_channels = 32, kernel_size = 3, padding=1),
-            nn.LeakyReLU(negative_slope=0.2),
-            Lambda(test),
-            nn.AvgPool3d(2),
-
-            nn.Conv3d(in_channels = 32, out_channels = 32, kernel_size = 3, padding=1),
-            nn.LeakyReLU(negative_slope=0.2),
-            Lambda(test),
-            nn.Conv3d(in_channels = 32, out_channels = 32, kernel_size = 3, padding=1),
-            nn.LeakyReLU(negative_slope=0.2),
-            Lambda(test),
-            nn.AvgPool3d(2),
-
-            Lambda(test),
-            Lambda(lambda x: x.reshape(x.shape[0], -1)),
-            Lambda(test),
-            nn.Linear(256, 1),
-            Lambda(test),
+        self.head = nn.Sequential(
+            Lambda(lambda x: x.reshape(-1, 64*FINAL_LAYER_FEATURES)),
+            nn.Linear(64*FINAL_LAYER_FEATURES, 1),
             nn.Sigmoid()
         )
+
+        self.optional_layers = []
+        for i in range(len(FEATURE_COUNTS)):
+            in_channels = FEATURE_COUNTS[i]
+            out_channels = FEATURE_COUNTS[i-1] if i > 0 else FINAL_LAYER_FEATURES
+            submodule = nn.Sequential(
+                nn.Conv3d(in_channels = in_channels, out_channels = out_channels, kernel_size = 4, stride = 2, padding = 1),
+                nn.LeakyReLU(negative_slope=0.2)
+            )
+            self.optional_layers.append(submodule)
+            self.add_module('optional_layer_{:d}'.format(i), submodule)
 
         self.cuda()
 
     def forward(self, x):
-        if (len(x.shape) < 5):
-            x = x.unsqueeze(dim = 1) # add dimension for channels
-            
-        return self.layers.forward(x).squeeze()
+        x = fromSDF(x, self.iteration)
 
-    def clip_weights(self, value):
-        for parameter in self.parameters():
-            parameter.data.clamp_(-value, value)
+        i = self.iteration
+        while i >= 0:
+            x = self.optional_layers[i].forward(x)
+            i -= 1
+            
+        return self.head.forward(x).squeeze()
+
+    def set_iteration(self, value):
+        self.iteration = value
+        self.filename = self.filename_base.format(self.iteration)
