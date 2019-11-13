@@ -18,13 +18,11 @@ viewer = MeshRenderer()
 
 STEPS = 20
 
-SHAPE = (2, LATENT_CODE_SIZE, 1, 1, 1)
-
 TRANSITION_TIME = 0.4
 WAIT_TIME = 0.8
 
 def get_random():
-    return standard_normal_distribution.sample(sample_shape=SHAPE).to(device)
+    return standard_normal_distribution.sample(sample_shape=(LATENT_CODE_SIZE,)).to(device)
 
 previous_model = None
 next_model = get_random()
@@ -42,7 +40,7 @@ for epoch in count():
             else:
                 model = next_model
 
-            viewer.set_voxels(generator.forward(model)[0, :, :, :, :].squeeze().detach().cpu())
+            viewer.set_voxels(generator.forward(model).squeeze().detach().cpu())
             time.sleep(TRANSITION_TIME / STEPS)
 
         time.sleep(WAIT_TIME)

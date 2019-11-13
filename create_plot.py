@@ -478,7 +478,7 @@ if "gan_tsne" in sys.argv:
     generator = load_generator(is_wgan='wgan' in sys.argv)
     from util import standard_normal_distribution
 
-    shape = torch.Size([500, LATENT_CODE_SIZE, 1, 1, 1])
+    shape = torch.Size([500, LATENT_CODE_SIZE])
     x = standard_normal_distribution.sample(shape).to(device)
     with torch.no_grad():
         voxels = generator.forward(x).squeeze()
@@ -515,8 +515,6 @@ if "gan_interpolation" in sys.argv:
         code_end = codes_start_end[1, :]
         for i in range(STEPS):
             codes[i, :] = code_start * (1.0 - i / (STEPS - 1)) + code_end * i / (STEPS - 1)
-        for i in range(3):
-            codes = codes.unsqueeze(dim=i+2)
         voxels = generator.forward(codes)
 
     plot = ImageGrid(STEPS)

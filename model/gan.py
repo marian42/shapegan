@@ -26,10 +26,11 @@ class Generator(SavableModule):
         self.cuda()
 
     def forward(self, x):
+        x = x.reshape((-1, LATENT_CODE_SIZE, 1, 1, 1))
         return self.layers.forward(x)
 
     def generate(self, sample_size = 1):
-        shape = torch.Size([sample_size, LATENT_CODE_SIZE, 1, 1, 1])
+        shape = torch.Size((sample_size, LATENT_CODE_SIZE))
         x = standard_normal_distribution.sample(shape).to(self.device)
         return self.forward(x)
 
@@ -45,7 +46,7 @@ class Generator(SavableModule):
             return 0
         with torch.no_grad():
             if sample_size not in self.inception_score_latent_codes:
-                shape = torch.Size([sample_size, LATENT_CODE_SIZE, 1, 1, 1])
+                shape = torch.Size((sample_size, LATENT_CODE_SIZE))
                 self.inception_score_latent_codes[sample_size] = standard_normal_distribution.sample(shape).to(self.device)
 
             sample = self.forward(self.inception_score_latent_codes[sample_size])

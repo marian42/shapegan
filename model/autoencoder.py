@@ -65,11 +65,7 @@ class Autoencoder(SavableModule):
         self.cuda()
 
     def encode(self, x, return_mean_and_log_variance = False):
-        if len(x.shape) == 3:
-            x = x.unsqueeze(dim = 0)  # add dimension for batch
-        if len(x.shape) == 4:
-            x = x.unsqueeze(dim = 1)  # add dimension for channels
-        
+        x = x.reshape((-1, 1, 32, 32, 32))
         x = self.encoder.forward(x)
 
         if not self.is_variational:
