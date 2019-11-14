@@ -6,7 +6,8 @@ RESOLUTIONS = [8, 16, 32]
 FEATURE_COUNTS = [128, 64, 1]
 FINAL_LAYER_FEATURES = 256
 
-def fromSDF(x, iteration):
+# works like fromRGB in the Progressive GAN paper
+def from_SDF(x, iteration):
     resolution = RESOLUTIONS[iteration]
     target_feature_count = FEATURE_COUNTS[iteration]
     
@@ -43,9 +44,15 @@ class Discriminator(SavableModule):
         self.cuda()
 
     def forward(self, x):
-        x = fromSDF(x, self.iteration)
+        x_in = x
+        x = from_SDF(x, self.iteration)
+        x = self.optional_layers[self.iteration].forward(x)
 
-        i = self.iteration
+        if (self.fade_in_progress < 1.0) and self.iteration > 0:
+            x2 = from_SDF(x_in[:, ::2, ::2, ::2], self.iteration - 1)
+            x = self.fade_in_progress * x + (1.0 - self.fade_in_progress) * x2
+
+        i = self.iteration - 1
         while i >= 0:
             x = self.optional_layers[i].forward(x)
             i -= 1

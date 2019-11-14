@@ -20,30 +20,37 @@ from inception_score import inception_score
 from util import create_text_slice
 
 
-ITERATION = 0
+ITERATION = 1
+# Continue with model parameters that were previously trained at the SAME iteration
+# Otherwise, it will use the model parameters of the previous iteration or initialize randomly at iteration 0
+CONTINUE = "continue" in sys.argv
+
+FADE_IN_EPOCHS = 10
 
 VOXEL_RESOLUTION = RESOLUTIONS[ITERATION]
 
 voxels = torch.load('data/chairs-voxels-32.to')
-
-pool = torch.nn.MaxPool3d(32 // VOXEL_RESOLUTION)
-
+pool = torch.nn.MaxPool3d(voxels.shape[1] // VOXEL_RESOLUTION)
 voxels = pool(voxels * -1).clone().detach().to(device)
 voxels.clamp_(-0.1, 0.1)
 voxels *= -1
 
-SIZE = voxels.shape[0]
+def get_generator_filename(iteration):
+    return 'hybrid_progressive_gan_generator_{:d}.to'.format(iteration)
 
 generator = SDFNet()
-generator.filename = 'hybrid_progressive_gan_generator_{:d}.to'.format(ITERATION)
-
 discriminator = Discriminator()
-discriminator.to(device)
+if not CONTINUE and ITERATION > 0:
+    generator.filename = get_generator_filename(ITERATION - 1)
+    generator.load()
+    discriminator.set_iteration(ITERATION - 1)
+    discriminator.load()
 discriminator.set_iteration(ITERATION)
-
-if "continue" in sys.argv:
+generator.filename = get_generator_filename(ITERATION)
+if CONTINUE:
     generator.load()
     discriminator.load()
+discriminator.to(device)
 
 LOG_FILE_NAME = "plots/hybrid_gan_training.csv"
 first_epoch = 0
@@ -90,11 +97,14 @@ def train():
     for epoch in count(start=first_epoch):
         batch_index = 0
         epoch_start_time = time.time()
-        for batch in tqdm(list(create_batches(SIZE, BATCH_SIZE)), desc='Epoch {:d}'.format(epoch)):
+        for batch in tqdm(list(create_batches(voxels.shape[0], BATCH_SIZE)), desc='Epoch {:d}'.format(epoch)):
             try:
                 indices = torch.tensor(batch, device = device)
                 current_batch_size = indices.shape[0] # equals BATCH_SIZE for all batches except the last one
                 batch_grid_points = grid_points.repeat((current_batch_size, 1))
+
+                if not CONTINUE and ITERATION > 0:
+                    discriminator.fade_in_progress = (epoch + batch_index / (voxels.shape[0] / BATCH_SIZE)) / FADE_IN_EPOCHS
 
                 # train generator
                 generator_optimizer.zero_grad()
