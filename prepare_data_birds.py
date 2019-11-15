@@ -1,5 +1,4 @@
 import os
-from rendering import MeshRenderer
 import time
 import trimesh
 from tqdm import tqdm
