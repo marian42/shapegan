@@ -98,9 +98,9 @@ class MeshSDF:
 
         sdf = self.get_sdf(points)
         
-        model_size = np.count_nonzero(sdf[-unit_sphere_sample_count:] < 0) / unit_sphere_sample_count
-        if model_size < 0.015:
-            raise BadMeshException()
+        #model_size = np.count_nonzero(sdf[-unit_sphere_sample_count:] < 0) / unit_sphere_sample_count
+        #if model_size < 0.015:
+            #raise BadMeshException()
 
         return points, sdf
 
