@@ -51,11 +51,8 @@ class MeshSDF:
             distances[self.is_outside(query_points)] *= -1
             return distances
         else:
-            start = time.time()
             distances, indices = self.kd_tree.query(query_points, k=sample_count)
             distances = distances.astype(np.float32)
-            end = time.time()
-            print('Time for KD-Tree query: {:.1f}s'.format(end - start))
 
             closest_points = self.points[indices]
             direction_to_surface = query_points[:, np.newaxis, :] - closest_points
