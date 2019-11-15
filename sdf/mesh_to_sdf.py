@@ -90,8 +90,8 @@ class MeshSDF:
 
         surface_sample_count = int(number_of_points * 0.4)
         surface_points = self.get_random_surface_points(surface_sample_count)
-        points.append(surface_points + np.random.normal(scale=0.0025, size=(surface_sample_count, 3)))
-        points.append(surface_points + np.random.normal(scale=0.00025, size=(surface_sample_count, 3)))
+        points.append(surface_points + np.random.normal(scale=0.005, size=(surface_sample_count, 3)))
+        points.append(surface_points + np.random.normal(scale=0.0005, size=(surface_sample_count, 3)))
 
         unit_sphere_sample_count = int(number_of_points * 0.2)
         unit_sphere_points = np.random.uniform(-1, 1, size=(unit_sphere_sample_count * 2, 3))
