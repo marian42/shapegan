@@ -7,6 +7,7 @@ from scipy.spatial.transform import Rotation
 import numpy as np
 from sdf.mesh_to_sdf import MeshSDF
 from util import ensure_directory
+from multiprocessing import Pool
 
 DIRECTORY = 'data/birds/'
 DIRECTORY_SDF = 'data/birds_sdf'
@@ -17,13 +18,15 @@ def get_obj_files():
             if filename.endswith('.obj'):
                 yield os.path.join(directory, filename)
 
-files = list(get_obj_files())
 rotation = np.matmul(
     Rotation.from_euler('y', 90, degrees=True).as_dcm(),
     Rotation.from_euler('x', -90, degrees=True).as_dcm())
 
-def process_obj_file(in_file, out_file, transform_file):
-    mesh = trimesh.load(in_file)
+def process_obj_file(filename):
+    out_file = os.path.join(DIRECTORY_SDF, filename.split('/')[-1].replace('.obj', '.npy'))
+    if os.path.isfile(out_file):
+        return
+    mesh = trimesh.load(filename)
     mesh.remove_degenerate_faces()
     mesh.remove_unreferenced_vertices()
     vertices = np.matmul(rotation, mesh.vertices.transpose()).transpose()
@@ -33,9 +36,6 @@ def process_obj_file(in_file, out_file, transform_file):
     scale = np.max(np.linalg.norm(vertices, axis=1)) * 1.05
     vertices /= scale
     mesh = trimesh.Trimesh(vertices=vertices, faces=mesh.faces, vertex_normals=normals)
-    
-    transform_file.write('{:s},{:.4f},{:.4f},{:.4f},{:.4f}\n'.format(in_file, centroid[0], centroid[1], centroid[2], scale))
-    transform_file.flush()
 
     mesh_sdf = MeshSDF(mesh, use_scans=False)
     points, sdf = mesh_sdf.get_sample_points()
@@ -44,15 +44,20 @@ def process_obj_file(in_file, out_file, transform_file):
 
 
 def process_obj_files():
-    transform_file = open('data/birds_transforms.csv', 'a')
     ensure_directory(DIRECTORY_SDF)
+    files = list(get_obj_files())
+    
+    worker_count = os.cpu_count()
+    print("Using {:d} processes.".format(worker_count))
+    pool = Pool(worker_count)
 
-    for filename in tqdm(files):
-        out_file = os.path.join(DIRECTORY_SDF, filename.split('/')[-1].replace('.obj', '.npy'))
-        if os.path.exists(out_file):
-            continue
-        process_obj_file(filename, out_file, transform_file)
-        
-    transform_file.close()
+    progress = tqdm(total=len(files))
+    def on_complete(*_):
+        progress.update()
+
+    for filename in files:
+        pool.apply_async(process_obj_file, args=(filename,), callback=on_complete)
+    pool.close()
+    pool.join()
 
 process_obj_files()
