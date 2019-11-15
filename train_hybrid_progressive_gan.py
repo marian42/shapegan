@@ -52,7 +52,7 @@ if CONTINUE:
     discriminator.load()
 discriminator.to(device)
 
-LOG_FILE_NAME = "plots/hybrid_gan_training.csv"
+LOG_FILE_NAME = "plots/hybrid_gan_training_{:d}.csv".format(ITERATION)
 first_epoch = 0
 if 'continue' in sys.argv:
     log_file_contents = open(LOG_FILE_NAME, 'r').readlines()
