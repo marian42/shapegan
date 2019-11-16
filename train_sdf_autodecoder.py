@@ -20,7 +20,13 @@ if "nogui" not in sys.argv:
 POINTCLOUD_SIZE = 200000
 
 points = torch.load('data/sdf_points.to').to(device)
-sdf = torch.load('data/sdf_values.to').to(device)
+sdf_cpu = torch.load('data/sdf_values.to')
+sdf = sdf_cpu.to(device)
+
+positive_indices = np.argwhere(sdf_cpu.numpy() > 0).reshape(-1)
+negative_indices = np.argwhere(sdf_cpu.numpy() < 0).reshape(-1)
+del sdf_cpu
+
 
 MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
 BATCH_SIZE = 20000
@@ -51,13 +57,16 @@ if 'continue' in sys.argv:
 log_file = open(LOG_FILE_NAME, "a" if "continue" in sys.argv else "w")
 
 def create_batches():
-    size = MODEL_COUNT * POINTCLOUD_SIZE
-    batch_count = int(size / BATCH_SIZE)
-    indices = np.arange(size)
-    np.random.shuffle(indices)
+    size = positive_indices.shape[0]
+    half_batch_size = BATCH_SIZE // 2
+    batch_count = int(size / half_batch_size)
+    np.random.shuffle(positive_indices)
+    np.random.shuffle(negative_indices)
+    extended_negative_indices = np.repeat(negative_indices, positive_indices.shape[0] // negative_indices.shape[0] + 1)[:positive_indices.shape[0]]
+    
     for i in range(batch_count - 1):
-        yield indices[i * BATCH_SIZE:(i+1)*BATCH_SIZE]
-    yield indices[(batch_count - 1) * BATCH_SIZE:]
+        yield np.concatenate((positive_indices[i * half_batch_size:(i+1)*half_batch_size], extended_negative_indices[i * half_batch_size:(i+1)*half_batch_size]))
+    yield np.concatenate((positive_indices[(batch_count - 1) * half_batch_size:], extended_negative_indices[(batch_count - 1) * half_batch_size:]))
 
 def train():
     for epoch in count(start=first_epoch):
