@@ -79,7 +79,7 @@ def load_sdf_net(filename=None, return_latent_codes = False):
     else:
         return sdf_net
 
-def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf", indices=None):
+def create_tsne_plot(codes, voxels = None, filename = "plot.pdf"):
     from sklearn.manifold import TSNE
     from matplotlib.offsetbox import OffsetImage, AnnotationBbox
 
@@ -100,7 +100,7 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf",
     x = np.interp(x, (x.min(), x.max()), (0, 1))
     y = np.interp(y, (y.min(), y.max()), (0, 1))
 
-    ax.scatter(x, y, c=labels, s = 40, cmap='Set1')
+    ax.scatter(x, y, s = 40)
     fig.set_size_inches(width, height)
 
     if voxels is not None:
@@ -108,24 +108,7 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf",
         from rendering import MeshRenderer
         viewer = MeshRenderer(start_thread=False)
         for i in tqdm(range(voxels.shape[0])):
-            viewer.set_voxels(voxels[i, :, :, :].cpu().numpy())
-            viewer.model_color = dataset.get_color(labels[i])
-            image = viewer.get_image(crop=True, output_size=128)
-            box = AnnotationBbox(OffsetImage(image, zoom = 0.5, cmap='gray'), (x[i], y[i]), frameon=True)
-            ax.add_artist(box)
-
-    if indices is not None:
-        print("Creating images...")
-        dataset_directories = directories = open('data/models.txt', 'r').readlines()
-        from rendering import MeshRenderer
-        viewer = MeshRenderer(start_thread=False)
-        import trimesh
-        import logging
-        logging.getLogger('trimesh').setLevel(1000000)
-        for i in tqdm(range(len(indices))):
-            mesh = trimesh.load(os.path.join(dataset_directories[index].strip(), 'model_normalized.obj'))
-            viewer.set_mesh(mesh, center_and_scale=True)
-            viewer.model_color = dataset.get_color(labels[i])
+            viewer.set_voxels(voxels[i, :, :, :])
             image = viewer.get_image(crop=True, output_size=128)
             box = AnnotationBbox(OffsetImage(image, zoom = 0.5, cmap='gray'), (x[i], y[i]), frameon=True)
             ax.add_artist(box)
@@ -230,16 +213,20 @@ if "autoencoder" in sys.argv:
 
 if "autodecoder_tsne" in sys.argv:
     from dataset import dataset as dataset
-    dataset.load_labels('cpu')
-    dataset.load_labels()
     from model.sdf_net import LATENT_CODES_FILENAME
     latent_codes = torch.load(LATENT_CODES_FILENAME).detach().cpu().numpy()
+
+    sdf_net = load_sdf_net()
     
     indices = random.sample(range(latent_codes.shape[0]), 1000)
     latent_codes = latent_codes[indices, :]
-    labels = dataset.labels[indices]
+
+    RESOLUTION = 64
+    voxels = np.zeros((latent_codes.shape[0], RESOLUTION, RESOLUTION, RESOLUTION))
+    for i in tqdm(range(latent_codes.shape[0])):
+        voxels[i, :, :, :] = sdf_net.get_voxels(torch.tensor(latent_codes[i, :], device=device), voxel_resolution=RESOLUTION)
     
-    create_tsne_plot(latent_codes, labels=labels, filename="plots/deepsdf-tsne.pdf", indices=indices)
+    create_tsne_plot(latent_codes, voxels=voxels, filename="plots/deepsdf-tsne.pdf")
 
 
 if "autoencoder_hist" in sys.argv:
