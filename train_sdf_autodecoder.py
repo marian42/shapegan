@@ -73,7 +73,7 @@ def train():
         epoch_start_time = time.time()
         loss_values = []
         batch_index = 0
-        for batch in tqdm(list(create_batches())):
+        for batch in tqdm(list(create_batches()), desc='Epoch {:d}'.format(epoch)):
             indices = torch.tensor(batch, device = device)
             model_indices = indices / POINTCLOUD_SIZE
 
@@ -97,6 +97,8 @@ def train():
                     viewer.set_mesh(sdf_net.get_mesh(latent_codes[random.randrange(MODEL_COUNT), :]))
                 except ValueError:
                     pass
+            if batch_index % 400 == 0 and batch_index > 0 and "verbose" in sys.argv:
+                tqdm.write('Epoch {:d}, batch {:d}, loss:  {:.8f}'.format(epoch, batch_index, np.mean(loss_values[-400:])))
 
             batch_index += 1
 
