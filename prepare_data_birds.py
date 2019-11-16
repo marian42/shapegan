@@ -64,7 +64,6 @@ def process_obj_files():
 
 def combine_files():
     import torch
-    from dataset import DATASET_DIRECTORY
     npy_files = sorted([get_npy_filename(f) for f in get_obj_files()])
     
     N = len(npy_files)
@@ -80,8 +79,8 @@ def combine_files():
         del numpy_array
         position += 1
     
-    torch.save(points, os.path.join(DATASET_DIRECTORY, 'sdf_points.to'))
-    torch.save(sdf, os.path.join(DATASET_DIRECTORY, 'sdf_values.to'))
+    torch.save(points, os.path.join('data', 'sdf_points.to'))
+    torch.save(sdf, os.path.join('data', 'sdf_values.to'))
 
 process_obj_files()
 combine_files()
