@@ -15,10 +15,10 @@ SAMPLE_COUNT = 30 # Number of distinct objects to generate and interpolate betwe
 TRANSITION_FRAMES = 60
 
 ROTATE_MODEL = False
-USE_HYBRID_GAN = True
-CATEGORY = 2 # Limit category when using the DeepSDF autodecoder, set to None to use all categories
+USE_HYBRID_GAN = False
+CATEGORY = None # Limit category when using the DeepSDF autodecoder, set to None to use all categories
 
-SURFACE_LEVEL = 0.048 if USE_HYBRID_GAN else 0.011
+SURFACE_LEVEL = 0.07 # 0.048 if USE_HYBRID_GAN else 0.011
 
 sdf_net = SDFNet()
 if USE_HYBRID_GAN:
