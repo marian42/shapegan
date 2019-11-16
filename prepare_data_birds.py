@@ -21,8 +21,11 @@ rotation = np.matmul(
     Rotation.from_euler('y', 90, degrees=True).as_dcm(),
     Rotation.from_euler('x', -90, degrees=True).as_dcm())
 
+def get_npy_filename(obj_filename):
+    return os.path.join(DIRECTORY_SDF, obj_filename.split('/')[-1].replace('.obj', '.npy'))
+
 def process_obj_file(filename):
-    out_file = os.path.join(DIRECTORY_SDF, filename.split('/')[-1].replace('.obj', '.npy'))
+    out_file = get_npy_filename(filename)
     if os.path.isfile(out_file):
         return
     mesh = trimesh.load(filename)
@@ -59,4 +62,26 @@ def process_obj_files():
     pool.close()
     pool.join()
 
+def combine_files():
+    import torch
+    from dataset import DATASET_DIRECTORY
+    npy_files = sorted([get_npy_filename(f) for f in get_obj_files()])
+    
+    N = len(npy_files)
+    POINTCLOUD_SIZE = 200000
+    points = torch.zeros((N * POINTCLOUD_SIZE, 3))
+    sdf = torch.zeros((N * POINTCLOUD_SIZE))
+    position = 0
+
+    for npy_filename in tqdm(npy_files):
+        numpy_array = np.load(npy_filename)
+        points[position * POINTCLOUD_SIZE:(position + 1) * POINTCLOUD_SIZE, :] = torch.tensor(numpy_array[:, :3])
+        sdf[position * POINTCLOUD_SIZE:(position + 1) * POINTCLOUD_SIZE] = torch.tensor(numpy_array[:, 3])
+        del numpy_array
+        position += 1
+    
+    torch.save(points, os.path.join(DATASET_DIRECTORY, 'sdf_points.to'))
+    torch.save(sdf, os.path.join(DATASET_DIRECTORY, 'sdf_values.to'))
+
 process_obj_files()
+combine_files()
