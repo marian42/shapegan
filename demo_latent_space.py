@@ -63,6 +63,17 @@ for i in range(SAMPLE_COUNT):
     dist = np.linalg.norm(latent_codes_embedded - center[np.newaxis, :], axis=1)
     indices[i] = np.argmin(dist)
 
+from prepare_data_birds import get_obj_files
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+import math
+
+filenames = sorted(get_obj_files())
+names = [f.split('/')[-1][:-6].replace('_', ' ') for f in filenames]
+names = [names[i] for i in indices]
+font = ImageFont.truetype('cmunrm.ttf', 60)
+
 def try_find_shortest_roundtrip(indices):
     best_order = indices
     best_distance = None
@@ -144,6 +155,17 @@ def render_frame(frame_index):
         else:
             viewer.set_mesh(sdf_net.get_mesh(frame_latent_codes[frame_index, :], voxel_resolution=128, sphere_only=True, level=SURFACE_LEVEL))
     image_mesh = viewer.get_image(flip_red_blue=True)
+
+    progress, model_index = math.modf(frame_index / TRANSITION_FRAMES + 0.5)
+    img = Image.fromarray(np.uint8(image_mesh))
+    font = ImageFont.truetype('cmunrm.ttf', 60)
+    name = names[int(model_index)]
+    names.append(names[0])
+    d = ImageDraw.Draw(img)
+    width, _ = d.textsize(name, font=font)
+    color = int(max(0, abs(progress - 0.5) * 2 * 3 - 2) * 255)
+    d.text((540 - width // 2, 980), name, font=font, fill=(color, color, color))
+    image_mesh = np.array(img)[:, :, :3]
 
     create_plot(frame_index)
     image_tsne = plt.imread(PLOT_FILE_NAME)[:, :, [2, 1, 0]] * 255
