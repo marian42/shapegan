@@ -50,8 +50,6 @@ else:
     sdf_net.load()
     sdf_net.eval()
 
-labels = dataset.load_labels().detach().cpu().numpy()
-
 print("Calculating embedding...")
 tsne = TSNE(n_components=2)
 latent_codes_embedded = tsne.fit_transform(latent_codes)
@@ -62,10 +60,7 @@ indices = np.zeros(SAMPLE_COUNT, dtype=int)
 kmeans_clusters = kmeans.fit_predict(latent_codes_embedded)
 for i in range(SAMPLE_COUNT):
     center = kmeans.cluster_centers_[i, :]
-    cluster_classes = labels[kmeans_clusters == i]
-    cluster_class = np.bincount(cluster_classes).argmax()
     dist = np.linalg.norm(latent_codes_embedded - center[np.newaxis, :], axis=1)
-    dist[labels != cluster_class] = float('inf')
     indices[i] = np.argmin(dist)
 
 def try_find_shortest_roundtrip(indices):
@@ -102,20 +97,8 @@ SIZE = latent_codes.shape[0]
 
 stop_latent_codes = latent_codes[indices, :]
 
-colors = np.zeros((labels.shape[0], 3))
-for i in range(labels.shape[0]):
-    colors[i, :] = dataset.get_color(labels[i])
-
 spline = scipy.interpolate.CubicSpline(np.arange(SAMPLE_COUNT + 1), stop_latent_codes, axis=0, bc_type='periodic')
 frame_latent_codes = spline(progress)
-
-color_spline = scipy.interpolate.CubicSpline(np.arange(SAMPLE_COUNT + 1), colors[indices, :], axis=0, bc_type='periodic')
-frame_colors = color_spline(progress)
-frame_colors = np.clip(frame_colors, 0, 1)
-
-frame_colors = np.zeros((progress.shape[0], 3))
-for i in range(SAMPLE_COUNT):
-    frame_colors[i*TRANSITION_FRAMES:(i+1)*TRANSITION_FRAMES, :] = np.linspace(colors[indices[i]], colors[indices[i+1]], num=TRANSITION_FRAMES)
 
 embedded_spline = scipy.interpolate.CubicSpline(np.arange(SAMPLE_COUNT + 1), latent_codes_embedded[indices, :], axis=0, bc_type='periodic')
 frame_latent_codes_embedded = embedded_spline(progress)
@@ -133,9 +116,6 @@ range_y = (latent_codes_embedded[:, 1].min() - margin, latent_codes_embedded[:, 
 plt.ioff()
 
 def create_plot(index, resolution=1080, filename=PLOT_FILE_NAME, dpi=100):
-    frame_color = frame_colors[index, :]
-    frame_color = (frame_color[0], frame_color[1], frame_color[2], 1.0)
-
     size_inches = resolution / dpi
 
     fig, ax = plt.subplots(1, figsize=(size_inches, size_inches), dpi=dpi)
@@ -145,9 +125,9 @@ def create_plot(index, resolution=1080, filename=PLOT_FILE_NAME, dpi=100):
     ax.set_ylim(range_y)
 
     ax.plot(frame_latent_codes_embedded[:, 0], frame_latent_codes_embedded[:, 1], c=(0.2, 0.2, 0.2, 1.0), zorder=1, linewidth=2)
-    ax.scatter(latent_codes_embedded[:, 0], latent_codes_embedded[:, 1], c=colors[:SIZE], s = 10, zorder=0)
-    ax.scatter(frame_latent_codes_embedded[index, 0], frame_latent_codes_embedded[index, 1], facecolors=frame_color, s = 200, linewidths=2, edgecolors=(0.1, 0.1, 0.1, 1.0), zorder=2)
-    ax.scatter(latent_codes_embedded[indices, 0], latent_codes_embedded[indices, 1], facecolors=colors[indices, :], s = 140, linewidths=1, edgecolors=(0.1, 0.1, 0.1, 1.0), zorder=3)
+    ax.scatter(latent_codes_embedded[:, 0], latent_codes_embedded[:, 1], c='red', s = 10, zorder=0)
+    ax.scatter(frame_latent_codes_embedded[index, 0], frame_latent_codes_embedded[index, 1], facecolors='red', s = 200, linewidths=2, edgecolors=(0.1, 0.1, 0.1, 1.0), zorder=2)
+    ax.scatter(latent_codes_embedded[indices, 0], latent_codes_embedded[indices, 1], facecolors='red', s = 140, linewidths=1, edgecolors=(0.1, 0.1, 0.1, 1.0), zorder=3)
     
     fig.savefig(filename, bbox_inches=Bbox([[0, 0], [size_inches, size_inches]]), dpi=dpi)
     plt.close(fig)
@@ -158,7 +138,6 @@ print("Rendering...")
 viewer = MeshRenderer(size=1080, start_thread=False)
 
 def render_frame(frame_index):
-    viewer.model_color = frame_colors[frame_index, :]
     with torch.no_grad():
         if USE_VAE:
             viewer.set_voxels(vae.decode(frame_latent_codes[frame_index, :]))
