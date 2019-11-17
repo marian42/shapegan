@@ -24,20 +24,21 @@ rotation = np.matmul(
 def get_npy_filename(obj_filename):
     return os.path.join(DIRECTORY_SDF, obj_filename.split('/')[-1].replace('.obj', '.npy'))
 
-def process_obj_file(filename):
-    out_file = get_npy_filename(filename)
-    if os.path.isfile(out_file):
-        return
+def load_and_rotate_mesh(filename):
     mesh = trimesh.load(filename)
-    mesh.remove_degenerate_faces()
-    mesh.remove_unreferenced_vertices()
     vertices = np.matmul(rotation, mesh.vertices.transpose()).transpose()
     normals = np.matmul(rotation, mesh.vertex_normals.transpose()).transpose()
     centroid = np.matmul(rotation, mesh.bounding_box.centroid)
     vertices -= centroid[np.newaxis, :]
     scale = np.max(np.linalg.norm(vertices, axis=1)) * 1.05
     vertices /= scale
-    mesh = trimesh.Trimesh(vertices=vertices, faces=mesh.faces, vertex_normals=normals)
+    return trimesh.Trimesh(vertices=vertices, faces=mesh.faces, vertex_normals=normals)
+
+def process_obj_file(filename):
+    out_file = get_npy_filename(filename)
+    if os.path.isfile(out_file):
+        return
+    mesh = load_and_rotate_mesh(filename)
 
     mesh_sdf = MeshSDF(mesh, use_scans=False)
     points, sdf = mesh_sdf.get_sample_points()
@@ -82,5 +83,6 @@ def combine_files():
     torch.save(points, os.path.join('data', 'sdf_points.to'))
     torch.save(sdf, os.path.join('data', 'sdf_values.to'))
 
-process_obj_files()
-combine_files()
+if __name__ == '__main__':
+    process_obj_files()
+    combine_files()

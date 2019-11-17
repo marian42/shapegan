@@ -714,21 +714,21 @@ if 'sdf_net_reconstruction' in sys.argv:
     from rendering.raymarching import render_image_for_index
     from PIL import Image
     from util import crop_image
+    from prepare_data_birds import get_obj_files, load_and_rotate_mesh
     sdf_net, latent_codes = load_sdf_net(return_latent_codes=True)
 
     COUNT = 5
-    MESH_FILENAME = 'screenshots/sdf_meshes/{:d}.png'
+    mesh_filenames = sorted(get_obj_files())
 
     indices = random.sample(range(latent_codes.shape[0]), COUNT)
-    print(indices)
 
-    plot = ImageGrid(COUNT, 2, create_viewer=False)
+    plot = ImageGrid(COUNT, 2, create_viewer=True)
 
     for i in range(COUNT):
-        mesh = Image.open(MESH_FILENAME.format(indices[i]))
-        mesh = np.array(mesh)
-        mesh = crop_image(mesh)
-        plot.set_image(mesh, i, 0)
+        mesh = load_and_rotate_mesh(mesh_filenames[indices[i]])
+        plot.viewer.set_mesh(mesh, center_and_scale=True)
+        image = plot.viewer.get_image(crop=True)
+        plot.set_image(image, i, 0)
 
         image = render_image_for_index(sdf_net, latent_codes, indices[i], crop=True)
         plot.set_image(image, i, 1)
