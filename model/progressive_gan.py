@@ -26,8 +26,9 @@ class Discriminator(SavableModule):
 
         self.head = nn.Sequential(
             Lambda(lambda x: x.reshape(-1, 64*FINAL_LAYER_FEATURES)),
-            nn.Linear(64*FINAL_LAYER_FEATURES, 1),
-            nn.Sigmoid()
+            nn.Linear(64*FINAL_LAYER_FEATURES, 128),
+            nn.LeakyReLU(negative_slope=0.2),
+            nn.Linear(128, 1)
         )
 
         self.optional_layers = []
