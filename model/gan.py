@@ -27,12 +27,12 @@ class Generator(SavableModule):
 
     def forward(self, x):
         x = x.reshape((-1, LATENT_CODE_SIZE, 1, 1, 1))
-        return self.layers.forward(x)
+        return self.layers(x)
 
     def generate(self, sample_size = 1):
         shape = torch.Size((sample_size, LATENT_CODE_SIZE))
         x = standard_normal_distribution.sample(shape).to(self.device)
-        return self.forward(x)
+        return self(x)
 
     def copy_autoencoder_weights(self, autoencoder):
         def copy(source, destination):
@@ -49,7 +49,7 @@ class Generator(SavableModule):
                 shape = torch.Size((sample_size, LATENT_CODE_SIZE))
                 self.inception_score_latent_codes[sample_size] = standard_normal_distribution.sample(shape).to(self.device)
 
-            sample = self.forward(self.inception_score_latent_codes[sample_size])
+            sample = self(self.inception_score_latent_codes[sample_size])
             return inception_score.inception_score(sample)
 
 
@@ -75,7 +75,7 @@ class Discriminator(SavableModule):
         if (len(x.shape) < 5):
             x = x.unsqueeze(dim = 1) # add dimension for channels
             
-        return self.layers.forward(x).squeeze()
+        return self.layers(x).squeeze()
 
     def clip_weights(self, value):
         for parameter in self.parameters():

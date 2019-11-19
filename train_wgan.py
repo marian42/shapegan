@@ -75,8 +75,8 @@ def train():
 
                 valid_sample = dataset.voxels[indices, :, :, :]
                 fake_sample = generator.generate(sample_size = current_batch_size).detach()
-                fake_critic_output = critic.forward(fake_sample)
-                valid_critic_output = critic.forward(valid_sample)
+                fake_critic_output = critic(fake_sample)
+                valid_critic_output = critic(valid_sample)
                 critic_loss = torch.mean(fake_critic_output) - torch.mean(valid_critic_output)
                 critic_loss.backward()
                 critic_optimizer.step()
@@ -90,7 +90,7 @@ def train():
                     fake_sample = generator.generate(sample_size = BATCH_SIZE)
                     if show_viewer:
                         viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
-                    fake_critic_output = critic.forward(fake_sample)
+                    fake_critic_output = critic(fake_sample)
                     generator_loss = -torch.mean(fake_critic_output)                
                     generator_loss.backward()
                     generator_optimizer.step()

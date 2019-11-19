@@ -13,7 +13,7 @@ class InceptionScore():
 
     def __call__(self, input):
         with torch.no_grad():
-            label_distribution = self.classifier.forward(input)
+            label_distribution = self.classifier(input)
             marginal_distribution = torch.mean(label_distribution, dim = 0)
             
             kld = -torch.sum(label_distribution * torch.log(marginal_distribution / label_distribution), dim = 1)
@@ -33,7 +33,7 @@ class PointcloudInceptionScore():
         with torch.no_grad():
             label_distribution = torch.zeros(object_count, dataset.label_count)
             for i in range(object_count):
-                label_distribution[i, :] = self.classifier.forward(points[i * pointcloud_size:(i + 1) * pointcloud_size, :])
+                label_distribution[i, :] = self.classifier(points[i * pointcloud_size:(i + 1) * pointcloud_size, :])
             
             marginal_distribution = torch.mean(label_distribution, dim = 0)            
             kld = -torch.sum(label_distribution * torch.log(marginal_distribution / label_distribution), dim = 1)            

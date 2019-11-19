@@ -49,8 +49,8 @@ for step in count():
 
     code = create_latent_code()
     test_points = get_points_in_unit_sphere(n = POINT_SAMPLE_COUNT, device=device)
-    fake_sdf = generator.forward(test_points, code)
-    fake_discriminator_assessment = discriminator.forward(test_points, fake_sdf)
+    fake_sdf = generator(test_points, code)
+    fake_discriminator_assessment = discriminator(test_points, fake_sdf)
     loss = -torch.log(fake_discriminator_assessment)
     loss.backward()
     generator_optimizer.step()
@@ -62,7 +62,7 @@ for step in count():
     indices = torch.LongTensor(POINT_SAMPLE_COUNT).random_(int(POINTCLOUD_SIZE * 0.8), POINTCLOUD_SIZE - 1)
     indices += POINTCLOUD_SIZE * random.randint(0, MODEL_COUNT - 1)
     
-    output = discriminator.forward(points[indices, :], sdf[indices])
+    output = discriminator(points[indices, :], sdf[indices])
     history_real.append(output.item())    
     loss = discriminator_criterion(output, torch.tensor(1, device=device, dtype=torch.float32))
     loss.backward()
@@ -75,8 +75,8 @@ for step in count():
     code = create_latent_code()
     test_points = get_points_in_unit_sphere(n = POINT_SAMPLE_COUNT, device=device)
     with torch.no_grad():
-        fake_sdf = generator.forward(test_points, code)
-    output = discriminator.forward(test_points, fake_sdf)
+        fake_sdf = generator(test_points, code)
+    output = discriminator(test_points, fake_sdf)
     history_fake.append(output.item())
 
     loss = discriminator_criterion(output, torch.tensor(0, device=device, dtype=torch.float32))
@@ -90,4 +90,4 @@ for step in count():
             viewer.set_mesh(generator.get_mesh(create_latent_code(repeat=1)))
         except ValueError:
             print("(Voxel volume contains no sign changes)")
-        print(generator.forward(debug_points, debug_latent_codes).detach())
+        print(generator(debug_points, debug_latent_codes).detach())

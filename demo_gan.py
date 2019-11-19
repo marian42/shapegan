@@ -40,7 +40,7 @@ for epoch in count():
             else:
                 model = next_model
 
-            viewer.set_voxels(generator.forward(model).squeeze().detach().cpu())
+            viewer.set_voxels(generator(model).squeeze().detach().cpu())
             time.sleep(TRANSITION_TIME / STEPS)
 
         time.sleep(WAIT_TIME)

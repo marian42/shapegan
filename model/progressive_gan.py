@@ -47,7 +47,7 @@ class Discriminator(SavableModule):
     def forward(self, x):
         x_in = x
         x = from_SDF(x, self.iteration)
-        x = self.optional_layers[self.iteration].forward(x)
+        x = self.optional_layers[self.iteration](x)
 
         if (self.fade_in_progress < 1.0) and self.iteration > 0:
             x2 = from_SDF(x_in[:, ::2, ::2, ::2], self.iteration - 1)
@@ -55,10 +55,10 @@ class Discriminator(SavableModule):
 
         i = self.iteration - 1
         while i >= 0:
-            x = self.optional_layers[i].forward(x)
+            x = self.optional_layers[i](x)
             i -= 1
             
-        return self.head.forward(x).squeeze()
+        return self.head(x).squeeze()
 
     def set_iteration(self, value):
         self.iteration = value

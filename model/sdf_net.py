@@ -52,9 +52,9 @@ class SDFNet(SavableModule):
 
     def forward(self, points, latent_codes):
         input = torch.cat((points, latent_codes), dim=1)
-        x = self.layers1.forward(input)
+        x = self.layers1(input)
         x = torch.cat((x, input), dim=1)
-        x = self.layers2.forward(x)
+        x = self.layers2(x)
         return x.squeeze()
 
     def evaluate_in_batches(self, points, latent_code, batch_size=100000, return_cpu_tensor=True):
@@ -66,9 +66,9 @@ class SDFNet(SavableModule):
             else:
                 result = torch.zeros((points.shape[0]), device=points.device)
             for i in range(batch_count):
-                result[batch_size * i:batch_size * (i+1)] = self.forward(points[batch_size * i:batch_size * (i+1), :], latent_codes)
+                result[batch_size * i:batch_size * (i+1)] = self(points[batch_size * i:batch_size * (i+1), :], latent_codes)
             remainder = points.shape[0] - batch_size * batch_count
-            result[batch_size * batch_count:] = self.forward(points[batch_size * batch_count:, :], latent_codes[:remainder, :])
+            result[batch_size * batch_count:] = self(points[batch_size * batch_count:, :], latent_codes[:remainder, :])
         return result
 
     def get_voxels(self, latent_code, voxel_resolution, sphere_only=True, pad=True):
@@ -118,7 +118,7 @@ class SDFNet(SavableModule):
         
         points.requires_grad = True
         latent_codes = latent_code.repeat(points.shape[0], 1)
-        sdf = self.forward(points, latent_codes)
+        sdf = self(points, latent_codes)
         sdf.backward(torch.ones(sdf.shape[0], device=self.device))
         normals = points.grad
         normals /= torch.norm(normals, dim=1).unsqueeze(dim=1)
@@ -129,7 +129,7 @@ class SDFNet(SavableModule):
         points.requires_grad = True
         latent_codes = latent_code.repeat(points.shape[0], 1)
     
-        sdf = self.forward(points, latent_codes)
+        sdf = self(points, latent_codes)
 
         sdf.backward(torch.ones((sdf.shape[0]), device=self.device))
         normals = points.grad

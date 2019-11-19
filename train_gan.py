@@ -71,7 +71,7 @@ def train():
                 if show_viewer:
                     viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                 
-                fake_discriminator_output = discriminator.forward(fake_sample)
+                fake_discriminator_output = discriminator(fake_sample)
                 fake_loss = -torch.mean(torch.log(fake_discriminator_output))
                 fake_loss.backward()
                 generator_optimizer.step()
@@ -85,14 +85,14 @@ def train():
 
                 discriminator_optimizer.zero_grad()
                 fake_sample = generator.generate(sample_size = current_batch_size).detach()
-                discriminator_output_fake = discriminator.forward(fake_sample)
+                discriminator_output_fake = discriminator(fake_sample)
                 fake_loss = discriminator_criterion(discriminator_output_fake, fake_target)
                 fake_loss.backward()
                 discriminator_optimizer.step()
 
                 discriminator_optimizer.zero_grad()
                 valid_sample = dataset.voxels[indices, :, :, :]
-                discriminator_output_valid = discriminator.forward(valid_sample)
+                discriminator_output_valid = discriminator(valid_sample)
                 valid_loss = discriminator_criterion(discriminator_output_valid, valid_target)
                 valid_loss.backward()
                 discriminator_optimizer.step()

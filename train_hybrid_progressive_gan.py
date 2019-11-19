@@ -100,7 +100,7 @@ def get_gradient_penalty(real_sample, fake_sample):
     interpolated_sample = alpha * real_sample + ((1 - alpha) * fake_sample)
     interpolated_sample.requires_grad = True
     
-    discriminator_output = discriminator.forward(interpolated_sample)
+    discriminator_output = discriminator(interpolated_sample)
 
     gradients = autograd.grad(outputs=discriminator_output, inputs=interpolated_sample, grad_outputs=torch.ones(discriminator_output.shape).to(device), create_graph=True, retain_graph=True, only_inputs=True)[0]
     return ((gradients.norm(2, dim=(1,2,3)) - 1) ** 2).mean() * GRADIENT_PENALTY_WEIGHT
@@ -123,14 +123,14 @@ def train():
                     generator_optimizer.zero_grad()
                     
                     latent_codes = sample_latent_codes(current_batch_size)
-                    fake_sample = generator.forward(batch_grid_points, latent_codes)
+                    fake_sample = generator(batch_grid_points, latent_codes)
                     fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
                     if batch_index % 50 == 0 and show_viewer:
                         viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                     if batch_index % 50 == 0 and "show_slice" in sys.argv:
                         print(create_text_slice(fake_sample[0, :, :, :] / SDF_CLIPPING))
                     
-                    fake_discriminator_output = discriminator.forward(fake_sample)
+                    fake_discriminator_output = discriminator(fake_sample)
                     fake_loss = -fake_discriminator_output.mean()
                     fake_loss.backward()
                     generator_optimizer.step()
@@ -139,13 +139,13 @@ def train():
                 # train discriminator on fake samples                
                 discriminator_optimizer.zero_grad()
                 latent_codes = sample_latent_codes(current_batch_size)
-                fake_sample = generator.forward(batch_grid_points, latent_codes)
+                fake_sample = generator(batch_grid_points, latent_codes)
                 fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
-                discriminator_output_fake = discriminator.forward(fake_sample)
+                discriminator_output_fake = discriminator(fake_sample)
 
                 # train discriminator on real samples
                 valid_sample = voxels[indices, :, :, :]
-                discriminator_output_valid = discriminator.forward(valid_sample)
+                discriminator_output_valid = discriminator(valid_sample)
                 
                 gradient_penalty = get_gradient_penalty(valid_sample.detach(), fake_sample.detach())
                 loss = discriminator_output_fake.mean() - discriminator_output_valid.mean() + gradient_penalty
@@ -182,7 +182,7 @@ def train():
 
         if "show_slice" in sys.argv:
             latent_code = sample_latent_codes(1)
-            slice_voxels = generator.forward(grid_points, latent_code)
+            slice_voxels = generator(grid_points, latent_code)
             slice_voxels = slice_voxels.reshape(VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
             print(create_text_slice(slice_voxels / SDF_CLIPPING))
         

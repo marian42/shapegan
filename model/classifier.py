@@ -31,4 +31,4 @@ class Classifier(SavableModule):
         if len(x.shape) == 4:
             x = x.unsqueeze(dim = 1)  # add dimension for channels
         
-        return self.layers.forward(x)
+        return self.layers(x)

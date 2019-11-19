@@ -79,10 +79,10 @@ def test(epoch_index, epoch_time):
         autoencoder.eval()
 
         if IS_VARIATIONAL:
-            output, mean, log_variance = autoencoder.forward(test_data)
+            output, mean, log_variance = autoencoder(test_data)
             kld = kld_loss(mean, log_variance)
         else:
-            output = autoencoder.forward(test_data)
+            output = autoencoder(test_data)
             kld = 0
 
         reconstruction_loss = get_reconstruction_loss(output, test_data)
@@ -116,10 +116,10 @@ def train():
                 autoencoder.zero_grad()
                 autoencoder.train()
                 if IS_VARIATIONAL:
-                    output, mean, log_variance = autoencoder.forward(sample)
+                    output, mean, log_variance = autoencoder(sample)
                     kld = kld_loss(mean, log_variance)
                 else:
-                    output = autoencoder.forward(sample)
+                    output = autoencoder(sample)
                     kld = 0
 
                 reconstruction_loss = get_reconstruction_loss(output, sample)

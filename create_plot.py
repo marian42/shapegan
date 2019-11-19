@@ -481,7 +481,7 @@ if "gan_tsne" in sys.argv:
     shape = torch.Size([500, LATENT_CODE_SIZE])
     x = standard_normal_distribution.sample(shape).to(device)
     with torch.no_grad():
-        voxels = generator.forward(x).squeeze()
+        voxels = generator(x).squeeze()
     codes = x.squeeze().cpu().numpy()
     filename = "plots/gan-images.pdf" if 'wgan' in sys.argv else "plots/wgan-images.pdf"
     create_tsne_plot(codes, voxels, labels = None, filename = filename)
@@ -515,7 +515,7 @@ if "gan_interpolation" in sys.argv:
         code_end = codes_start_end[1, :]
         for i in range(STEPS):
             codes[i, :] = code_start * (1.0 - i / (STEPS - 1)) + code_end * i / (STEPS - 1)
-        voxels = generator.forward(codes)
+        voxels = generator(codes)
 
     plot = ImageGrid(STEPS)
     for i in range(STEPS):
@@ -903,7 +903,7 @@ if 'vae_checkpoints' in sys.argv:
     with torch.no_grad():
         for i in range(COUNT):
             vae.load_state_dict(torch.load(os.path.join(CHECKPOINT_PATH, checkpoints[i])))
-            reconstructed, _, _ = vae.forward(model)
+            reconstructed, _, _ = vae(model)
             plot.set_voxels(reconstructed[0, :, :, :], i)
 
     plot.save('plots/vae-checkpoints.pdf')

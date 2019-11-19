@@ -68,7 +68,7 @@ viewer = MeshRenderer(size=1080, start_thread=False)
 def render_frame(frame_index):
     with torch.no_grad():
         voxels = vae.decode(frame_latent_codes[frame_index, :])
-        predicted_classes = classifier.forward(voxels).detach().cpu().squeeze().numpy()
+        predicted_classes = classifier(voxels).detach().cpu().squeeze().numpy()
 
     weighted_colors = colors * predicted_classes[:, np.newaxis]
     viewer.model_color = tuple(np.sum(weighted_colors, axis=0))

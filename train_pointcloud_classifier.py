@@ -57,7 +57,7 @@ def train():
             sample = points[indices, :]
 
             classifier.zero_grad()
-            output = classifier.forward(sample)
+            output = classifier(sample)
             loss = criterion(output, labels_onehot[i, :])
             loss.backward()
             optimizer.step()

@@ -86,12 +86,12 @@ def train():
                 # train critic
                 critic_optimizer.zero_grad()                
                 latent_codes = sample_latent_codes()
-                fake_sample = generator.forward(grid_points, latent_codes)
+                fake_sample = generator(grid_points, latent_codes)
                 fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
                 valid_sample = dataset.voxels[indices, :, :, :]
 
-                critic_output_fake = critic.forward(fake_sample)
-                critic_output_valid = critic.forward(valid_sample)
+                critic_output_fake = critic(fake_sample)
+                critic_output_valid = critic(valid_sample)
 
                 critic_loss = torch.mean(critic_output_fake) - torch.mean(critic_output_valid)
                 critic_loss.backward()
@@ -104,14 +104,14 @@ def train():
                     critic.zero_grad()
                     
                     latent_codes = sample_latent_codes()
-                    fake_sample = generator.forward(grid_points, latent_codes)
+                    fake_sample = generator(grid_points, latent_codes)
                     fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
                     if batch_index % 20 == 0 and show_viewer:
                         viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                     if batch_index % 20 == 0 and "show_slice" in sys.argv:
                         print(create_text_slice(fake_sample[0, :, :, :] / SDF_CLIPPING))
                     
-                    critic_output_fake = critic.forward(fake_sample)
+                    critic_output_fake = critic(fake_sample)
                     fake_loss = torch.mean(-torch.log(critic_output_fake))
                     fake_loss.backward()
                     generator_optimizer.step()

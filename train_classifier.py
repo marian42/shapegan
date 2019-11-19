@@ -49,7 +49,7 @@ def create_batches():
 
 def test(epoch_index, epoch_time):
     with torch.no_grad():
-        output = classifier.forward(test_data)
+        output = classifier(test_data)
         loss = criterion(output, test_labels_onehot).item()
         _, output_classes = torch.max(output, 1)
         accuracy = float(torch.sum(output_classes == test_labels)) / test_data.shape[0]
@@ -69,7 +69,7 @@ def train():
             sample = dataset.voxels[indices, :, :, :]
 
             classifier.zero_grad()
-            output = classifier.forward(sample)
+            output = classifier(sample)
             loss = criterion(output, labels_onehot[indices])
             loss.backward()
             optimizer.step()

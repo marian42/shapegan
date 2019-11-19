@@ -49,7 +49,7 @@ while True:
         indices[BATCH_SIZE//2:] = torch.tensor(np.random.choice(negative_indices, BATCH_SIZE//2), device=device)
 
         sdf_net.zero_grad()
-        predicted_sdf = sdf_net.forward(points[indices, :], latent_code)
+        predicted_sdf = sdf_net(points[indices, :], latent_code)
         batch_sdf = sdf[indices]
         loss = torch.mean(torch.abs(predicted_sdf - batch_sdf))
         loss.backward()

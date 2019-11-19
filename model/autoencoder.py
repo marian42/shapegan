@@ -66,7 +66,7 @@ class Autoencoder(SavableModule):
 
     def encode(self, x, return_mean_and_log_variance = False):
         x = x.reshape((-1, 1, 32, 32, 32))
-        x = self.encoder.forward(x)
+        x = self.encoder(x)
 
         if not self.is_variational:
             return x
@@ -91,7 +91,7 @@ class Autoencoder(SavableModule):
     def decode(self, x):
         if len(x.shape) == 1:
             x = x.unsqueeze(dim = 0)  # add dimension for channels
-        x = self.decoder.forward(x)
+        x = self.decoder(x)
         return x.squeeze()
 
     def forward(self, x):
