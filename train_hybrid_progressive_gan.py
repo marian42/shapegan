@@ -162,6 +162,7 @@ def train():
                     tqdm.write("Epoch " + str(epoch) + ", batch " + str(batch_index) +
                         ": D(x'): " + '{0:.4f}'.format(history_fake[-1]) +
                         ", D(x): " + '{0:.4f}'.format(history_real[-1]) +
+                        ", loss: " + '{0:.4f}'.format(history_real[-1] - history_fake[-1]) +
                         ", gradient penalty: " + '{0:.4f}'.format(gradient_penalty.item()))
             except KeyboardInterrupt:
                 if show_viewer:
@@ -172,7 +173,13 @@ def train():
         prediction_real = np.mean(history_real)
         recent_gradient_penalty = np.mean(history_gradient_penalty)
 
-        print('Epoch {:d} ({:.1f}s), D(x\'): {:.4f}, D(x): {:.4f}, gradient penalty: {:.4f}'.format(epoch, time.time() - epoch_start_time, prediction_fake, prediction_real, recent_gradient_penalty))
+        print('Epoch {:d} ({:.1f}s), D(x\'): {:.4f}, D(x): {:.4f}, loss: {:4f}, gradient penalty: {:.4f}'.format(
+            epoch,
+            time.time() - epoch_start_time,
+            prediction_fake,
+            prediction_real,
+            prediction_real - prediction_fake,
+            recent_gradient_penalty))
         
         generator.save()
         discriminator.save()
