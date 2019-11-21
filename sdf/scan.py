@@ -81,6 +81,11 @@ class Scan():
         pixels = np.clip(pixels, 0, VIEWPORT_SIZE - 1)
         return viewport_points[:, 2] < self.depth[pixels[:, 1], pixels[:, 0]]
 
+    def show_pointcloud(self):
+        scene = pyrender.Scene()
+        scene.add(pyrender.Mesh.from_points(self.points * 100, normals=self.normals))
+        pyrender.Viewer(scene, use_raymond_lighting=True, point_size=8)
+
 render_lock = Lock()
 
 def get_camera_angles(count):
