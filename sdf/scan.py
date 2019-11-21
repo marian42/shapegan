@@ -26,15 +26,21 @@ class Scan():
         self.camera_transform = get_camera_transform(rotation_y, rotation_x)
         self.camera_direction = np.matmul(self.camera_transform, np.array([0, 0, 1, 0]))[:3]
         self.camera_position = np.matmul(self.camera_transform, np.array([0, 0, 0, 1]))[:3]
+
+        z_near = CAMERA_DISTANCE - 1.0
+        z_far = CAMERA_DISTANCE + 1.0
         
-        camera = pyrender.PerspectiveCamera(yfov=2 * math.asin(1.0 / CAMERA_DISTANCE), aspectRatio=1.0, znear = CAMERA_DISTANCE - 1.0, zfar = CAMERA_DISTANCE + 1.0)
+        camera = pyrender.PerspectiveCamera(yfov=2 * math.asin(1.0 / CAMERA_DISTANCE), aspectRatio=1.0, znear = z_near, zfar = z_far)
         self.projection_matrix = camera.get_projection_matrix()
 
         color, depth = render_normal_and_depth_buffers(mesh, camera, self.camera_transform, VIEWPORT_SIZE)
+        
+        indices = np.argwhere(depth != 0)
+        depth[depth == 0] = float('inf')
 
-        self.depth = depth * 2 - 1
-        indices = np.argwhere(self.depth != 1)
-
+        # This reverts the processing that pyrender does and calculates the original depth buffer in clipping space
+        self.depth = (z_far + z_near - (2.0 * z_near * z_far) / depth) / (z_far - z_near)
+        
         points = np.ones((indices.shape[0], 4))
         points[:, [1, 0]] = indices.astype(float) / (VIEWPORT_SIZE -1) * 2 - 1
         points[:, 1] *= -1
