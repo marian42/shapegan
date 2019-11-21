@@ -70,9 +70,6 @@ class MeshSDF:
             result[start:end] = self.get_sdf(points[start:end, :])
         return result
 
-    def get_pyrender_pointcloud(self):
-        return pyrender.Mesh.from_points(self.points, normals=self.normals)
-
     def get_voxel_sdf(self, voxel_resolution = 32):
         center = self.mesh.bounding_box.centroid
         size = np.max(self.mesh.bounding_box.extents) / 2
@@ -125,8 +122,8 @@ class MeshSDF:
     
     def show_pointcloud(self):
         scene = pyrender.Scene()
-        scene.add(self.get_pyrender_pointcloud())
-        pyrender.Viewer(scene, use_raymond_lighting=True, point_size=2)
+        scene.add(pyrender.Mesh.from_points(self.points * 10000, normals=self.normals))
+        pyrender.Viewer(scene, use_raymond_lighting=True, point_size=8)
 
     def show_reconstructed_mesh(self, voxel_resolution=64):
         scene = pyrender.Scene()
