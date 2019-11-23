@@ -108,6 +108,10 @@ class SDFNet(SavableModule):
         mesh = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
         return mesh
 
+    def get_uniform_surface_points(self, latent_code, point_count=1000, voxel_resolution=64, sphere_only=True):
+        mesh = self.get_mesh(latent_code, voxel_resolution=voxel_resolution, sphere_only=sphere_only)
+        return mesh.sample(point_count)
+
     def get_normals(self, latent_code, points):
         if latent_code.requires_grad or points.requires_grad:
             raise Exception('get_normals may only be called with tensors that don\'t require grad.')
