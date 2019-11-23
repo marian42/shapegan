@@ -297,6 +297,8 @@ if __name__ == "__main__":
         for directory in dataset.get_models():
             model_filename = os.path.join(directory, 'model_normalized.obj')        
             mesh = trimesh.load(model_filename)
+            if isinstance(mesh, trimesh.Scene):
+                mesh = mesh.dump().sum()
             viewer.set_mesh(mesh, center_and_scale=True)
             time.sleep(0.5)
     if "show_voxels" in sys.argv:

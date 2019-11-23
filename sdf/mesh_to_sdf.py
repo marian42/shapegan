@@ -14,6 +14,9 @@ class BadMeshException(Exception):
     pass
 
 def scale_to_unit_sphere(mesh):
+    if isinstance(mesh, trimesh.Scene):
+        mesh = mesh.dump().sum()
+
     origin = mesh.bounding_box.centroid
     vertices = mesh.vertices - origin
     distances = np.linalg.norm(vertices, axis=1)
@@ -23,6 +26,8 @@ def scale_to_unit_sphere(mesh):
 
 class MeshSDF:
     def __init__(self, mesh, use_scans=True):
+        if isinstance(mesh, trimesh.Scene):
+            mesh = mesh.dump().sum()
         self.mesh = mesh
         
         if use_scans:
