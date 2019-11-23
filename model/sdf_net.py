@@ -124,8 +124,11 @@ class SDFNet(SavableModule):
         normals /= torch.norm(normals, dim=1).unsqueeze(dim=1)
         return normals
 
-    def get_surface_points(self, latent_code, sample_size=100000, sdf_cutoff=0.1, return_normals=False):
-        points = get_points_in_unit_sphere(n=sample_size, device=self.device)
+    def get_surface_points(self, latent_code, sample_size=100000, sdf_cutoff=0.1, return_normals=False, use_unit_sphere=True):
+        if use_unit_sphere:
+            points = get_points_in_unit_sphere(n=sample_size, device=self.device) * 1.1
+        else:
+            points = torch.rand((sample_size, 3), device=self.device) * 2.2 - 1
         points.requires_grad = True
         latent_codes = latent_code.repeat(points.shape[0], 1)
     
@@ -140,7 +143,7 @@ class SDFNet(SavableModule):
         points -= normals * sdf.unsqueeze(dim=1)
 
         # Discard points with truncated SDF values
-        mask = torch.abs(sdf) < sdf_cutoff
+        mask = (torch.abs(sdf) < sdf_cutoff) & torch.all(torch.isfinite(points), dim=1)
         points = points[mask, :]
         normals = normals[mask, :]
         
