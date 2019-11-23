@@ -117,7 +117,7 @@ class MeshSDF:
         d3 = (block - voxels[:-1, :-1, 1:]).reshape(-1)
 
         max_distance = max(np.max(d1), np.max(d2), np.max(d3))
-        if max_distance > 2.0 / voxels.shape[0] * 1.5:
+        if max_distance > 2.0 / voxels.shape[0] * 1.75: # The exact value is sqrt(3), the length of the diagonal of a cube
             raise BadMeshException()
     
     def show_pointcloud(self):
