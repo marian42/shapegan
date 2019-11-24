@@ -48,7 +48,7 @@ def process_model_file(filename):
 
     if is_bad_mesh(filename):
         return
-    if not (CREATE_VOXELS and not os.path.isfile(voxels_filename) or CREATE_SDF_CLOUDS and os.path.isfile(sdf_cloud_filename)):
+    if not (CREATE_VOXELS and not os.path.isfile(voxels_filename) or CREATE_SDF_CLOUDS and not os.path.isfile(sdf_cloud_filename)):
         return
     
     mesh = trimesh.load(filename)
