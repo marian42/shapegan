@@ -52,3 +52,13 @@ if 'dataset' in sys.argv:
     voxels = torch.load('data/chairs-voxels-32.to').detach().cpu().numpy()[:1000, :, :, :]
     clouds = sample_from_voxels(voxels, 1000)
     np.save('data/dataset_point_cloud_sample.npy', clouds)
+
+
+if 'test' in sys.argv:
+    import pyrender
+    data = np.load('data/dataset_point_cloud_sample.npy')
+    for i in range(data.shape[0]):
+        points = data[i, :, :]
+        scene = pyrender.Scene()
+        scene.add(pyrender.Mesh.from_points(points))
+        pyrender.Viewer(scene, use_raymond_lighting=True, point_size=8)
