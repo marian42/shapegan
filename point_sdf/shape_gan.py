@@ -6,7 +6,7 @@ from shapenet import ShapeNetSDF
 from generator import SDFGenerator
 from discriminator import Encoder
 
-LATENT_DIM = 64
+LATENT_DIM = 128
 GRADIENT_PENALITY = 10
 
 root = '/data/sdf_chairs/chairs'
@@ -23,14 +23,15 @@ D_optimizer = RMSprop(D.parameters(), lr=0.0001)
 
 num_steps = 0
 for epoch in range(1, 1001):
+    total_loss = 0
     for uniform, surface in loader:
         num_steps += 1
 
         uniform, surface = uniform.to(device), surface.to(device)
         u_pos, u_dist = uniform[..., :3], uniform[..., 3:]
         s_pos, s_dist = surface[..., :3], surface[..., 3:]
-        u_dist = (10 * u_dist).tanh()
-        s_dist = (10 * s_dist).tanh()
+        # u_dist = (10 * u_dist).tanh() / 10.0
+        # s_dist = (10 * s_dist).tanh() / 10.0
 
         D_optimizer.zero_grad()
 
@@ -38,7 +39,7 @@ for epoch in range(1, 1001):
         fake = G(u_pos, z)
 
         out_real = D(u_pos, u_dist)
-        out_fake = D(u_pos, fake.tanh())
+        out_fake = D(u_pos, fake)
         D_loss = out_fake.mean() - out_real.mean()
 
         alpha = torch.rand((uniform.size(0), 1, 1), device=device)
@@ -63,7 +64,7 @@ for epoch in range(1, 1001):
             pos = 2 * torch.rand_like(u_pos) - 1
             z = torch.randn(uniform.size(0), LATENT_DIM, device=device)
             fake = G(pos, z)
-            out_fake = D(pos, fake.tanh())
+            out_fake = D(pos, fake)
             loss = -out_fake.mean()
             loss.backward()
             G_optimizer.step()
@@ -72,7 +73,9 @@ for epoch in range(1, 1001):
                 -D_loss.item(), gp.item(),
                 fake.min().item(),
                 fake.max().item()))
+        total_loss += D_loss.abs().item()
 
     print('Epoch {} done!'.format(epoch))
+    print('Loss: {:.4f}'.format(total_loss / len(loader)))
     torch.save(G.state_dict(), 'G.pt')
     torch.save(D.state_dict(), 'D.pt')
