@@ -45,12 +45,12 @@ if 'sample' in sys.argv:
     sdf_net.load()
     sdf_net.eval()
 
-    clouds = sample_point_clouds(sdf_net, 1000, 1000, voxel_resolution=32)
+    clouds = sample_point_clouds(sdf_net, 1000, 2048, voxel_resolution=32)
     np.save('data/generated_point_cloud_sample.npy', clouds)
 
 if 'dataset' in sys.argv:
     voxels = torch.load('data/chairs-voxels-32.to').detach().cpu().numpy()[:1000, :, :, :]
-    clouds = sample_from_voxels(voxels, 1000)
+    clouds = sample_from_voxels(voxels, 2048)
     np.save('data/dataset_point_cloud_sample.npy', clouds)
 
 
