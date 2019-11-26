@@ -57,7 +57,7 @@ def process(path):
 
     uniform_dist, closest_point = get_sdf(mesh_sdf, uniform_pos)
     surface_pos = closest_point + np.random.normal(
-        scale=0.0025, size=(closest_point.shape[0], 3))
+        scale=0.025, size=(closest_point.shape[0], 3))
     surface_dist, _ = get_sdf(mesh_sdf, surface_pos)
 
     uniform_pos = torch.from_numpy(uniform_pos).to(torch.float)
