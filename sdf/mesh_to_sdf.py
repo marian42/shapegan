@@ -120,15 +120,21 @@ class MeshSDF:
         indices = indices[:number_of_points]
         return np.concatenate([self.points[indices, :], self.normals[indices, :]], axis=1)
 
-    def check_voxels(self, voxels):
+    def check_voxels(self, voxels, raise_invalid=True):
         block = voxels[:-1, :-1, :-1]
         d1 = (block - voxels[1:, :-1, :-1]).reshape(-1)
         d2 = (block - voxels[:-1, 1:, :-1]).reshape(-1)
         d3 = (block - voxels[:-1, :-1, 1:]).reshape(-1)
 
         max_distance = max(np.max(d1), np.max(d2), np.max(d3))
-        if max_distance > 2.0 / voxels.shape[0] * 1.75: # The exact value is sqrt(3), the length of the diagonal of a cube
+        voxel_size = 2.0 / (voxels.shape[0] - 1)
+        threshold = voxel_size * 1.75 # The exact value is sqrt(3), the length of the diagonal of a cube
+
+        valid = max_distance < threshold
+
+        if raise_invalid and not valid:
             raise BadMeshException()
+        return valid
     
     def show_pointcloud(self):
         scene = pyrender.Scene()
