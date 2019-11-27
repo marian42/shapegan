@@ -145,11 +145,11 @@ class MeshSDF:
         scene.add(reconstructed_pyrender)
         pyrender.Viewer(scene, use_raymond_lighting=True)
         
-    def is_outside(self, points):
+    def is_outside(self, points, threshold=1):
         result = None
         for scan in self.scans:
             if result is None:
-                result = scan.is_visible(points)
+                result = scan.is_visible(points).astype(int)
             else:
-                result = np.logical_or(result, scan.is_visible(points))
-        return result
+                result += scan.is_visible(points)
+        return result > threshold
