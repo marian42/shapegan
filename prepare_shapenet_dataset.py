@@ -1,4 +1,5 @@
 import os
+os.environ['PYOPENGL_PLATFORM'] = 'egl'
 import trimesh
 from tqdm import tqdm
 import numpy as np
