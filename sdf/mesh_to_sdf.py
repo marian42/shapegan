@@ -106,7 +106,7 @@ class MeshSDF:
         near_surface_sdf = self.get_sdf(near_surface_points, use_depth_buffer=True)
         
         model_size = np.count_nonzero(sdf < 0) / number_of_points
-        if model_size < 0.015:
+        if model_size < 0.01:
             raise BadMeshException()
 
         return points, sdf, near_surface_points, near_surface_sdf
