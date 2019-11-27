@@ -7,7 +7,7 @@ import pyrender
 import random
 
 CAMERA_DISTANCE = 2
-VIEWPORT_SIZE = 400
+VIEWPORT_SIZE = 1024
 
 def get_camera_transform(rotation_y, rotation_x = 0):
     camera_transform = np.identity(4)
@@ -52,11 +52,11 @@ class Scan():
         points /= points[:, 3][:, np.newaxis]
         self.points = points[:, :3]
 
-        normals = color[indices[:, 0], indices[:, 1]] / 255 * 2 - 1
-        camera_to_points = self.camera_position - self.points
-        normal_orientation = np.einsum('ij,ij->i', camera_to_points, normals)
-        normals[normal_orientation < 0] *= -1
-        self.normals = normals
+        # normals = color[indices[:, 0], indices[:, 1]] / 255 * 2 - 1
+        # camera_to_points = self.camera_position - self.points
+        # normal_orientation = np.einsum('ij,ij->i', camera_to_points, normals)
+        # normals[normal_orientation < 0] *= -1
+        # self.normals = normals
 
     def convert_world_space_to_viewport(self, points):
         half_viewport_size = 0.5 * VIEWPORT_SIZE
@@ -95,7 +95,7 @@ def get_camera_angles(count):
         phi = ((i + 1) * increment) % (2 * math.pi)
         yield phi, theta
 
-def create_scans(mesh, camera_count=100):
+def create_scans(mesh, camera_count=50):
     scans = []
     render_lock.acquire()
 

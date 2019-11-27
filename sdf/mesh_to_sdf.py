@@ -24,6 +24,17 @@ def scale_to_unit_sphere(mesh):
     vertices /= size
     return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
 
+def scale_to_unit_cube(mesh):
+    if isinstance(mesh, trimesh.Scene):
+        mesh = mesh.dump().sum()
+
+    origin = mesh.bounding_box.centroid
+    vertices = mesh.vertices - origin
+    distances = np.abs(vertices.reshape(-1))
+    size = np.max(distances)
+    vertices /= size
+    return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
+
 class MeshSDF:
     def __init__(self, mesh, use_scans=True):
         if isinstance(mesh, trimesh.Scene):
@@ -32,9 +43,7 @@ class MeshSDF:
         
         if use_scans:
             self.scans = create_scans(mesh)
-
             self.points = np.concatenate([scan.points for scan in self.scans], axis=0)
-            self.normals = np.concatenate([scan.normals for scan in self.scans], axis=0)
         else:
             points, indices = mesh.sample(10000000, return_index=True)
             self.points = points
@@ -49,7 +58,7 @@ class MeshSDF:
         else:
             return self.mesh.sample(count)
 
-    def get_sdf(self, query_points, use_depth_buffer=False, sample_count=11):
+    def get_sdf(self, query_points, use_depth_buffer=True, sample_count=11):
         if use_depth_buffer:
             distances, _ = self.kd_tree.query(query_points)
             distances = distances.astype(np.float32).reshape(-1) * -1
@@ -84,27 +93,23 @@ class MeshSDF:
         return voxels
 
     def get_sample_points(self, number_of_points = 200000):
-        ''' Use sample points as described in the DeepSDF paper '''
-        points = []
-
-        surface_sample_count = int(number_of_points * 0.4)
-        surface_points = self.get_random_surface_points(surface_sample_count)
-        points.append(surface_points + np.random.normal(scale=0.0025, size=(surface_sample_count, 3)))
-        points.append(surface_points + np.random.normal(scale=0.00025, size=(surface_sample_count, 3)))
-
-        unit_sphere_sample_count = int(number_of_points * 0.2)
-        unit_sphere_points = np.random.uniform(-1, 1, size=(unit_sphere_sample_count * 2, 3))
+        unit_sphere_points = np.random.uniform(-1, 1, size=(number_of_points * 2, 3))
         unit_sphere_points = unit_sphere_points[np.linalg.norm(unit_sphere_points, axis=1) < 1]
-        points.append(unit_sphere_points[:unit_sphere_sample_count, :])
-        points = np.concatenate(points).astype(np.float32)
+        points = unit_sphere_points[:number_of_points, :]
 
-        sdf = self.get_sdf(points)
+        distances, indices = self.kd_tree.query(points)
+        sdf = distances.astype(np.float32).reshape(-1) * -1
+        sdf[self.is_outside(points)] *= -1
+
+        surface_points = self.points[indices, :]
+        near_surface_points = surface_points + np.random.normal(scale=0.0025, size=surface_points)
+        near_surface_sdf = self.get_sdf(near_surface_points, use_depth_buffer=True)
         
-        model_size = np.count_nonzero(sdf[-unit_sphere_sample_count:] < 0) / unit_sphere_sample_count
+        model_size = np.count_nonzero(sdf < 0) / number_of_points
         if model_size < 0.015:
             raise BadMeshException()
 
-        return points, sdf
+        return points, sdf, near_surface_points, near_surface_sdf
 
     def get_surface_points_and_normals(self, number_of_points = 50000):
         count = self.points.shape[0]
