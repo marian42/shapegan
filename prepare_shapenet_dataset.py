@@ -94,7 +94,7 @@ def process_model_files():
     ensure_directory(DIRECTORY_SURFACE)
     ensure_directory(DIRECTORY_BAD_MESHES)
 
-    files = list(get_model_files())[:1]
+    files = list(get_model_files())
 
     worker_count = os.cpu_count()
     print("Using {:d} processes.".format(worker_count))
