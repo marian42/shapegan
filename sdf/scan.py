@@ -22,15 +22,15 @@ This renders a normal and depth buffer and reprojects it into a point cloud.
 The resulting point cloud contains a point for every pixel in the buffer that hit the model.
 '''
 class Scan():
-    def __init__(self, mesh, rotation_y, rotation_x):
+    def __init__(self, mesh, rotation_y, rotation_x, object_size=1):
         self.camera_transform = get_camera_transform(rotation_y, rotation_x)
         self.camera_direction = np.matmul(self.camera_transform, np.array([0, 0, 1, 0]))[:3]
         self.camera_position = np.matmul(self.camera_transform, np.array([0, 0, 0, 1]))[:3]
 
-        z_near = CAMERA_DISTANCE - 1.0
-        z_far = CAMERA_DISTANCE + 1.0
+        z_near = CAMERA_DISTANCE - object_size
+        z_far = CAMERA_DISTANCE + object_size
         
-        camera = pyrender.PerspectiveCamera(yfov=2 * math.asin(1.0 / CAMERA_DISTANCE), aspectRatio=1.0, znear = z_near, zfar = z_far)
+        camera = pyrender.PerspectiveCamera(yfov=2 * math.asin(object_size / CAMERA_DISTANCE), aspectRatio=1.0, znear = z_near, zfar = z_far)
         self.projection_matrix = camera.get_projection_matrix()
 
         color, depth = render_normal_and_depth_buffers(mesh, camera, self.camera_transform, VIEWPORT_SIZE)
@@ -95,12 +95,12 @@ def get_camera_angles(count):
         phi = ((i + 1) * increment) % (2 * math.pi)
         yield phi, theta
 
-def create_scans(mesh, camera_count=50):
+def create_scans(mesh, camera_count=50, object_size=1):
     scans = []
     render_lock.acquire()
 
     for phi, theta in get_camera_angles(camera_count):
-        scans.append(Scan(mesh, math.degrees(phi), math.degrees(theta)))
+        scans.append(Scan(mesh, math.degrees(phi), math.degrees(theta), object_size=object_size))
 
     render_lock.release()
     return scans

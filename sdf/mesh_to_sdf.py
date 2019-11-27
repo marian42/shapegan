@@ -36,13 +36,13 @@ def scale_to_unit_cube(mesh):
     return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
 
 class MeshSDF:
-    def __init__(self, mesh, use_scans=True):
+    def __init__(self, mesh, use_scans=True, object_size=1):
         if isinstance(mesh, trimesh.Scene):
             mesh = mesh.dump().sum()
         self.mesh = mesh
         
         if use_scans:
-            self.scans = create_scans(mesh)
+            self.scans = create_scans(mesh, object_size=object_size)
             self.points = np.concatenate([scan.points for scan in self.scans], axis=0)
         else:
             points, indices = mesh.sample(10000000, return_index=True)
