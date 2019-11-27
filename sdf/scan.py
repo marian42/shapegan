@@ -50,7 +50,7 @@ class Scan():
 
         points = np.matmul(points, clipping_to_world.transpose())
         points /= points[:, 3][:, np.newaxis]
-        self.points = points[:, :3]
+        self.points = points[:, :3].astype(np.float32)
 
         # normals = color[indices[:, 0], indices[:, 1]] / 255 * 2 - 1
         # camera_to_points = self.camera_position - self.points

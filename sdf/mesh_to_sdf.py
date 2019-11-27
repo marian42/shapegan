@@ -93,7 +93,7 @@ class MeshSDF:
         return voxels
 
     def get_sample_points(self, number_of_points = 200000):
-        unit_sphere_points = np.random.uniform(-1, 1, size=(number_of_points * 2, 3))
+        unit_sphere_points = np.random.uniform(-1, 1, size=(number_of_points * 2, 3)).astype(np.float32)
         unit_sphere_points = unit_sphere_points[np.linalg.norm(unit_sphere_points, axis=1) < 1]
         points = unit_sphere_points[:number_of_points, :]
 
@@ -102,7 +102,7 @@ class MeshSDF:
         sdf[self.is_outside(points)] *= -1
 
         surface_points = self.points[indices[:, 0], :]
-        near_surface_points = surface_points + np.random.normal(scale=0.0025, size=surface_points.shape)
+        near_surface_points = surface_points + np.random.normal(scale=0.0025, size=surface_points.shape).astype(np.float32)
         near_surface_sdf = self.get_sdf(near_surface_points, use_depth_buffer=True)
         
         model_size = np.count_nonzero(sdf < 0) / number_of_points
