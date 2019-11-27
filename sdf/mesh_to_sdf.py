@@ -101,8 +101,8 @@ class MeshSDF:
         sdf = distances.astype(np.float32).reshape(-1) * -1
         sdf[self.is_outside(points)] *= -1
 
-        surface_points = self.points[indices, :]
-        near_surface_points = surface_points + np.random.normal(scale=0.0025, size=surface_points)
+        surface_points = self.points[indices[:, 0], :]
+        near_surface_points = surface_points + np.random.normal(scale=0.0025, size=surface_points.shape)
         near_surface_sdf = self.get_sdf(near_surface_points, use_depth_buffer=True)
         
         model_size = np.count_nonzero(sdf < 0) / number_of_points

@@ -57,7 +57,7 @@ def process_model_file(filename):
 
         voxel_filenames = [get_voxel_filename(filename, resolution) for resolution in VOXEL_RESOLUTIONS]
         if not all(os.path.exists(f) for f in voxel_filenames):
-            mesh_sdf = MeshSDF(mesh_unit_cube)
+            mesh_sdf = MeshSDF(mesh_unit_cube, object_size=3**0.5)
             try:
                 for resolution in VOXEL_RESOLUTIONS:
                     voxels = mesh_sdf.get_voxel_sdf(voxel_resolution=resolution)
@@ -67,12 +67,12 @@ def process_model_file(filename):
                 mark_bad_mesh(filename)
                 return
         
-        mesh_unit_sphere = scale_to_unit_sphere(mesh)
-        mesh_sdf = MeshSDF(mesh_unit_sphere)
         if not os.path.exists(get_sdf_cloud_filename(filename)) or not os.path.exists(get_surface_filename(filename)):
+            mesh_unit_sphere = scale_to_unit_sphere(mesh)
+            mesh_sdf = MeshSDF(mesh_unit_sphere)
             try:
                 points, sdf, near_surface_points, near_surface_sdf = mesh_sdf.get_sample_points(number_of_points=SDF_CLOUD_SAMPLE_SIZE)
-
+                
                 combined_uniform = np.concatenate((points, sdf[:, np.newaxis]), axis=1)
                 np.save(get_sdf_cloud_filename(filename), combined_uniform)
 
