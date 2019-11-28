@@ -29,14 +29,15 @@ ITERATION = 0
 CONTINUE = "continue" in sys.argv
 
 FADE_IN_EPOCHS = 10
+BATCH_SIZE = 8
+GRADIENT_PENALTY_WEIGHT = 10
 
 VOXEL_RESOLUTION = RESOLUTIONS[ITERATION]
 
 dataset = VoxelsSingleTensor('data/chairs-voxels-32.to')
-
 pool = torch.nn.MaxPool3d(dataset[0].shape[0] // VOXEL_RESOLUTION)
 dataset.data = pool(dataset.data * -1) * -1
-
+data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
 def get_generator_filename(iteration):
     return 'hybrid_progressive_gan_generator_{:d}.to'.format(iteration)
@@ -72,20 +73,14 @@ if show_viewer:
     from rendering import MeshRenderer
     viewer = MeshRenderer()
 
-BATCH_SIZE = 8
-GRADIENT_PENALTY_WEIGHT = 10
-
-data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
-
-valid_target_default = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
-fake_target_default = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
-
 def sample_latent_codes(current_batch_size):
     latent_codes = standard_normal_distribution.sample(sample_shape=[current_batch_size, LATENT_CODE_SIZE]).to(device)
     latent_codes = latent_codes.repeat((1, 1, grid_points.shape[0])).reshape(-1, LATENT_CODE_SIZE)
     return latent_codes
 
 grid_points = get_voxel_coordinates(VOXEL_RESOLUTION, return_torch_tensor=True)
+grid_points_default_batch = grid_points.repeat((BATCH_SIZE, 1))
+
 history_fake = deque(maxlen=50)
 history_real = deque(maxlen=50)
 history_gradient_penalty = deque(maxlen=50)
@@ -105,10 +100,14 @@ def train():
     for epoch in count(start=first_epoch):
         batch_index = 0
         epoch_start_time = time.time()
-        for valid_sample in tqdm(data_loader, desc='Epoch {:d}'.format(epoch)):
+        for valid_sample in tqdm(data_loader, desc='Epoch {:d} ({:d}³)'.format(epoch, VOXEL_RESOLUTION)):
             try:
+                valid_sample = valid_sample.to(device)
                 current_batch_size = valid_sample.shape[0]
-                batch_grid_points = grid_points.repeat((current_batch_size, 1))
+                if current_batch_size == BATCH_SIZE:
+                    batch_grid_points = grid_points_default_batch
+                else:
+                    batch_grid_points = grid_points.repeat((current_batch_size, 1))
 
                 if not CONTINUE and ITERATION > 0:
                     discriminator.fade_in_progress = (epoch + batch_index / (len(dataset) / BATCH_SIZE)) / FADE_IN_EPOCHS
@@ -139,7 +138,7 @@ def train():
                 discriminator_output_fake = discriminator(fake_sample)
 
                 # train discriminator on real samples
-                discriminator_output_valid = discriminator(valid_sample.to(device))
+                discriminator_output_valid = discriminator(valid_sample)
                 
                 gradient_penalty = get_gradient_penalty(valid_sample.detach(), fake_sample.detach())
                 loss = discriminator_output_fake.mean() - discriminator_output_valid.mean() + gradient_penalty
@@ -177,7 +176,7 @@ def train():
         
         generator.save()
         discriminator.save()
-
+        
         generator.save(epoch=epoch)
         discriminator.save(epoch=epoch)
 
