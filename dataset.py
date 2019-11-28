@@ -26,8 +26,6 @@ SDF_CLIPPING = 0.1
 POINTCLOUD_SIZE = 200000
 SURFACE_POINTCLOUD_SIZE = 50000
 
-SDF_PARTS = 8
-
 from util import device
 
 class Category():
@@ -49,28 +47,6 @@ class Category():
     def get_directory(self):
         return os.path.join(DATASET_DIRECTORY, str(self.id).rjust(8, '0'))
 
-class SDFPart():
-    def __init__(self, index, dataset):
-        self.index = index
-        self.points_filename = SDF_POINTS_FILENAME.format(index)
-        self.values_filename = SDF_VALUES_FILENAME.format(index)
-        self.points = None
-        self.values = None
-        self.dataset = dataset
-
-    def load(self):
-        self.points = torch.load(self.points_filename, map_location=device)
-        self.values = torch.load(self.values_filename, map_location=device)
-        
-        if self.dataset.clip_sdf:
-            torch.clamp_(self.values, -SDF_CLIPPING, SDF_CLIPPING)
-            if self.dataset.rescale_sdf:
-                self.values /= SDF_CLIPPING
-
-    def unload(self):
-        del self.points
-        del self.values
-
 class Dataset():
     def __init__(self):
         self.clip_sdf = True
@@ -78,10 +54,6 @@ class Dataset():
 
         self.load_categories()
         self.labels = None
-
-        self.sdf_part_count = SDF_PARTS
-        self.last_part_loaded = None
-        self.sdf_parts = [SDFPart(i, self) for i in range(self.sdf_part_count)]
 
     def load_categories(self):
         taxonomy_filename = os.path.join(DATASET_DIRECTORY, "taxonomy.json")
@@ -126,27 +98,6 @@ class Dataset():
         with open(DIRECTORIES_FILE, 'w') as file:
             file.write('\n'.join(directories))
 
-    def get_models(self):
-        if not os.path.isfile(DIRECTORIES_FILE):
-            self.prepare_models_file()
-        
-        with open(DIRECTORIES_FILE, 'r') as file:
-            return [line.strip() for line in file.readlines()]
-
-    def prepare_voxels(self):
-        models = []
-        print("Loading models...")
-        for directory in tqdm(self.get_models()):
-            voxels = np.load(os.path.join(directory, VOXEL_FILENAME))
-            voxels = torch.tensor(voxels)
-            models.append(voxels)
-        
-        print("Stacking...")
-        tensor = torch.stack(models)
-        print("Saving...")
-        torch.save(tensor, VOXELS_SDF_FILENAME)        
-        print("Done.")
-
     def prepare_labels(self):
         directories = self.get_models()
         labels = torch.zeros(len(directories), dtype=torch.int64)
@@ -157,60 +108,7 @@ class Dataset():
             labels[i] = label
         
         torch.save(labels, LABELS_FILENAME)
-
-    def prepare_sdf_clouds(self):
-        directories = self.get_models()
-        part_size = POINTCLOUD_SIZE // SDF_PARTS
-
-        for part in range(SDF_PARTS):
-            print("Preparing part {:d} / {:d}...".format(part + 1, SDF_PARTS))
-
-            points = torch.zeros((part_size * len(directories), 3))
-            sdf = torch.zeros((part_size * len(directories)))            
-            position = 0
-
-            print("Loading models...")
-            for directory in tqdm(directories):
-                cloud = np.load(os.path.join(directory, SDF_CLOUD_FILENAME))
-                cloud = cloud[part::SDF_PARTS, :]
-                if cloud.shape[0] != part_size:
-                    raise Exception("Bad pointcloud shape: ", cloud.shape)
-
-                cloud = torch.tensor(cloud)
-                points[position * part_size:(position + 1) * part_size, :] = cloud[:, :3]
-                sdf[position * part_size:(position + 1) * part_size] = cloud[:, 3]
-                position += 1
-            
-            print("Saving...")
-            torch.save(points, SDF_POINTS_FILENAME.format(part))
-            torch.save(sdf, SDF_VALUES_FILENAME.format(part))
-            del points
-            del sdf
-        
-        print("Done.")
-
-    def prepare_surface_clouds(self):
-        SKIP_POINTS = 2
-        directories = self.get_models()
-
-        points = torch.zeros((SURFACE_POINTCLOUD_SIZE * len(directories) // SKIP_POINTS, 3))
-        position = 0
-
-        print("Loading models...")
-        for directory in tqdm(directories):
-            cloud = np.load(os.path.join(directory, SURFACE_POINTCLOUD_FILENAME))
-            if cloud.shape[0] != SURFACE_POINTCLOUD_SIZE:
-                raise Exception("Bad pointcloud shape: ", cloud.shape)
-
-            cloud = torch.tensor(cloud[::SKIP_POINTS, :3])
-            points[position * SURFACE_POINTCLOUD_SIZE // SKIP_POINTS:(position + 1) * (SURFACE_POINTCLOUD_SIZE // SKIP_POINTS), :] = cloud
-            position += 1
-        
-        print("Saving...")
-        torch.save(points, SURFACE_POINTCLOUDS_FILENAME)
-        
-        print("Done.")
-
+    
     def load_voxels(self, device):
         print("Loading dataset...")
         self.voxels = torch.load(VOXELS_SDF_FILENAME).to(device).float()
@@ -257,14 +155,6 @@ class Dataset():
         else:
             return (0.7, 0.7, 0.7)
 
-    def load_sdf_part(self, index):
-        if self.last_part_loaded is not None and self.last_part_loaded.index != index:
-            self.last_part_loaded.unload()
-        part = self.sdf_parts[index]
-        part.load()
-        self.last_part_loaded = part
-        return part
-
 dataset = Dataset()
 
 if __name__ == "__main__":
@@ -273,10 +163,6 @@ if __name__ == "__main__":
         dataset.prepare_labels()
     if "prepare_voxels" in sys.argv:
         dataset.prepare_voxels()
-    if "prepare_sdf" in sys.argv:
-        dataset.prepare_sdf_clouds()
-    if "prepare_surface" in sys.argv:
-        dataset.prepare_surface_clouds()
     if "stats" in sys.argv:
         dataset.load_labels()
         label_count = torch.sum(dataset.get_labels_onehot('cpu'), dim=0)
