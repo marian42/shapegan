@@ -2,7 +2,6 @@ import numpy as np
 import math
 from rendering.math import get_rotation_matrix
 from sdf.pyrender_wrapper import render_normal_and_depth_buffers
-from threading import Lock
 import pyrender
 import random
 
@@ -86,8 +85,6 @@ class Scan():
         scene.add(pyrender.Mesh.from_points(self.points * 100, normals=self.normals))
         pyrender.Viewer(scene, use_raymond_lighting=True, point_size=8)
 
-render_lock = Lock()
-
 def get_camera_angles(count):
     increment = math.pi * (3 - math.sqrt(5))
     for i in range(count):
@@ -97,10 +94,8 @@ def get_camera_angles(count):
 
 def create_scans(mesh, camera_count=50, object_size=1):
     scans = []
-    render_lock.acquire()
 
     for phi, theta in get_camera_angles(camera_count):
         scans.append(Scan(mesh, math.degrees(phi), math.degrees(theta), object_size=object_size))
 
-    render_lock.release()
     return scans

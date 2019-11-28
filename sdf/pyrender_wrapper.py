@@ -40,8 +40,14 @@ class CustomShaderCache():
         return self.program
 
 
+from multiprocessing import Lock
+
+render_lock = Lock()
+
+
 def render_normal_and_depth_buffers(mesh, camera, camera_transform, resolution):
     global suppress_multisampling
+    render_lock.acquire()
     suppress_multisampling = True
     scene = pyrender.Scene()
     scene.add(pyrender.Mesh.from_trimesh(mesh, smooth = False))
@@ -52,4 +58,5 @@ def render_normal_and_depth_buffers(mesh, camera, camera_transform, resolution):
 
     color, depth = renderer.render(scene)
     suppress_multisampling = False
+    render_lock.release()
     return color, depth
