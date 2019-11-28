@@ -18,7 +18,7 @@ from util import create_text_slice, device, standard_normal_distribution, get_vo
 
 from dataset import dataset as dataset, SDF_CLIPPING
 from util import create_text_slice
-from datasets import VoxelsSingleTensor
+from datasets import VoxelsMultipleFiles
 from torch.utils.data import DataLoader
 
 
@@ -33,9 +33,7 @@ GRADIENT_PENALTY_WEIGHT = 10
 
 VOXEL_RESOLUTION = RESOLUTIONS[ITERATION]
 
-dataset = VoxelsSingleTensor('data/chairs-voxels-32.to')
-pool = torch.nn.MaxPool3d(dataset[0].shape[0] // VOXEL_RESOLUTION)
-dataset.data = pool(dataset.data * -1) * -1
+dataset = VoxelsMultipleFiles('data/chairs/voxels_{:d}/'.format(VOXEL_RESOLUTION))
 data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
 def get_generator_filename(iteration):
