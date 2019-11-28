@@ -50,7 +50,6 @@ def is_bad_mesh(model_filename):
 def process_model_file(filename):
     try:
         if is_bad_mesh(filename):
-            tqdm.write("Skipping bad mesh")
             return
         
         mesh = trimesh.load(filename)
