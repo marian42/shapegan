@@ -2,8 +2,8 @@ from model import *
 from inception_score import inception_score
 from util import standard_normal_distribution
 
-RESOLUTIONS = [8, 16, 32]
-FEATURE_COUNTS = [128, 64, 1]
+RESOLUTIONS = [8, 16, 32, 64]
+FEATURE_COUNTS = [128, 64, 32, 1]
 FINAL_LAYER_FEATURES = 256
 
 # works like fromRGB in the Progressive GAN paper
