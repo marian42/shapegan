@@ -3,11 +3,10 @@ from torch.utils.data import Dataset
 import os
 import glob
 import numpy as np
-from util import device
 
 class VoxelsSingleTensor(Dataset):
     def __init__(self, filename, clamp=0.1):
-        self.data = torch.load(filename).to(device)
+        self.data = torch.load(filename)
         if clamp is not None:
             self.data.clamp_(-clamp, clamp)
 
@@ -26,4 +25,4 @@ class VoxelsMultipleFiles(Dataset):
 
     def __getitem__(self, index):
         array = np.load(self.files[index])
-        return torch.from_numpy(array).to(device)
+        return torch.from_numpy(array)

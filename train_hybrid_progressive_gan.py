@@ -75,7 +75,7 @@ if show_viewer:
 BATCH_SIZE = 8
 GRADIENT_PENALTY_WEIGHT = 10
 
-data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
 valid_target_default = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
 fake_target_default = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
@@ -139,7 +139,7 @@ def train():
                 discriminator_output_fake = discriminator(fake_sample)
 
                 # train discriminator on real samples
-                discriminator_output_valid = discriminator(valid_sample)
+                discriminator_output_valid = discriminator(valid_sample.to(device))
                 
                 gradient_penalty = get_gradient_penalty(valid_sample.detach(), fake_sample.detach())
                 loss = discriminator_output_fake.mean() - discriminator_output_valid.mean() + gradient_penalty
