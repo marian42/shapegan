@@ -17,7 +17,6 @@ from model.progressive_gan import Discriminator, LATENT_CODE_SIZE, RESOLUTIONS
 from util import create_text_slice, device, standard_normal_distribution, get_voxel_coordinates
 
 from dataset import dataset as dataset, SDF_CLIPPING
-from inception_score import inception_score
 from util import create_text_slice
 from datasets import VoxelsSingleTensor
 from torch.utils.data import DataLoader

@@ -1,5 +1,4 @@
 from model import *
-from inception_score import inception_score
 from util import standard_normal_distribution
 
 RESOLUTIONS = [8, 16, 32, 64]
