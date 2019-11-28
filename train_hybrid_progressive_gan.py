@@ -19,6 +19,8 @@ from util import create_text_slice, device, standard_normal_distribution, get_vo
 from dataset import dataset as dataset, SDF_CLIPPING
 from inception_score import inception_score
 from util import create_text_slice
+from datasets import VoxelsSingleTensor
+from torch.utils.data import DataLoader
 
 
 ITERATION = 0
@@ -30,11 +32,11 @@ FADE_IN_EPOCHS = 10
 
 VOXEL_RESOLUTION = RESOLUTIONS[ITERATION]
 
-voxels = torch.load('data/chairs-voxels-32.to')
-pool = torch.nn.MaxPool3d(voxels.shape[1] // VOXEL_RESOLUTION)
-voxels = pool(voxels * -1).clone().detach().to(device)
-voxels.clamp_(-0.1, 0.1)
-voxels *= -1
+dataset = VoxelsSingleTensor('data/chairs-voxels-32.to')
+
+pool = torch.nn.MaxPool3d(dataset[0].shape[0] // VOXEL_RESOLUTION)
+dataset.data = pool(dataset.data * -1) * -1
+
 
 def get_generator_filename(iteration):
     return 'hybrid_progressive_gan_generator_{:d}.to'.format(iteration)
@@ -73,16 +75,10 @@ if show_viewer:
 BATCH_SIZE = 8
 GRADIENT_PENALTY_WEIGHT = 10
 
+data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+
 valid_target_default = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
 fake_target_default = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
-
-def create_batches(sample_count, batch_size):
-    batch_count = int(sample_count / batch_size)
-    indices = list(range(sample_count))
-    random.shuffle(indices)
-    for i in range(batch_count - 1):
-        yield indices[i * batch_size:(i+1)*batch_size]
-    yield indices[(batch_count - 1) * batch_size:]
 
 def sample_latent_codes(current_batch_size):
     latent_codes = standard_normal_distribution.sample(sample_shape=[current_batch_size, LATENT_CODE_SIZE]).to(device)
@@ -109,14 +105,13 @@ def train():
     for epoch in count(start=first_epoch):
         batch_index = 0
         epoch_start_time = time.time()
-        for batch in tqdm(list(create_batches(voxels.shape[0], BATCH_SIZE)), desc='Epoch {:d}'.format(epoch)):
+        for valid_sample in tqdm(data_loader, desc='Epoch {:d}'.format(epoch)):
             try:
-                indices = torch.tensor(batch, device = device)
-                current_batch_size = indices.shape[0] # equals BATCH_SIZE for all batches except the last one
+                current_batch_size = valid_sample.shape[0]
                 batch_grid_points = grid_points.repeat((current_batch_size, 1))
 
                 if not CONTINUE and ITERATION > 0:
-                    discriminator.fade_in_progress = (epoch + batch_index / (voxels.shape[0] / BATCH_SIZE)) / FADE_IN_EPOCHS
+                    discriminator.fade_in_progress = (epoch + batch_index / (len(dataset) / BATCH_SIZE)) / FADE_IN_EPOCHS
 
                 # train generator
                 if batch_index % 5 == 0:
@@ -144,7 +139,6 @@ def train():
                 discriminator_output_fake = discriminator(fake_sample)
 
                 # train discriminator on real samples
-                valid_sample = voxels[indices, :, :, :]
                 discriminator_output_valid = discriminator(valid_sample)
                 
                 gradient_penalty = get_gradient_penalty(valid_sample.detach(), fake_sample.detach())
