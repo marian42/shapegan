@@ -33,7 +33,7 @@ GRADIENT_PENALTY_WEIGHT = 10
 
 VOXEL_RESOLUTION = RESOLUTIONS[ITERATION]
 
-dataset = VoxelsMultipleFiles('data/chairs/voxels_{:d}/'.format(VOXEL_RESOLUTION))
+dataset = VoxelsMultipleFiles.from_split('data/chairs/voxels_{:d}/{{:s}}.npy'.format(VOXEL_RESOLUTION), 'data/chairs/train.txt')
 data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
 def get_generator_filename(iteration):
