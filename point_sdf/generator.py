@@ -1,5 +1,4 @@
 import sys
-import os.path as osp
 
 import torch
 import torch.nn.functional as F
@@ -12,7 +11,7 @@ from model.sdf_net import SDFNet  # noqa
 class SDFGenerator(SDFNet):
     def __init__(self, latent_channels, hidden_channels, num_layers, norm=True,
                  dropout=0.0):
-        super(SDFGenerator, self).__init__()
+        super(SDFGenerator, self).__init__(device='cpu')
 
         self.layers1 = None
         self.layers2 = None
@@ -93,4 +92,7 @@ class SDFGenerator(SDFNet):
 if __name__ == '__main__':
     model = SDFGenerator(latent_channels=16, hidden_channels=32, num_layers=4)
     out = model(torch.randn(128, 3), torch.randn(16, ))
-    print(out.size())
+    assert out.size() == (1, 128, 1)
+
+    out = model(torch.randn(8, 128, 3), torch.randn(8, 16))
+    assert out.size() == (8, 128, 1)
