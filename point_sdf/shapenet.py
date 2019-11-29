@@ -1,5 +1,4 @@
 import os.path as osp
-import glob
 
 import torch
 import numpy as np
