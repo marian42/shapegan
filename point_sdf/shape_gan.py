@@ -85,7 +85,8 @@ for epoch in range(1, 2001):
             loss.backward()
             G_optimizer.step()
 
-        if num_steps % 20 == 0:
+        # if num_steps % 20 == 0:
+        if False:
             print(
                 'D: {:.4f}, GP: {:.4f}, R: {:.4f} - {:.4f}, F: {:.4f} - {:.4f}'
                 .format(-D_loss.item(), gp.item(),
@@ -99,3 +100,6 @@ for epoch in range(1, 2001):
     print('Epoch: {}, Loss: {:.4f}'.format(epoch, total_loss / len(loader)))
     torch.save(G.state_dict(), 'G.pt')
     torch.save(D.state_dict(), 'D.pt')
+    if epoch % 100 == 0:
+        torch.save(G.state_dict(), 'G_{}.pt'.format(epoch))
+        torch.save(D.state_dict(), 'D_{}.pt'.format(epoch))
