@@ -30,6 +30,7 @@ CONTINUE = "continue" in sys.argv
 FADE_IN_EPOCHS = 10
 BATCH_SIZE = 8
 GRADIENT_PENALTY_WEIGHT = 10
+NUMBER_OF_EPOCHS = 200
 
 VOXEL_RESOLUTION = RESOLUTIONS[ITERATION]
 
@@ -94,10 +95,13 @@ def get_gradient_penalty(real_sample, fake_sample):
     return ((gradients.norm(2, dim=(1,2,3)) - 1) ** 2).mean() * GRADIENT_PENALTY_WEIGHT
 
 def train():
-    for epoch in count(start=first_epoch):
+    progress = tqdm(total=NUMBER_OF_EPOCHS * (len(dataset) // BATCH_SIZE + 1))
+
+    for epoch in range(first_epoch, NUMBER_OF_EPOCHS):
+        progress.desc = 'Epoch {:d}/{:d} ({:d}³)'.format(epoch, NUMBER_OF_EPOCHS, VOXEL_RESOLUTION)
         batch_index = 0
         epoch_start_time = time.time()
-        for valid_sample in tqdm(data_loader, desc='Epoch {:d} ({:d}³)'.format(epoch, VOXEL_RESOLUTION)):
+        for valid_sample in data_loader:
             try:
                 valid_sample = valid_sample.to(device)
                 current_batch_size = valid_sample.shape[0]
@@ -119,7 +123,7 @@ def train():
                     if batch_index % 50 == 0 and show_viewer:
                         viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                     if batch_index % 50 == 0 and "show_slice" in sys.argv:
-                        print(create_text_slice(fake_sample[0, :, :, :] / SDF_CLIPPING))
+                        tqdm.write(create_text_slice(fake_sample[0, :, :, :] / SDF_CLIPPING))
                     
                     fake_discriminator_output = discriminator(fake_sample)
                     fake_loss = -fake_discriminator_output.mean()
@@ -154,6 +158,7 @@ def train():
                         ", D(x): " + '{0:.4f}'.format(history_real[-1]) +
                         ", loss: " + '{0:.4f}'.format(history_real[-1] - history_fake[-1]) +
                         ", gradient penalty: " + '{0:.4f}'.format(gradient_penalty.item()))
+                progress.update()
             except KeyboardInterrupt:
                 if show_viewer:
                     viewer.stop()
@@ -163,7 +168,7 @@ def train():
         prediction_real = np.mean(history_real)
         recent_gradient_penalty = np.mean(history_gradient_penalty)
 
-        print('Epoch {:d} ({:.1f}s), D(x\'): {:.4f}, D(x): {:.4f}, loss: {:4f}, gradient penalty: {:.4f}'.format(
+        tqdm.write('Epoch {:d} ({:.1f}s), D(x\'): {:.4f}, D(x): {:.4f}, loss: {:4f}, gradient penalty: {:.4f}'.format(
             epoch,
             time.time() - epoch_start_time,
             prediction_fake,
@@ -181,7 +186,7 @@ def train():
             latent_code = sample_latent_codes(1)
             slice_voxels = generator(grid_points, latent_code)
             slice_voxels = slice_voxels.reshape(VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
-            print(create_text_slice(slice_voxels / SDF_CLIPPING))
+            tqdm.write(create_text_slice(slice_voxels / SDF_CLIPPING))
         
         log_file.write('{:d} {:.1f} {:.4f} {:.4f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, prediction_fake, prediction_real, recent_gradient_penalty))
         log_file.flush()
