@@ -14,6 +14,9 @@ class VoxelsSingleTensor(Dataset):
 
     def __len__(self):
         return self.data.shape[0]
+    
+    def show(self):
+        show_dataset(self)
 
 class VoxelsMultipleFiles(Dataset):
     def __init__(self, files, clamp=0.1):
@@ -43,3 +46,21 @@ class VoxelsMultipleFiles(Dataset):
         files = [pattern.format(id.strip()) for id in ids]
         files = [file for file in files if os.path.exists(file)]
         return VoxelsMultipleFiles(files)
+    
+    def show(self):
+        show_dataset(self)
+
+def show_dataset(dataset):
+    from rendering import MeshRenderer
+    import time
+    from tqdm import tqdm
+
+    viewer = MeshRenderer()
+    for item in tqdm(dataset):
+        viewer.set_voxels(item.numpy())
+        time.sleep(0.5)
+
+if __name__ == '__main__':
+    #dataset = VoxelsMultipleFiles.glob('data/chairs/voxels_64/')
+    dataset = VoxelsMultipleFiles.from_split('data/chairs/voxels_{:d}/{{:s}}.npy'.format(64), 'data/chairs/train.txt')
+    dataset.show()
