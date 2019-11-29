@@ -31,12 +31,20 @@ if args.eval:
     G.eval()
     torch.manual_seed(12345)
     for _ in range(5):
-        pos = 2 * torch.rand((32 * 1024, 3), device=device) - 1
+        pos = 2 * torch.rand((64 * 1024, 3), device=device) - 1
+        pos.requires_grad_(True)
         z = torch.randn((LATENT_SIZE, ), device=device)
-        with torch.no_grad():
-            dist = G(pos, z).squeeze()
+        dist = G(pos, z).squeeze()
+        visualize(pos.detach(), dist.detach(), dist.detach().abs() < 0.05)
 
-        visualize(pos, dist, dist.abs() < 0.05)
+        grad = torch.autograd.grad(dist, pos,
+                                   grad_outputs=torch.ones_like(dist),
+                                   create_graph=True, retain_graph=True,
+                                   only_inputs=True)[0]
+        perm = dist.abs() < 0.1
+        pos = pos[perm] - grad[perm] * dist[perm].unsqueeze(-1)
+        visualize(pos.detach())
+
     sys.exit()
 
 root = '/data/SDF_GAN'
