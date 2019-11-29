@@ -7,24 +7,55 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # noqa
 
 
-class ShapeNetSDF(torch.utils.data.Dataset):
-    def __init__(self, root, num_points, transform=None):
-        self.root = osp.expanduser(osp.normpath(root))
+def visualize(pos, dist=None, perm=None):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    if perm is not None:
+        pos = pos[perm]
+        dist = None if dist is None else dist[perm]
+
+    xs = pos[:, 0]
+    ys = pos[:, 1]
+    zs = pos[:, 2]
+
+    ax.scatter(xs, ys, zs, s=2, c='blue' if dist is None else dist)
+
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+
+    plt.show()
+
+
+class ShapeNetPointSDF(torch.utils.data.Dataset):
+    def __init__(self, root, category, num_points, split='train',
+                 transform=None):
+        self.root = osp.expanduser(osp.join(osp.normpath(root), category))
+        self.category = category
         self.num_points = num_points
-        assert 0 < self.num_points <= 250000
+        assert 0 < self.num_points <= 64**3  # TODO
+        self.split = split
+        assert self.split in ['train', 'val', 'test']
         self.transform = transform
 
-        self.files = glob.glob(osp.join(self.root, '*.pt'))
+        with open(osp.join(self.root, '{}.txt'.format(split)), 'r') as f:
+            self.names = f.read().split('\n')
 
     def __len__(self):
-        return len(self.files)
+        return len(self.names)
 
     def __getitem__(self, idx):
-        uniform, surface = torch.load(self.files[idx])
+        name = self.names[idx]
+
+        uniform = osp.join(self.root, 'uniform', '{}.npy'.format(name))
+        uniform = torch.from_numpy(np.load(uniform))
+
+        surface = osp.join(self.root, 'surface', '{}.npy'.format(name))
+        surface = torch.from_numpy(np.load(surface))
 
         # Sample a subset of points.
         sample = np.random.choice(uniform.size(0), self.num_points)
-        sample = torch.from_numpy(sample)
         uniform, surface = uniform[sample], surface[sample]
 
         data = (uniform, surface)
@@ -36,31 +67,11 @@ class ShapeNetSDF(torch.utils.data.Dataset):
 
 
 if __name__ == '__main__':
-    root = '/data/sdf_chairs/chairs'
-    dataset = ShapeNetSDF(root, num_points=4096)
+    root = '/data/SDF_GAN'
+    dataset = ShapeNetPointSDF(root, category='chairs', num_points=4096)
     print(len(dataset))
     uniform, surface = dataset[0]
     print(uniform.size(), surface.size())
-
-    def visualize(pos, dist=None, perm=None):
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-
-        if perm is not None:
-            pos = pos[perm]
-            dist = None if dist is None else dist[perm]
-
-        xs = pos[:, 0]
-        ys = pos[:, 1]
-        zs = pos[:, 2]
-
-        ax.scatter(xs, ys, zs, s=2, c='blue' if dist is None else dist)
-
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        ax.set_zlabel('z')
-
-        plt.show()
 
     pos = uniform[:, :3]
     dist = uniform[:, 3]
