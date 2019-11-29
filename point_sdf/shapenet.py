@@ -25,6 +25,10 @@ def visualize(pos, dist=None, perm=None):
     ax.set_ylabel('y')
     ax.set_zlabel('z')
 
+    ax.set_xlim(-1, 1)
+    ax.set_ylim(-1, 1)
+    ax.set_zlim(-1, 1)
+
     plt.show()
 
 
@@ -41,6 +45,8 @@ class ShapeNetPointSDF(torch.utils.data.Dataset):
 
         with open(osp.join(self.root, '{}.txt'.format(split)), 'r') as f:
             self.names = f.read().split('\n')
+            if self.names[-1] == '':
+                self.names = self.names[:-1]
 
     def __len__(self):
         return len(self.names)
@@ -67,12 +73,20 @@ class ShapeNetPointSDF(torch.utils.data.Dataset):
 
 
 if __name__ == '__main__':
-    root = '/data/SDF_GAN'
-    dataset = ShapeNetPointSDF(root, category='chairs', num_points=4096)
+    root = 'SDF_GAN'
+    dataset = ShapeNetPointSDF(root, category='chairs', num_points=16 * 1024)
     print(len(dataset))
     uniform, surface = dataset[0]
     print(uniform.size(), surface.size())
 
     pos = uniform[:, :3]
     dist = uniform[:, 3]
+    perm = dist.abs() < 0.05
+    visualize(pos, dist, perm)
+
+    pos = surface[:, :3]
+    dist = surface[:, 3]
     visualize(pos, dist)
+
+    visualize(uniform[:3, :3])
+    visualize(surface[:3, :3])
