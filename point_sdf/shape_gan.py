@@ -10,8 +10,8 @@ LATENT_DIM = 128
 GRADIENT_PENALITY = 10
 
 root = '/data/sdf_chairs/chairs'
-dataset = ShapeNetSDF(root, num_points=1024)
-loader = DataLoader(dataset, batch_size=16, shuffle=True, num_workers=6)
+dataset = ShapeNetSDF(root, num_points=1024 * 2)
+loader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=6)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 G = SDFGenerator(LATENT_DIM, 256, num_layers=8, dropout=0.0)
@@ -22,7 +22,7 @@ G_optimizer = RMSprop(G.parameters(), lr=0.0001)
 D_optimizer = RMSprop(D.parameters(), lr=0.0001)
 
 num_steps = 0
-for epoch in range(1, 1001):
+for epoch in range(1, 2001):
     total_loss = 0
     for uniform, surface in loader:
         num_steps += 1
@@ -67,16 +67,16 @@ for epoch in range(1, 1001):
             loss.backward()
             G_optimizer.step()
 
-            print(
-                'D: {:.4f}, GP: {:.4f}, R: {:.4f} - {:.4f}, F: {:.4f} - {:.4f}'
-                .format(-D_loss.item(), gp.item(),
-                        u_dist.min().item(),
-                        u_dist.max().item(),
-                        fake.min().item(),
-                        fake.max().item()))
+            # print(
+            #     'D: {:.4f}, GP: {:.4f}, R: {:.4f} - {:.4f}, F: {:.4f} - {:.4f}'
+            #     .format(-D_loss.item(), gp.item(),
+            #             u_dist.min().item(),
+            #             u_dist.max().item(),
+            #             fake.min().item(),
+            #             fake.max().item()))
         total_loss += D_loss.abs().item()
 
-    print('Epoch {} done!'.format(epoch))
-    print('Loss: {:.4f}'.format(total_loss / len(loader)))
+    # print('Epoch {} done!'.format(epoch))
+    print('Epoch: {}, Loss: {:.4f}'.format(epoch, total_loss / len(loader)))
     torch.save(G.state_dict(), 'G.pt')
     torch.save(D.state_dict(), 'D.pt')

@@ -132,5 +132,5 @@ for epoch in range(1, 1001):
 
     print('Epoch {} done!'.format(epoch))
     print('Loss: {:.4f}'.format(total_loss / len(loader)))
-    torch.save(G.state_dict(), 'G.pt')
-    torch.save(D.state_dict(), 'D.pt')
+    torch.save(G.state_dict(), 'G_ref.pt')
+    torch.save(D.state_dict(), 'D_ref.pt')
