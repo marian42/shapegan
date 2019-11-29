@@ -32,12 +32,12 @@ def visualize(pos, dist=None, perm=None):
 
 
 class ShapeNetPointSDF(torch.utils.data.Dataset):
-    def __init__(self, root, category, num_points, split='train',
+    def __init__(self, root, category, split='train', num_points=1024,
                  transform=None):
         self.root = osp.expanduser(osp.join(osp.normpath(root), category))
         self.category = category
         self.num_points = num_points
-        assert 0 < self.num_points <= 64**3  # TODO
+        assert 0 < self.num_points <= 64**3
         self.split = split
         assert self.split in ['train', 'val', 'test']
         self.transform = transform

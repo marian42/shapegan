@@ -1,22 +1,45 @@
+import sys
+
+import argparse
 import torch
 from torch.utils.data import DataLoader
 from torch.optim import RMSprop
 
-from shapenet import ShapeNetSDF
+from shapenet import ShapeNetPointSDF, visualize
 from generator import SDFGenerator
-from discriminator import Encoder
+from pointnet import PointNet
 
-LATENT_DIM = 128
+parser = argparse.ArgumentParser()
+parser.add_argument('--eval', action='store_true')
+args = parser.parse_args()
+
+NUM_POINTS = 1024
+LATENT_SIZE = 128
 GRADIENT_PENALITY = 10
+HIDDEN_SIZE = 256
+NUM_LAYERS = 8
+NORM = True
 
-root = '/data/sdf_chairs/chairs'
-dataset = ShapeNetSDF(root, num_points=1024 * 2)
+root = '/data/SDF_GAN'
+dataset = ShapeNetPointSDF(root, category='chairs', split='train',
+                           num_points=NUM_POINTS)
 loader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=6)
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-G = SDFGenerator(LATENT_DIM, 256, num_layers=8, dropout=0.0)
-D = Encoder(1)
+G = SDFGenerator(LATENT_SIZE, HIDDEN_SIZE, NUM_LAYERS, NORM, dropout=0.0)
+D = PointNet(out_channels=1)
 G, D = G.to(device), D.to(device)
+
+if args.eval:
+    G.load_state_dict(torch.load('G.pt'))
+    torch.manual_seed(12345)
+    for _ in range(5):
+        pos = 2 * torch.rand((16 * NUM_POINTS, 3), device=device) - 1
+        z = torch.randn((LATENT_SIZE, ), device=device)
+        dist = G(pos, z).squeeze()
+
+        visualize(pos, dist, dist.abs() < 0.05)
+    sys.exit()
 
 G_optimizer = RMSprop(G.parameters(), lr=0.0001)
 D_optimizer = RMSprop(D.parameters(), lr=0.0001)
@@ -24,18 +47,16 @@ D_optimizer = RMSprop(D.parameters(), lr=0.0001)
 num_steps = 0
 for epoch in range(1, 2001):
     total_loss = 0
-    for uniform, surface in loader:
+    for uniform, _ in loader:
         num_steps += 1
 
-        uniform, surface = uniform.to(device), surface.to(device)
+        uniform = uniform.to(device)
         u_pos, u_dist = uniform[..., :3], uniform[..., 3:]
-        s_pos, s_dist = surface[..., :3], surface[..., 3:]
 
         D_optimizer.zero_grad()
 
-        z = torch.randn(uniform.size(0), LATENT_DIM, device=device)
+        z = torch.randn(uniform.size(0), LATENT_SIZE, device=device)
         fake = G(u_pos, z)
-
         out_real = D(u_pos, u_dist)
         out_fake = D(u_pos, fake)
         D_loss = out_fake.mean() - out_real.mean()
@@ -58,25 +79,24 @@ for epoch in range(1, 2001):
 
         if num_steps % 5 == 0:
             G_optimizer.zero_grad()
-            z = torch.randn(uniform.size(0), LATENT_DIM, device=device)
-            pos = 2 * torch.rand_like(u_pos) - 1
-            z = torch.randn(uniform.size(0), LATENT_DIM, device=device)
-            fake = G(pos, z)
-            out_fake = D(pos, fake)
+            z = torch.randn(uniform.size(0), LATENT_SIZE, device=device)
+            fake = G(u_pos, z)
+            out_fake = D(u_pos, fake)
             loss = -out_fake.mean()
             loss.backward()
             G_optimizer.step()
 
-            # print(
-            #     'D: {:.4f}, GP: {:.4f}, R: {:.4f} - {:.4f}, F: {:.4f} - {:.4f}'
-            #     .format(-D_loss.item(), gp.item(),
-            #             u_dist.min().item(),
-            #             u_dist.max().item(),
-            #             fake.min().item(),
-            #             fake.max().item()))
+        if num_steps % 20 == 0:
+            print(
+                'D: {:.4f}, GP: {:.4f}, R: {:.4f} - {:.4f}, F: {:.4f} - {:.4f}'
+                .format(-D_loss.item(), gp.item(),
+                        u_dist.min().item(),
+                        u_dist.max().item(),
+                        fake.min().item(),
+                        fake.max().item()))
+
         total_loss += D_loss.abs().item()
 
-    # print('Epoch {} done!'.format(epoch))
     print('Epoch: {}, Loss: {:.4f}'.format(epoch, total_loss / len(loader)))
     torch.save(G.state_dict(), 'G.pt')
     torch.save(D.state_dict(), 'D.pt')
