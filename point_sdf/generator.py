@@ -44,15 +44,6 @@ class SDFGenerator(SDFNet):
         self.z_lin1 = Linear(latent_channels, hidden_channels)
         self.z_lin2 = Linear(latent_channels, hidden_channels)
 
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        for lin, norm in zip(self.lins, self.norms):
-            lin.reset_parameters()
-            norm.reset_parameters()
-        self.z_lin1.reset_parameters()
-        self.z_lin2.reset_parameters()
-
     def forward(self, pos, z):
         # pos: [batch_size, num_points, 3]
         # z: [batch_size, latent_channels]
