@@ -28,12 +28,13 @@ G_optimizer = RMSprop(G.parameters(), lr=0.0001)
 D_optimizer = RMSprop(D.parameters(), lr=0.0001)
 
 if args.eval:
-    G.load_state_dict(torch.load('G.pt'))
+    G.load_state_dict(torch.load('G.pt', map_location=device))
     torch.manual_seed(12345)
     for _ in range(5):
-        pos = 2 * torch.rand((16 * NUM_POINTS, 3), device=device) - 1
+        pos = 2 * torch.rand((32 * NUM_POINTS, 3), device=device) - 1
         z = torch.randn((LATENT_SIZE, ), device=device)
-        dist = G(pos, z).squeeze()
+        with torch.no_grad():
+            dist = G(pos, z).squeeze()
 
         visualize(pos, dist, dist.abs() < 0.05)
     sys.exit()
