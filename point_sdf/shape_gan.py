@@ -29,6 +29,7 @@ D_optimizer = RMSprop(D.parameters(), lr=0.0001)
 
 if args.eval:
     G.load_state_dict(torch.load('G.pt', map_location=device))
+    G.eval()
     torch.manual_seed(12345)
     for _ in range(5):
         pos = 2 * torch.rand((32 * NUM_POINTS, 3), device=device) - 1
