@@ -21,7 +21,7 @@ sdf_voxelization_helper = dict()
 SDF_NET_BREADTH = 512
 
 class SDFNet(SavableModule):
-    def __init__(self, latent_code_size=LATENT_CODE_SIZE):
+    def __init__(self, latent_code_size=LATENT_CODE_SIZE, device='cuda'):
         super(SDFNet, self).__init__(filename="sdf_net.to")
 
         # DeepSDF paper has one additional FC layer in the first and second part each
@@ -48,7 +48,7 @@ class SDFNet(SavableModule):
             nn.Tanh()
         )
 
-        self.cuda()
+        self.to(device)
 
     def forward(self, points, latent_codes):
         input = torch.cat((points, latent_codes), dim=1)
