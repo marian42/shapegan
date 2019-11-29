@@ -20,15 +20,12 @@ HIDDEN_SIZE = 256
 NUM_LAYERS = 8
 NORM = True
 
-root = '/data/SDF_GAN'
-dataset = ShapeNetPointSDF(root, category='chairs', split='train',
-                           num_points=NUM_POINTS)
-loader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=6)
-
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 G = SDFGenerator(LATENT_SIZE, HIDDEN_SIZE, NUM_LAYERS, NORM, dropout=0.0)
 D = PointNet(out_channels=1)
 G, D = G.to(device), D.to(device)
+G_optimizer = RMSprop(G.parameters(), lr=0.0001)
+D_optimizer = RMSprop(D.parameters(), lr=0.0001)
 
 if args.eval:
     G.load_state_dict(torch.load('G.pt'))
@@ -41,8 +38,10 @@ if args.eval:
         visualize(pos, dist, dist.abs() < 0.05)
     sys.exit()
 
-G_optimizer = RMSprop(G.parameters(), lr=0.0001)
-D_optimizer = RMSprop(D.parameters(), lr=0.0001)
+root = '/data/SDF_GAN'
+dataset = ShapeNetPointSDF(root, category='chairs', split='train',
+                           num_points=NUM_POINTS)
+loader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=6)
 
 num_steps = 0
 for epoch in range(1, 2001):
