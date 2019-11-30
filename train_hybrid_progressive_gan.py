@@ -40,7 +40,7 @@ data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_worke
 def get_generator_filename(iteration):
     return 'hybrid_progressive_gan_generator_{:d}.to'.format(iteration)
 
-generator = SDFNet()
+generator = SDFNet(device='cpu')
 discriminator = Discriminator()
 if not CONTINUE and ITERATION > 0:
     generator.filename = get_generator_filename(ITERATION - 1)
@@ -52,7 +52,17 @@ generator.filename = get_generator_filename(ITERATION)
 if CONTINUE:
     generator.load()
     discriminator.load()
-discriminator.to(device)
+
+if torch.cuda.device_count() > 1:
+    print("Using dataparallel with {:d} GPUs.".format(torch.cuda.device_count()))
+    generator_parallel = nn.DataParallel(generator)
+    discriminator_parallel = nn.DataParallel(discriminator)
+else:
+    generator_parallel = generator
+    discriminator_parallel = discriminator
+
+generator_parallel.to(device)
+discriminator_parallel.to(device)
 
 LOG_FILE_NAME = "plots/hybrid_gan_training_{:d}.csv".format(ITERATION)
 first_epoch = 0
@@ -62,7 +72,7 @@ if 'continue' in sys.argv:
 
 log_file = open(LOG_FILE_NAME, "a" if "continue" in sys.argv else "w")
 
-generator_optimizer = optim.Adam(generator.parameters(), lr=0.0005)
+generator_optimizer = optim.Adam(generator_parallel.parameters(), lr=0.0005)
 discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.0005)
 
 show_viewer = "nogui" not in sys.argv
@@ -89,7 +99,7 @@ def get_gradient_penalty(real_sample, fake_sample):
     interpolated_sample = alpha * real_sample + ((1 - alpha) * fake_sample)
     interpolated_sample.requires_grad = True
     
-    discriminator_output = discriminator(interpolated_sample)
+    discriminator_output = discriminator_parallel(interpolated_sample)
 
     gradients = autograd.grad(outputs=discriminator_output, inputs=interpolated_sample, grad_outputs=torch.ones(discriminator_output.shape).to(device), create_graph=True, retain_graph=True, only_inputs=True)[0]
     return ((gradients.norm(2, dim=(1,2,3)) - 1) ** 2).mean() * GRADIENT_PENALTY_WEIGHT
@@ -103,6 +113,8 @@ def train():
         epoch_start_time = time.time()
         for valid_sample in data_loader:
             try:
+                if valid_sample.shape[0] == 1: # Skip final batch if it contains only one object
+                    continue
                 valid_sample = valid_sample.to(device)
                 current_batch_size = valid_sample.shape[0]
                 if current_batch_size == BATCH_SIZE:
@@ -118,14 +130,14 @@ def train():
                     generator_optimizer.zero_grad()
                     
                     latent_codes = sample_latent_codes(current_batch_size)
-                    fake_sample = generator(batch_grid_points, latent_codes)
+                    fake_sample = generator_parallel(batch_grid_points, latent_codes)
                     fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
                     if batch_index % 50 == 0 and show_viewer:
                         viewer.set_voxels(fake_sample[0, :, :, :].squeeze().detach().cpu().numpy())
                     if batch_index % 50 == 0 and "show_slice" in sys.argv:
                         tqdm.write(create_text_slice(fake_sample[0, :, :, :] / SDF_CLIPPING))
                     
-                    fake_discriminator_output = discriminator(fake_sample)
+                    fake_discriminator_output = discriminator_parallel(fake_sample)
                     fake_loss = -fake_discriminator_output.mean()
                     fake_loss.backward()
                     generator_optimizer.step()
@@ -134,12 +146,12 @@ def train():
                 # train discriminator on fake samples                
                 discriminator_optimizer.zero_grad()
                 latent_codes = sample_latent_codes(current_batch_size)
-                fake_sample = generator(batch_grid_points, latent_codes)
+                fake_sample = generator_parallel(batch_grid_points, latent_codes)
                 fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
-                discriminator_output_fake = discriminator(fake_sample)
+                discriminator_output_fake = discriminator_parallel(fake_sample)
 
                 # train discriminator on real samples
-                discriminator_output_valid = discriminator(valid_sample)
+                discriminator_output_valid = discriminator_parallel(valid_sample)
                 
                 gradient_penalty = get_gradient_penalty(valid_sample.detach(), fake_sample.detach())
                 loss = discriminator_output_fake.mean() - discriminator_output_valid.mean() + gradient_penalty
@@ -184,7 +196,7 @@ def train():
 
         if "show_slice" in sys.argv:
             latent_code = sample_latent_codes(1)
-            slice_voxels = generator(grid_points, latent_code)
+            slice_voxels = generator_parallel(grid_points, latent_code)
             slice_voxels = slice_voxels.reshape(VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
             tqdm.write(create_text_slice(slice_voxels / SDF_CLIPPING))
         

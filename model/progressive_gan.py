@@ -30,7 +30,7 @@ class Discriminator(SavableModule):
             nn.Linear(128, 1)
         )
 
-        self.optional_layers = []
+        self.optional_layers = nn.ModuleList()
         for i in range(len(FEATURE_COUNTS)):
             in_channels = FEATURE_COUNTS[i]
             out_channels = FEATURE_COUNTS[i-1] if i > 0 else FINAL_LAYER_FEATURES
@@ -41,13 +41,10 @@ class Discriminator(SavableModule):
             self.optional_layers.append(submodule)
             self.add_module('optional_layer_{:d}'.format(i), submodule)
 
-        self.cuda()
-
     def forward(self, x):
         x_in = x
         x = from_SDF(x, self.iteration)
         x = self.optional_layers[self.iteration](x)
-
         if (self.fade_in_progress < 1.0) and self.iteration > 0:
             x2 = from_SDF(x_in[:, ::2, ::2, ::2], self.iteration - 1)
             x = self.fade_in_progress * x + (1.0 - self.fade_in_progress) * x2
