@@ -105,7 +105,7 @@ def get_gradient_penalty(real_sample, fake_sample):
     return ((gradients.norm(2, dim=(1,2,3)) - 1) ** 2).mean() * GRADIENT_PENALTY_WEIGHT
 
 def train():
-    progress = tqdm(total=NUMBER_OF_EPOCHS * (len(dataset) // BATCH_SIZE + 1))
+    progress = tqdm(total=NUMBER_OF_EPOCHS * (len(dataset) // BATCH_SIZE + 1), initial=first_epoch * (len(dataset) // BATCH_SIZE + 1))
 
     for epoch in range(first_epoch, NUMBER_OF_EPOCHS):
         progress.desc = 'Epoch {:d}/{:d} ({:d}³)'.format(epoch, NUMBER_OF_EPOCHS, VOXEL_RESOLUTION)
