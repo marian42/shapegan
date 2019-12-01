@@ -7,7 +7,7 @@ import os
 MODEL_PATH = "models"
 CHECKPOINT_PATH = os.path.join(MODEL_PATH, 'checkpoints')
 LATENT_CODES_FILENAME = os.path.join(MODEL_PATH, "sdf_net_latent_codes.to")
-LATENT_CODE_SIZE = 64
+LATENT_CODE_SIZE = 128
 
 class Lambda(nn.Module):
     def __init__(self, function):
