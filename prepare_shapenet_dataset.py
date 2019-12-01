@@ -1,5 +1,6 @@
 import os
-os.environ['PYOPENGL_PLATFORM'] = 'egl'
+# Enable this when running on a computer without a screen
+# os.environ['PYOPENGL_PLATFORM'] = 'egl'
 import trimesh
 from tqdm import tqdm
 import numpy as np
