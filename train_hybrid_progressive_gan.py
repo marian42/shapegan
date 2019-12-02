@@ -191,8 +191,9 @@ def train():
         generator.save()
         discriminator.save()
         
-        generator.save(epoch=epoch)
-        discriminator.save(epoch=epoch)
+        if epoch % 10 == 0:
+            generator.save(epoch=epoch)
+            discriminator.save(epoch=epoch)
 
         if "show_slice" in sys.argv:
             latent_code = sample_latent_codes(1)
