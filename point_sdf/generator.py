@@ -101,12 +101,12 @@ class SDFGenerator(SDFNet):
 
         return voxels
 
-    def get_mesh(self, z, resolution=64):
+    def get_mesh(self, z, resolution=64, level=0):
         voxels = self.get_voxels(z, resolution)
 
         try:
             vertices, faces, normals, _ = marching_cubes_lewiner(
-                voxels.numpy(), level=0,
+                voxels.numpy(), level=level,
                 spacing=(2 / resolution, 2 / resolution, 2 / resolution))
             vertices -= 1
         except ValueError as e:
