@@ -1,3 +1,4 @@
+import os.path as osp
 import sys
 
 import argparse
@@ -10,6 +11,7 @@ from generator import SDFGenerator
 from pointnet import PointNet
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--category', type=str, required=True)
 parser.add_argument('--eval', action='store_true')
 args = parser.parse_args()
 
@@ -27,7 +29,8 @@ G_optimizer = RMSprop(G.parameters(), lr=0.0001)
 D_optimizer = RMSprop(D.parameters(), lr=0.0001)
 
 if args.eval:
-    G.load_state_dict(torch.load('G.pt', map_location=device))
+    path = osp.join(args.category, 'G.pt')
+    G.load_state_dict(torch.load(path, map_location=device))
     G.eval()
     torch.manual_seed(12345)
     for _ in range(5):
@@ -51,16 +54,23 @@ if args.eval:
     sys.exit()
 
 root = '/data/SDF_GAN'
-dataset = ShapeNetPointSDF(root, category='chairs', split='train')
+dataset = ShapeNetPointSDF(root, category=args.category, split='train')
+
+configuration = [
+    (1024, 32, 300),
+    (2048, 32, 300),
+    (4096, 32, 300),
+    (8192, 24, 300),
+    (16384, 12, 300),
+    (32768, 6, 900),
+]
 
 num_steps = 0
-for num_points, batch_size in zip([1024, 2048, 4096, 8192, 16384, 32768],
-                                  [32, 32, 32, 24, 12, 6]):
-
+for num_points, batch_size, epochs in configuration:
     dataset.num_points = num_points
     loader = DataLoader(dataset, batch_size, shuffle=True, num_workers=6)
 
-    for epoch in range(1, 301):
+    for epoch in range(1, epochs + 1):
         total_loss = 0
         for uniform, _ in loader:
             num_steps += 1
@@ -106,9 +116,11 @@ for num_points, batch_size in zip([1024, 2048, 4096, 8192, 16384, 32768],
         print('Num points: {}, Epoch: {:03d}, Loss: {:.6f}'.format(
             num_points, epoch, total_loss / len(loader)))
 
-        torch.save(G.state_dict(), 'G.pt')
-        torch.save(D.state_dict(), 'D.pt')
+        torch.save(G.state_dict(), osp.join(args.category, 'G.pt'))
+        torch.save(D.state_dict(), osp.join(args.category, 'D.pt'))
 
         if epoch % 100 == 0:
-            torch.save(G.state_dict(), 'G_{}_{}.pt'.format(num_points, epoch))
-            torch.save(D.state_dict(), 'D_{}_{}.pt'.format(num_points, epoch))
+            name = 'G_{}_{}.pt'.format(num_points, epoch)
+            path = torch.save(G.state_dict(), osp.join(args.category, name))
+            name = 'D_{}_{}.pt'.format(num_points, epoch)
+            path = torch.save(D.state_dict(), osp.join(args.category, name))
