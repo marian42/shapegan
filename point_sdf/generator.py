@@ -1,11 +1,16 @@
 import sys
 
+import trimesh
+from skimage.measure import marching_cubes_lewiner
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.nn import Linear, LayerNorm
 
 sys.path.insert(0, '..')
-from model.sdf_net import SDFNet  # noqa
+from model.sdf_net import SDFNet, SDFVoxelizationHelperData  # noqa
+
+sdf_voxelization_helper = dict()
 
 
 class SDFGenerator(SDFNet):
@@ -78,6 +83,38 @@ class SDFGenerator(SDFNet):
                 x = F.dropout(x, p=self.dropout, training=self.training)
 
         return x
+
+    def get_voxels(self, z, resolution):
+        if not resolution in sdf_voxelization_helper:
+            helper_data = SDFVoxelizationHelperData(z.device, resolution, True)
+            sdf_voxelization_helper[resolution] = helper_data
+        else:
+            helper_data = sdf_voxelization_helper[resolution]
+
+        with torch.no_grad():
+            distances = self(helper_data.sample_points, z).view(-1)
+
+        voxels = torch.ones((resolution, resolution, resolution))
+        voxels[helper_data.unit_sphere_mask] = distances.to('cpu')
+        voxels = np.pad(voxels, 1, mode='constant', constant_values=1)
+        voxels = torch.from_numpy(voxels)
+
+        return voxels
+
+    def get_mesh(self, z, resolution=64):
+        voxels = self.get_voxels(z, resolution)
+
+        try:
+            vertices, faces, normals, _ = marching_cubes_lewiner(
+                voxels.numpy(), level=0,
+                spacing=(2 / resolution, 2 / resolution, 2 / resolution))
+            vertices -= 1
+        except ValueError as e:
+            print(e)
+            return None
+
+        return trimesh.Trimesh(vertices=vertices, faces=faces,
+                               vertex_normals=normals)
 
 
 if __name__ == '__main__':

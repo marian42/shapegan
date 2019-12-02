@@ -37,13 +37,16 @@ if args.eval:
         dist = G(pos, z).squeeze()
         visualize(pos.detach(), dist.detach(), dist.detach().abs() < 0.05)
 
-        grad = torch.autograd.grad(dist, pos,
-                                   grad_outputs=torch.ones_like(dist),
-                                   create_graph=True, retain_graph=True,
-                                   only_inputs=True)[0]
-        perm = dist.abs() < 0.1
-        pos = pos[perm] - grad[perm] * dist[perm].unsqueeze(-1)
-        visualize(pos.detach())
+        mesh = G.get_mesh(z, 64)
+        visualize(mesh.sample(2048))
+
+        # grad = torch.autograd.grad(dist, pos,
+        #                            grad_outputs=torch.ones_like(dist),
+        #                            create_graph=True, retain_graph=True,
+        #                            only_inputs=True)[0]
+        # perm = dist.abs() < 0.1
+        # pos = pos[perm] - grad[perm] * dist[perm].unsqueeze(-1)
+        # visualize(pos.detach())
 
     sys.exit()
 
