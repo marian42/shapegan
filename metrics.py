@@ -17,9 +17,12 @@ def sample_point_clouds(sdf_net, sample_count, point_cloud_size, voxel_resolutio
     result = np.zeros((sample_count, point_cloud_size, 3))
     latent_codes = standard_normal_distribution.sample((sample_count, LATENT_CODE_SIZE)).to(device)
     for i in tqdm(range(sample_count)):
-        point_cloud = sdf_net.get_uniform_surface_points(latent_codes[i, :], point_count=point_cloud_size, voxel_resolution=voxel_resolution, sphere_only=False)
-        rescale_point_cloud(point_cloud, method=rescale)
-        result[i, :, :] = point_cloud
+        try:
+            point_cloud = sdf_net.get_uniform_surface_points(latent_codes[i, :], point_count=point_cloud_size, voxel_resolution=voxel_resolution, sphere_only=False)
+            rescale_point_cloud(point_cloud, method=rescale)
+            result[i, :, :] = point_cloud
+        except AttributeError:
+            print("Warning: Empty mesh.")
     return result
 
 def sample_from_voxels(voxels, point_cloud_size, rescale='half_unit_sphere'):
@@ -47,6 +50,21 @@ if 'sample' in sys.argv:
 
     clouds = sample_point_clouds(sdf_net, 1000, 2048, voxel_resolution=32)
     np.save('data/generated_point_cloud_sample.npy', clouds)
+
+if 'checkpoints' in sys.argv:
+    import glob
+    from tqdm import tqdm
+    files = glob.glob('models/checkpoints/hybrid_progressive_gan_generator_2-epoch-*.to', recursive=True)
+    for filename in tqdm(files):
+        epoch_id = filename[61:-3]
+        sdf_net = SDFNet()
+        sdf_net.filename = filename[7:]
+        sdf_net.load()
+        sdf_net.eval()
+
+        clouds = sample_point_clouds(sdf_net, 50, 2048, voxel_resolution=64)
+        np.save('data/chairs/results/voxels_{:s}.npy'.format(epoch_id), clouds)
+
 
 if 'dataset' in sys.argv:
     from datasets import VoxelsMultipleFiles
