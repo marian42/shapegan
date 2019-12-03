@@ -12,17 +12,17 @@ import random
 import sys
 
 SAMPLE_COUNT = 30 # Number of distinct objects to generate and interpolate between
-TRANSITION_FRAMES = 30
+TRANSITION_FRAMES = 60
 
 ROTATE_MODEL = False
 USE_HYBRID_GAN = True
 CATEGORY = 2 # Limit category when using the DeepSDF autodecoder, set to None to use all categories
 
-SURFACE_LEVEL = 0#0.048 if USE_HYBRID_GAN else 0.011
+SURFACE_LEVEL = 0.048 if USE_HYBRID_GAN else 0.011
 
 sdf_net = SDFNet()
 if USE_HYBRID_GAN:
-    sdf_net.filename = 'hybrid_progressive_gan_generator_0.to'
+    sdf_net.filename = 'hybrid_progressive_gan_generator_2.to'
 sdf_net.load()
 sdf_net.eval()
 
@@ -54,7 +54,7 @@ def create_image_sequence():
             code = torch.tensor(spline(float(sample_index) + step / TRANSITION_FRAMES), dtype=torch.float32, device=device)
             if ROTATE_MODEL:
                 viewer.rotation = (147 + frame_index / (SAMPLE_COUNT * TRANSITION_FRAMES) * 360 * 6, 40)
-            viewer.set_mesh(sdf_net.get_mesh(code, voxel_resolution=128, sphere_only=True, level=SURFACE_LEVEL))
+            viewer.set_mesh(sdf_net.get_mesh(code, voxel_resolution=64, sphere_only=False, level=SURFACE_LEVEL))
             image = viewer.get_image(flip_red_blue=True)
             cv2.imwrite("images/frame-{:05d}.png".format(frame_index), image)
             frame_index += 1
@@ -80,7 +80,7 @@ def show_models():
                     if ROTATE_MODEL:
                         viewer.rotation = (147 + (sample_index + progress) / SAMPLE_COUNT * 360 * 6, 40)
                     code = torch.tensor(spline(float(sample_index) + progress), dtype=torch.float32, device=device)
-                    viewer.set_mesh(sdf_net.get_mesh(code, voxel_resolution=32, sphere_only=False, level=SURFACE_LEVEL))
+                    viewer.set_mesh(sdf_net.get_mesh(code, voxel_resolution=64, sphere_only=False, level=SURFACE_LEVEL))
                 
             except KeyboardInterrupt:
                 viewer.stop()
