@@ -1,7 +1,6 @@
 import torch
 from torch.utils.data import Dataset
 import os
-import glob
 import numpy as np
 
 class VoxelsSingleTensor(Dataset):
@@ -15,14 +14,53 @@ class VoxelsSingleTensor(Dataset):
 
     def __len__(self):
         return self.data.shape[0]
+    
+    def show(self):
+        show_dataset(self)
 
 class VoxelsMultipleFiles(Dataset):
-    def __init__(self, directory, extension='.npy'):
-        self.files = glob.glob(os.path.join(directory, '**' + extension), recursive=True)
+    def __init__(self, files, clamp=0.1):
+        self.files = files
+        self.clamp = clamp
 
     def __len__(self):
         return len(self.files)
 
     def __getitem__(self, index):
         array = np.load(self.files[index])
-        return torch.from_numpy(array)
+        result = torch.from_numpy(array)
+        if self.clamp is not None:
+            result.clamp_(-self.clamp, self.clamp)
+        return result
+
+    @staticmethod
+    def glob(directory, extension='.npy'):
+        import glob
+        files = glob.glob(os.path.join(directory, '**' + extension), recursive=True)
+        return VoxelsMultipleFiles(files)
+    
+    @staticmethod
+    def from_split(pattern, split_file_name):
+        split_file = open(split_file_name, 'r')
+        ids = split_file.readlines()
+        files = [pattern.format(id.strip()) for id in ids]
+        files = [file for file in files if os.path.exists(file)]
+        return VoxelsMultipleFiles(files)
+    
+    def show(self):
+        show_dataset(self)
+
+def show_dataset(dataset):
+    from rendering import MeshRenderer
+    import time
+    from tqdm import tqdm
+
+    viewer = MeshRenderer()
+    for item in tqdm(dataset):
+        viewer.set_voxels(item.numpy())
+        time.sleep(0.5)
+
+if __name__ == '__main__':
+    #dataset = VoxelsMultipleFiles.glob('data/chairs/voxels_64/')
+    dataset = VoxelsMultipleFiles.from_split('data/chairs/voxels_{:d}/{{:s}}.npy'.format(64), 'data/chairs/train.txt')
+    dataset.show()

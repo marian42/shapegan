@@ -18,16 +18,16 @@ class SDFVoxelizationHelperData():
 
 sdf_voxelization_helper = dict()
 
-SDF_NET_BREADTH = 512
+SDF_NET_BREADTH = 256
 
 class SDFNet(SavableModule):
     def __init__(self, latent_code_size=LATENT_CODE_SIZE, device='cuda'):
         super(SDFNet, self).__init__(filename="sdf_net.to")
-
-        # DeepSDF paper has one additional FC layer in the first and second part each
-        
         self.layers1 = nn.Sequential(
             nn.Linear(in_features = 3 + latent_code_size, out_features = SDF_NET_BREADTH),
+            nn.ReLU(inplace=True),
+
+            nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
             nn.ReLU(inplace=True),
 
             nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
@@ -39,6 +39,9 @@ class SDFNet(SavableModule):
 
         self.layers2 = nn.Sequential(
             nn.Linear(in_features = SDF_NET_BREADTH + latent_code_size + 3, out_features = SDF_NET_BREADTH),
+            nn.ReLU(inplace=True),
+
+            nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
             nn.ReLU(inplace=True),
 
             nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
