@@ -72,8 +72,8 @@ if 'continue' in sys.argv:
 
 log_file = open(LOG_FILE_NAME, "a" if "continue" in sys.argv else "w")
 
-generator_optimizer = optim.Adam(generator_parallel.parameters(), lr=0.0005)
-discriminator_optimizer = optim.Adam(discriminator.parameters(), lr=0.0005)
+generator_optimizer = optim.RMSprop(generator_parallel.parameters(), lr=0.0001)
+discriminator_optimizer = optim.RMSprop(discriminator.parameters(), lr=0.0001)
 
 show_viewer = "nogui" not in sys.argv
 
