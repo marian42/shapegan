@@ -34,7 +34,7 @@ ITERATION = int(get_parameter('iteration', 0))
 CONTINUE = "continue" in sys.argv
 
 FADE_IN_EPOCHS = 10
-BATCH_SIZE = 8
+BATCH_SIZE = 16
 GRADIENT_PENALTY_WEIGHT = 10
 NUMBER_OF_EPOCHS = int(get_parameter('epochs', 250))
 
