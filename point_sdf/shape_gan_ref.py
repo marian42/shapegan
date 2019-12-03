@@ -12,8 +12,8 @@ from pointnet import PointNet
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--category', type=str, required=True)
-parser.add_argument('--G_init', type=str, required=True)
-parser.add_argument('--D_init', type=str, required=True)
+parser.add_argument('--G_init', type=str, default='')
+parser.add_argument('--D_init', type=str, default='')
 parser.add_argument('--level', type=float, default=0.04)
 parser.add_argument('--eval', action='store_true')
 args = parser.parse_args()
@@ -29,10 +29,6 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 G = SDFGenerator(LATENT_SIZE, HIDDEN_SIZE, NUM_LAYERS, NORM, dropout=0.0)
 D = PointNet(out_channels=1)
 G, D = G.to(device), D.to(device)
-G.load_state_dict(torch.load(args.G_init, map_location=device))
-D.load_state_dict(torch.load(args.D_init, map_location=device))
-G_optimizer = RMSprop(G.parameters(), lr=0.0001)
-D_optimizer = RMSprop(D.parameters(), lr=0.0001)
 
 if args.eval:
     path = osp.join(args.category, 'Gref.pt')
@@ -48,6 +44,8 @@ if args.eval:
 
         mesh = G.get_mesh(z, 64, level=args.level)
         visualize(mesh.sample(2048))
+
+    sys.exit()
 
 root = '/data/SDF_GAN'
 dataset = ShapeNetPointSDF(root, category=args.category, split='train')
@@ -93,7 +91,11 @@ class RefinementGenerator(torch.nn.Module):
         return u_pos, u_dist, s_pos, s_dist
 
 
+G.load_state_dict(torch.load(args.G_init, map_location=device))
+D.load_state_dict(torch.load(args.D_init, map_location=device))
 ref_G = RefinementGenerator(G).to(device)
+G_optimizer = RMSprop(ref_G.parameters(), lr=0.0001)
+D_optimizer = RMSprop(D.parameters(), lr=0.0001)
 
 configuration = [
     (4096, 24, 300),
