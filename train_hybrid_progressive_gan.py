@@ -21,8 +21,14 @@ from util import create_text_slice
 from datasets import VoxelsMultipleFiles
 from torch.utils.data import DataLoader
 
+def get_parameter(name, default):
+    for arg in sys.argv:
+        if arg.startswith(name + '='):
+            return arg[len(name) + 1:]
+    return default
 
-ITERATION = 0
+
+ITERATION = int(get_parameter('iteration', 0))
 # Continue with model parameters that were previously trained at the SAME iteration
 # Otherwise, it will use the model parameters of the previous iteration or initialize randomly at iteration 0
 CONTINUE = "continue" in sys.argv
@@ -30,7 +36,7 @@ CONTINUE = "continue" in sys.argv
 FADE_IN_EPOCHS = 10
 BATCH_SIZE = 8
 GRADIENT_PENALTY_WEIGHT = 10
-NUMBER_OF_EPOCHS = 250
+NUMBER_OF_EPOCHS = int(get_parameter('epochs', 250))
 
 VOXEL_RESOLUTION = RESOLUTIONS[ITERATION]
 
