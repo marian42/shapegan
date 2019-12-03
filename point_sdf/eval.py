@@ -36,6 +36,12 @@ paths = sorted(glob.glob(osp.join(args.category, 'G_*00.pt')),
 for i, path in enumerate(paths):
     print(path)
     G.load_state_dict(torch.load(path, map_location=device))
+
+    path = '/data/SDF_GAN/{}/results/uniform_{:02d}.pt'.format(
+        args.category, i + 1)
+    if osp.exists(path):
+        continue
+
     torch.manual_seed(1234)
     generated = []
     while len(generated) < 200:
@@ -44,6 +50,4 @@ for i, path in enumerate(paths):
         if mesh is not None:
             generated += [torch.from_numpy(mesh.sample(2048))]
     generated = torch.stack(generated, dim=0)
-    path = '/data/SDF_GAN/{}/results/uniform_{:02d}.pt'.format(
-        args.category, i + 1)
     torch.save(generated, path)
