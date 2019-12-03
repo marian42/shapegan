@@ -13,9 +13,10 @@ def rescale_point_cloud(point_cloud, method=None):
     elif method == 'half_unit_cube':
         point_cloud /= np.abs(point_cloud).max() * 2
 
-def sample_point_clouds(sdf_net, sample_count, point_cloud_size, voxel_resolution=128, rescale='half_unit_sphere'):
+def sample_point_clouds(sdf_net, sample_count, point_cloud_size, voxel_resolution=128, rescale='half_unit_sphere', latent_codes=None):
     result = np.zeros((sample_count, point_cloud_size, 3))
-    latent_codes = standard_normal_distribution.sample((sample_count, LATENT_CODE_SIZE)).to(device)
+    if latent_codes is None:
+        latent_codes = standard_normal_distribution.sample((sample_count, LATENT_CODE_SIZE)).to(device)
     for i in tqdm(range(sample_count)):
         try:
             point_cloud = sdf_net.get_uniform_surface_points(latent_codes[i, :], point_count=point_cloud_size, voxel_resolution=voxel_resolution, sphere_only=False)
@@ -55,6 +56,7 @@ if 'checkpoints' in sys.argv:
     import glob
     from tqdm import tqdm
     files = glob.glob('models/checkpoints/hybrid_progressive_gan_generator_2-epoch-*.to', recursive=True)
+    latent_codes = standard_normal_distribution.sample((50, LATENT_CODE_SIZE)).to(device)
     for filename in tqdm(files):
         epoch_id = filename[61:-3]
         sdf_net = SDFNet()
@@ -62,18 +64,18 @@ if 'checkpoints' in sys.argv:
         sdf_net.load()
         sdf_net.eval()
 
-        clouds = sample_point_clouds(sdf_net, 50, 2048, voxel_resolution=64)
+        clouds = sample_point_clouds(sdf_net, 50, 2048, voxel_resolution=64, latent_codes=latent_codes)
         np.save('data/chairs/results/voxels_{:s}.npy'.format(epoch_id), clouds)
 
 
 if 'dataset' in sys.argv:
     from datasets import VoxelsMultipleFiles
-    dataset = VoxelsMultipleFiles.from_split('data/chairs/voxels_64/{:s}.npy', 'data/chairs/val.txt')
+    dataset = VoxelsMultipleFiles.from_split('data/airplanes/voxels_64/{:s}.npy', 'data/airplanes/val.txt')
     from torch.utils.data import DataLoader
     voxels = next(iter(DataLoader(dataset, batch_size=100, shuffle=True)))
     print(voxels.shape)
     clouds = sample_from_voxels(voxels, 2048)
-    np.save('data/dataset_point_cloud_sample.npy', clouds)
+    np.save('data/dataset_airplanes_point_cloud_sample.npy', clouds)
 
 
 if 'test' in sys.argv:
