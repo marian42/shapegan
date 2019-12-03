@@ -104,6 +104,9 @@ class SDFGenerator(SDFNet):
     def get_mesh(self, z, resolution=64, level=0):
         voxels = self.get_voxels(z, resolution)
 
+        if level < voxels.min() or level > voxels.max():
+            return None
+
         try:
             vertices, faces, normals, _ = marching_cubes_lewiner(
                 voxels.numpy(), level=level,

@@ -12,7 +12,7 @@ from pointnet import PointNet
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--category', type=str, required=True)
-parser.add_argument('--level', type=float, default=0.0)
+parser.add_argument('--level', type=float, default=0.04)
 parser.add_argument('--eval', action='store_true')
 args = parser.parse_args()
 
@@ -43,7 +43,6 @@ if args.eval:
 
         mesh = G.get_mesh(z, 64, level=args.level)
         visualize(mesh.sample(2048))
-        mesh.show()
 
         # grad = torch.autograd.grad(dist, pos,
         #                            grad_outputs=torch.ones_like(dist),
