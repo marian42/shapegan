@@ -49,7 +49,11 @@ if 'sample' in sys.argv:
     np.save('data/generated_point_cloud_sample.npy', clouds)
 
 if 'dataset' in sys.argv:
-    voxels = torch.load('data/chairs-voxels-32.to').detach().cpu().numpy()[:1000, :, :, :]
+    from datasets import VoxelsMultipleFiles
+    dataset = VoxelsMultipleFiles.from_split('data/chairs/voxels_64/{:s}.npy', 'data/chairs/val.txt')
+    from torch.utils.data import DataLoader
+    voxels = next(iter(DataLoader(dataset, batch_size=100, shuffle=True)))
+    print(voxels.shape)
     clouds = sample_from_voxels(voxels, 2048)
     np.save('data/dataset_point_cloud_sample.npy', clouds)
 
