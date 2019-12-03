@@ -55,6 +55,7 @@ if 'sample' in sys.argv:
 if 'checkpoints' in sys.argv:
     import glob
     from tqdm import tqdm
+    torch.manual_seed(1234)
     files = glob.glob('models/checkpoints/hybrid_progressive_gan_generator_2-epoch-*.to', recursive=True)
     latent_codes = standard_normal_distribution.sample((50, LATENT_CODE_SIZE)).to(device)
     for filename in tqdm(files):
