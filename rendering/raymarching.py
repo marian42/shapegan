@@ -164,7 +164,7 @@ def render_image(sdf_net, latent_code, resolution=800, threshold=0.0005, sdf_off
 
     pixels = np.ones((points.shape[0], 3))
     pixels[model_mask] = color
-    pixels[ground_points] -= ((1.0 - 0.4) * ground_shadows)[:, np.newaxis]
+    pixels[ground_points] -= ((1.0 - 0.65) * ground_shadows)[:, np.newaxis]
     pixels = pixels.reshape((resolution * ssaa, resolution * ssaa, 3))
 
     if crop:

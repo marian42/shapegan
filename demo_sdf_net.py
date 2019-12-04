@@ -86,7 +86,30 @@ def show_models():
                 viewer.stop()
                 return
 
+def create_objects():
+    from util import ensure_directory
+    from rendering.raymarching import render_image
+    import os
+    ensure_directory('generated_objects/')
+    image_filename = 'generated_objects/{:05d}.png'
+    mesh_filename = 'generated_objects/{:05d}.stl'
+    index = 0
+    while True:
+        if os.path.exists(image_filename.format(index)) or os.path.exists(mesh_filename.format(index)):
+            index += 1
+            continue
+        latent_code = standard_normal_distribution.sample((LATENT_CODE_SIZE,)).to(device)
+        image = render_image(sdf_net, latent_code, resolution=800, sdf_offset=-SURFACE_LEVEL, ssaa=2, radius=1.4, color=(0.7, 0.7, 0.7))
+        image.save(image_filename.format(index))
+        mesh = sdf_net.get_mesh(latent_code, voxel_resolution=128, sphere_only=False, level=SURFACE_LEVEL)
+        mesh.export(mesh_filename.format(index))
+        print("Created mesh for index {:d}".format(index))
+        index += 1
+
+
 if 'save' in sys.argv:
     create_image_sequence()
+elif 'create_objects' in sys.argv:
+    create_objects()
 else:
     show_models()
