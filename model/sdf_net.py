@@ -111,8 +111,8 @@ class SDFNet(SavableModule):
         mesh = trimesh.Trimesh(vertices=vertices, faces=faces, vertex_normals=normals)
         return mesh
 
-    def get_uniform_surface_points(self, latent_code, point_count=1000, voxel_resolution=64, sphere_only=True):
-        mesh = self.get_mesh(latent_code, voxel_resolution=voxel_resolution, sphere_only=sphere_only)
+    def get_uniform_surface_points(self, latent_code, point_count=1000, voxel_resolution=64, sphere_only=True, level=0):
+        mesh = self.get_mesh(latent_code, voxel_resolution=voxel_resolution, sphere_only=sphere_only, level=level)
         return mesh.sample(point_count)
 
     def get_normals(self, latent_code, points):

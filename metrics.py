@@ -7,6 +7,8 @@ import torch
 import skimage
 import trimesh
 
+LEVEL = 0.048
+
 def rescale_point_cloud(point_cloud, method=None):
     if method == 'half_unit_sphere':
         point_cloud /= np.linalg.norm(point_cloud, axis=1).max() * 2
@@ -19,7 +21,7 @@ def sample_point_clouds(sdf_net, sample_count, point_cloud_size, voxel_resolutio
         latent_codes = standard_normal_distribution.sample((sample_count, LATENT_CODE_SIZE)).to(device)
     for i in tqdm(range(sample_count)):
         try:
-            point_cloud = sdf_net.get_uniform_surface_points(latent_codes[i, :], point_count=point_cloud_size, voxel_resolution=voxel_resolution, sphere_only=False)
+            point_cloud = sdf_net.get_uniform_surface_points(latent_codes[i, :], point_count=point_cloud_size, voxel_resolution=voxel_resolution, sphere_only=False, level=LEVEL)
             rescale_point_cloud(point_cloud, method=rescale)
             result[i, :, :] = point_cloud
         except AttributeError:
