@@ -61,9 +61,11 @@ def generate_batch(u_pos, u_dist, s_pos, s_dist):
     s_dist = s_dist[mask].view(-1, 1)
     s_batch = u_batch[mask].view(-1)
 
-    u_pos = u_pos.view(-1, 3)
-    u_dist = u_dist.view(-1, 1)
-    u_batch = u_batch.view(-1)
+    mask = mask | (torch.rand(mask.size(), device=mask.device) < 0.15)
+
+    u_pos = u_pos[mask].view(-1, 3)
+    u_dist = u_dist[mask].view(-1, 1)
+    u_batch = u_batch[mask].view(-1)
 
     return (
         torch.cat([u_pos, s_pos], dim=0),
@@ -98,9 +100,8 @@ G_optimizer = RMSprop(ref_G.parameters(), lr=0.0001)
 D_optimizer = RMSprop(D.parameters(), lr=0.0001)
 
 configuration = [
-    (4096, 24, 300),
-    (8192, 12, 300),
-    (16384, 6, 900),
+    (8192, 16, 60),
+    (16384, 8, 60),
 ]
 
 num_steps = 0
@@ -117,15 +118,15 @@ for num_points, batch_size, epochs in configuration:
             u_pos, u_dist = uniform[..., :3], uniform[..., 3:]
             s_pos, s_dist = surface[..., :3], surface[..., 3:]
 
-            real_pos, real_dist, real_batch = generate_batch(
-                u_pos, u_dist, s_pos, s_dist)
-
             D_optimizer.zero_grad()
 
             z = torch.randn(uniform.size(0), LATENT_SIZE, device=device)
             fake_u_pos, fake_u_dist, fake_s_pos, fake_s_dist = ref_G(u_pos, z)
             fake_pos, fake_dist, fake_batch = generate_batch(
                 fake_u_pos, fake_u_dist, fake_s_pos, fake_s_dist)
+
+            real_pos, real_dist, real_batch = generate_batch(
+                u_pos, u_dist, s_pos, s_dist)
 
             out_real = D(real_pos, real_dist, real_batch)
             out_fake = D(fake_pos, fake_dist, fake_batch)
@@ -167,7 +168,7 @@ for num_points, batch_size, epochs in configuration:
         torch.save(G.state_dict(), osp.join(args.category, 'Gref.pt'))
         torch.save(D.state_dict(), osp.join(args.category, 'Dref.pt'))
 
-        if epoch % 100 == 0:
+        if epoch % 5 == 0:
             name = 'Gref_{}_{}.pt'.format(num_points, epoch)
             path = torch.save(G.state_dict(), osp.join(args.category, name))
             name = 'Dref_{}_{}.pt'.format(num_points, epoch)
