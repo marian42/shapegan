@@ -7,7 +7,7 @@ import torch
 import skimage
 import trimesh
 
-LEVEL = 0.048
+LEVEL = 0
 
 def rescale_point_cloud(point_cloud, method=None):
     if method == 'half_unit_sphere':
