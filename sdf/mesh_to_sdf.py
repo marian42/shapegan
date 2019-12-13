@@ -13,7 +13,7 @@ import time
 class BadMeshException(Exception):
     pass
 
-def scale_to_unit_sphere(mesh):
+def scale_to_unit_sphere(mesh, rotation_matrix=None):
     if isinstance(mesh, trimesh.Scene):
         mesh = mesh.dump().sum()
 
@@ -22,6 +22,10 @@ def scale_to_unit_sphere(mesh):
     distances = np.linalg.norm(vertices, axis=1)
     size = np.max(distances)
     vertices /= size
+
+    if rotation_matrix is not None:
+        vertices = np.matmul(rotation_matrix, vertices.transpose()).transpose()
+
     return trimesh.Trimesh(vertices=vertices, faces=mesh.faces)
 
 class MeshSDF:
