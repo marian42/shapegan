@@ -59,7 +59,7 @@ def process_model_file(filename):
         try:
             points, sdf = mesh_sdf.get_sample_points(number_of_points=SDF_CLOUD_SAMPLE_SIZE)
             combined = np.concatenate((points, sdf[:, np.newaxis]), axis=1)
-            ensure_directory(sdf_cloud_filename)
+            ensure_directory(os.path.dirname(sdf_cloud_filename))
             np.save(sdf_cloud_filename, combined)
         except BadMeshException:
             tqdm.write("Skipping bad mesh. ({:s})".format(filename))
