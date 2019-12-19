@@ -116,7 +116,7 @@ def create_tsne_plot(codes, voxels = None, labels = None, filename = "plot.pdf",
 
     if indices is not None:
         print("Creating images...")
-        dataset_directories = directories = open('data/models.txt', 'r').readlines()
+        dataset_directories = open('data/models.txt', 'r').readlines()
         from rendering import MeshRenderer
         viewer = MeshRenderer(start_thread=False)
         import trimesh
