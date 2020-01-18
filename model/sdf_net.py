@@ -95,7 +95,7 @@ class SDFNet(SavableModule):
         return voxels
 
     def get_mesh(self, latent_code, voxel_resolution = 64, sphere_only = True, raise_on_empty=False, level=0):
-        size = 2 if sphere_only else 1.41421
+        size = 2
         
         voxels = self.get_voxels(latent_code, voxel_resolution=voxel_resolution, sphere_only=sphere_only)
         voxels = np.pad(voxels, 1, mode='constant', constant_values=1)
