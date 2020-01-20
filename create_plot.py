@@ -638,7 +638,7 @@ if "autoencoder_training" in sys.argv:
         create_autoencoder_training_plot('plots/variational_autoencoder_training.csv', 'Variational Autoencoder Training', 'plots/variational-autoencoder-training.pdf')
 
 if "sdf_slice" in sys.argv:
-    from sdf.mesh_to_sdf import MeshSDF, scale_to_unit_sphere
+    from mesh_to_sdf import mesh_to_sdf, scale_to_unit_sphere
     import trimesh
     import cv2
 
@@ -647,7 +647,6 @@ if "sdf_slice" in sys.argv:
     print("Loading mesh...")
     mesh = trimesh.load(model_filename)
     mesh = scale_to_unit_sphere(mesh)
-    mesh_sdf = MeshSDF(mesh)
 
     resolution = 1280
     slice_position = 0.0
@@ -662,7 +661,7 @@ if "sdf_slice" in sys.argv:
     points = points.reshape(3, -1).transpose()
 
     print("Calculating SDF values...")
-    sdf = mesh_sdf.get_sdf_in_batches(points)
+    sdf = mesh_to_sdf(mesh, points)
     sdf = sdf.reshape(1, resolution, resolution)
     sdf = sdf[0, :, :]
     sdf = np.clip(sdf, -clip, clip) / clip
