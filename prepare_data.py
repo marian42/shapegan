@@ -2,18 +2,18 @@ import os
 import trimesh
 from tqdm import tqdm
 import numpy as np
-from sdf.mesh_to_sdf import MeshSDF, scale_to_unit_sphere, BadMeshException
+from mesh_to_sdf import get_surface_point_cloud, scale_to_unit_sphere, BadMeshException
 from util import ensure_directory
 from multiprocessing import Pool
 
 DIRECTORY_MODELS = 'data/meshes/'
-MODEL_EXTENSION = '.obj'
+MODEL_EXTENSION = '.stl'
 DIRECTORY_SDF = 'data/sdf/'
 
 CREATE_VOXELS = True
 VOXEL_RESOLUTION = 32
 
-CREATE_SDF_CLOUDS = False
+CREATE_SDF_CLOUDS = True
 SDF_CLOUD_SAMPLE_SIZE = 200000
 
 def get_model_files():
@@ -54,10 +54,10 @@ def process_model_file(filename):
     mesh = trimesh.load(filename)
     mesh = scale_to_unit_sphere(mesh)
 
-    mesh_sdf = MeshSDF(mesh, use_scans=True)
+    surface_point_cloud = get_surface_point_cloud(mesh)
     if CREATE_SDF_CLOUDS:
         try:
-            points, sdf = mesh_sdf.get_sample_points(number_of_points=SDF_CLOUD_SAMPLE_SIZE)
+            points, sdf = surface_point_cloud.sample_sdf_near_surface(number_of_points=SDF_CLOUD_SAMPLE_SIZE)
             combined = np.concatenate((points, sdf[:, np.newaxis]), axis=1)
             ensure_directory(os.path.dirname(sdf_cloud_filename))
             np.save(sdf_cloud_filename, combined)
@@ -68,7 +68,7 @@ def process_model_file(filename):
 
     if CREATE_VOXELS:
         try:
-            voxels = mesh_sdf.get_voxel_sdf(voxel_resolution=VOXEL_RESOLUTION)
+            voxels = surface_point_cloud.get_voxels(voxel_resolution=VOXEL_RESOLUTION)
             ensure_directory(os.path.dirname(voxels_filename))
             np.save(voxels_filename, voxels)
         except BadMeshException:
@@ -81,7 +81,7 @@ def process_model_files():
     ensure_directory(DIRECTORY_SDF)
     files = list(get_model_files())
     
-    worker_count = os.cpu_count()
+    worker_count = os.cpu_count() // 2
     print("Using {:d} processes.".format(worker_count))
     pool = Pool(worker_count)
 

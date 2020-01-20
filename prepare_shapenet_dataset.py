@@ -7,8 +7,7 @@ import numpy as np
 from util import ensure_directory
 from multiprocessing import Pool
 import traceback
-from mesh_to_sdf import BadMeshException, get_surface_point_cloud
-from mesh_to_sdf.utils import scale_to_unit_cube, scale_to_unit_sphere
+from mesh_to_sdf import get_surface_point_cloud,scale_to_unit_cube, scale_to_unit_sphere, BadMeshException
 
 DATASET_NAME = 'chairs'
 DIRECTORY_MODELS = 'data/shapenet/03001627'
@@ -126,7 +125,7 @@ def process_model_files():
 
     files = list(get_model_files())
 
-    worker_count = 4 #os.cpu_count()
+    worker_count = os.cpu_count() // 2
     print("Using {:d} processes.".format(worker_count))
     pool = Pool(worker_count)
 
