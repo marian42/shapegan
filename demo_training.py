@@ -1,4 +1,4 @@
-from sdf.mesh_to_sdf import MeshSDF, scale_to_unit_sphere
+from mesh_to_sdf import sample_sdf_near_surface
 import numpy as np
 import trimesh
 import torch
@@ -8,14 +8,12 @@ from model.sdf_net import SDFNet
 from rendering import MeshRenderer
 import sys
 import cv2
-latent_code_size = 0
+LATENT_CODE_SIZE = 0
 
 MODEL_PATH = 'examples/chair.obj'
 
 mesh = trimesh.load(MODEL_PATH)
-mesh = scale_to_unit_sphere(mesh)
-mesh_sdf = MeshSDF(mesh)
-points, sdf = mesh_sdf.get_sample_points()
+points, sdf = sample_sdf_near_surface(mesh)
 
 save_images = 'save' in sys.argv
 
@@ -29,11 +27,11 @@ points = torch.tensor(points, dtype=torch.float32, device=device)
 sdf = torch.tensor(sdf, dtype=torch.float32, device=device)
 sdf.clamp_(-0.1, 0.1)
 
-sdf_net = SDFNet(latent_code_size=latent_code_size).to(device)
+sdf_net = SDFNet(latent_code_size=LATENT_CODE_SIZE).to(device)
 optimizer = torch.optim.Adam(sdf_net.parameters(), lr=1e-5)
 
 BATCH_SIZE = 20000
-latent_code = torch.zeros((BATCH_SIZE, latent_code_size), device=device)
+latent_code = torch.zeros((BATCH_SIZE, LATENT_CODE_SIZE), device=device)
 indices = torch.zeros(BATCH_SIZE, dtype=torch.int64, device=device)
 
 positive_indices = (sdf > 0).nonzero().squeeze().cpu().numpy()
