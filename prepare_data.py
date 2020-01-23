@@ -5,6 +5,7 @@ import numpy as np
 from mesh_to_sdf import get_surface_point_cloud, scale_to_unit_sphere, BadMeshException
 from util import ensure_directory
 from multiprocessing import Pool
+from rendering.math import get_rotation_matrix
 
 DIRECTORY_MODELS = 'data/meshes/'
 MODEL_EXTENSION = '.stl'
@@ -15,6 +16,8 @@ VOXEL_RESOLUTION = 32
 
 CREATE_SDF_CLOUDS = True
 SDF_CLOUD_SAMPLE_SIZE = 200000
+
+ROTATION = None # get_rotation_matrix(90, axis='x')
 
 def get_model_files():
     for directory, _, files in os.walk(DIRECTORY_MODELS):
@@ -52,6 +55,8 @@ def process_model_file(filename):
         return
     
     mesh = trimesh.load(filename)
+    if ROTATION is not None:
+        mesh.apply_transform(ROTATION)
     mesh = scale_to_unit_sphere(mesh)
 
     surface_point_cloud = get_surface_point_cloud(mesh)
