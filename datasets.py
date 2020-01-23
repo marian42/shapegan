@@ -34,9 +34,11 @@ class VoxelsMultipleFiles(Dataset):
         return result
 
     @staticmethod
-    def glob(directory, extension='.npy'):
+    def glob(pattern):
         import glob
-        files = glob.glob(os.path.join(directory, '**' + extension), recursive=True)
+        files = glob.glob(pattern, recursive=True)
+        if len(files) == 0:
+            raise Exception('No files found for glob pattern {:s}.'.format(pattern))
         return VoxelsMultipleFiles(files)
     
     @staticmethod
