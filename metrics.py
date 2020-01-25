@@ -72,8 +72,8 @@ if 'checkpoints' in sys.argv:
 
 
 if 'dataset' in sys.argv:
-    from datasets import VoxelsMultipleFiles
-    dataset = VoxelsMultipleFiles.from_split('data/airplanes/voxels_64/{:s}.npy', 'data/airplanes/val.txt')
+    from datasets import VoxelDataset
+    dataset = VoxelDataset.from_split('data/airplanes/voxels_64/{:s}.npy', 'data/airplanes/val.txt')
     from torch.utils.data import DataLoader
     voxels = next(iter(DataLoader(dataset, batch_size=100, shuffle=True)))
     print(voxels.shape)

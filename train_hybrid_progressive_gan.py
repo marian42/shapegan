@@ -18,7 +18,7 @@ from util import create_text_slice, device, standard_normal_distribution, get_vo
 
 from dataset import dataset as dataset, SDF_CLIPPING
 from util import create_text_slice
-from datasets import VoxelsMultipleFiles
+from datasets import VoxelDataset
 from torch.utils.data import DataLoader
 
 def get_parameter(name, default):
@@ -40,7 +40,7 @@ NUMBER_OF_EPOCHS = int(get_parameter('epochs', 250))
 
 VOXEL_RESOLUTION = RESOLUTIONS[ITERATION]
 
-dataset = VoxelsMultipleFiles.from_split('data/chairs/voxels_{:d}/{{:s}}.npy'.format(VOXEL_RESOLUTION), 'data/chairs/train.txt')
+dataset = VoxelDataset.from_split('data/chairs/voxels_{:d}/{{:s}}.npy'.format(VOXEL_RESOLUTION), 'data/chairs/train.txt')
 data_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
 def get_generator_filename(iteration):
