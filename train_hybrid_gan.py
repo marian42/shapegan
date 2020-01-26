@@ -15,10 +15,12 @@ from model.sdf_net import SDFNet
 from model.gan import Discriminator, LATENT_CODE_SIZE
 from util import create_text_slice, device, standard_normal_distribution, get_voxel_coordinates
 
-from dataset import dataset as dataset, VOXEL_RESOLUTION, SDF_CLIPPING
+VOXEL_RESOLUTION = 32
+SDF_CLIPPING = 0.1
 from util import create_text_slice
-dataset.rescale_sdf = False
-dataset.load_voxels(device)
+
+from datasets import VoxelDataset
+from torch.utils.data import DataLoader
 
 generator = SDFNet()
 generator.filename = 'hybrid_gan_generator.to'
@@ -51,16 +53,12 @@ if show_viewer:
 
 BATCH_SIZE = 8
 
+dataset = VoxelDataset.glob('data/chairs/voxels_32/**.npy')
+dataset.rescale_sdf = False
+data_loader = DataLoader(dataset, shuffle=True, batch_size=BATCH_SIZE, num_workers=8)
+
 valid_target_default = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
 fake_target_default = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
-
-def create_batches(sample_count, batch_size):
-    batch_count = int(sample_count / batch_size)
-    indices = list(range(sample_count))
-    random.shuffle(indices)
-    for i in range(batch_count - 1):
-        yield indices[i * batch_size:(i+1)*batch_size]
-    yield indices[(batch_count - 1) * batch_size:]
 
 def sample_latent_codes(current_batch_size):
     latent_codes = standard_normal_distribution.sample(sample_shape=[current_batch_size, LATENT_CODE_SIZE]).to(device)
@@ -75,10 +73,9 @@ def train():
     for epoch in count(start=first_epoch):
         batch_index = 0
         epoch_start_time = time.time()
-        for batch in tqdm(list(create_batches(dataset.size, BATCH_SIZE)), desc='Epoch {:d}'.format(epoch)):
+        for batch in tqdm(data_loader, desc='Epoch {:d}'.format(epoch)):
             try:
-                indices = torch.tensor(batch, device = device)
-                current_batch_size = indices.shape[0] # equals BATCH_SIZE for all batches except the last one
+                current_batch_size = batch.shape[0] # equals BATCH_SIZE for all batches except the last one
                 batch_grid_points = grid_points.repeat((current_batch_size, 1))
 
                 # train generator
@@ -113,8 +110,7 @@ def train():
 
                 # train discriminator on real samples
                 discriminator_optimizer.zero_grad()
-                valid_sample = dataset.voxels[indices, :, :, :]
-                discriminator_output_valid = discriminator(valid_sample)
+                discriminator_output_valid = discriminator(batch.to(device))
                 valid_loss = discriminator_criterion(discriminator_output_valid, valid_target)
                 valid_loss.backward()
                 discriminator_optimizer.step()

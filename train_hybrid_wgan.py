@@ -9,21 +9,27 @@ import random
 import time
 import sys
 from collections import deque
+from tqdm import tqdm
 
 from model.sdf_net import SDFNet
 from model.gan import Discriminator, LATENT_CODE_SIZE
 from util import create_text_slice, device, standard_normal_distribution
 
-from dataset import dataset as dataset, VOXEL_RESOLUTION, SDF_CLIPPING
-from util import create_text_slice, get_voxel_coordinates
+VOXEL_RESOLUTION = 32
+SDF_CLIPPING = 0.1
+from util import create_text_slice,get_voxel_coordinates
 
-dataset.rescale_sdf = False
-dataset.load_voxels(device)
+from datasets import VoxelDataset
+from torch.utils.data import DataLoader
 
 LEARN_RATE = 0.00001
 BATCH_SIZE = 8
 CRITIC_UPDATES_PER_GENERATOR_UPDATE = 5
 CRITIC_WEIGHT_LIMIT = 0.01
+
+dataset = VoxelDataset.glob('data/chairs/voxels_32/**.npy')
+dataset.rescale_sdf = False
+data_loader = DataLoader(dataset, shuffle=True, batch_size=BATCH_SIZE, num_workers=8)
 
 generator = SDFNet()
 generator.filename = 'hybrid_wgan_generator.to'
@@ -58,18 +64,10 @@ if show_viewer:
 valid_target = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
 fake_target = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
 
-def create_batches(sample_count):
-    batch_count = int(sample_count / BATCH_SIZE)
-    indices = list(range(sample_count))
-    random.shuffle(indices)
-    for i in range(batch_count - 1):
-        yield indices[i * BATCH_SIZE:(i+1)*BATCH_SIZE]
-
 def sample_latent_codes():
     latent_codes = standard_normal_distribution.sample(sample_shape=[BATCH_SIZE, LATENT_CODE_SIZE]).to(device)
     latent_codes = latent_codes.repeat((1, 1, VOXEL_RESOLUTION**3)).reshape(-1, LATENT_CODE_SIZE)
     return latent_codes
-
 
 grid_points = get_voxel_coordinates(VOXEL_RESOLUTION, return_torch_tensor=True).repeat((BATCH_SIZE, 1))
 history_fake = deque(maxlen=50)
@@ -79,19 +77,16 @@ def train():
     for epoch in count(start=first_epoch):
         batch_index = 0
         epoch_start_time = time.time()
-        for batch in list(create_batches(dataset.size)):
+        for batch in tqdm(data_loader, desc='Epoch {:d}'.format(epoch)):
             try:
-                indices = torch.tensor(batch, device = device)
-                
                 # train critic
                 critic_optimizer.zero_grad()                
                 latent_codes = sample_latent_codes()
                 fake_sample = generator(grid_points, latent_codes)
                 fake_sample = fake_sample.reshape(-1, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
-                valid_sample = dataset.voxels[indices, :, :, :]
-
+                
                 critic_output_fake = critic(fake_sample)
-                critic_output_valid = critic(valid_sample)
+                critic_output_valid = critic(batch.to(device))
 
                 critic_loss = torch.mean(critic_output_fake) - torch.mean(critic_output_valid)
                 critic_loss.backward()

@@ -12,9 +12,9 @@ from collections import deque
 
 from model.gan import Generator, Discriminator
 
-from dataset import dataset as dataset
 from util import create_text_slice, device
-dataset.load_voxels(device)
+from datasets import VoxelDataset
+from torch.utils.data import DataLoader
 
 generator = Generator()
 discriminator = Discriminator()
@@ -38,17 +38,11 @@ if show_viewer:
 
 BATCH_SIZE = 64
 
+dataset = VoxelDataset.glob('data/chairs/voxels_32/**.npy')
+data_loader = DataLoader(dataset, shuffle=True, batch_size=BATCH_SIZE, num_workers=8)
 
 valid_target_default = torch.ones(BATCH_SIZE, requires_grad=False).to(device)
 fake_target_default = torch.zeros(BATCH_SIZE, requires_grad=False).to(device)
-
-def create_batches(sample_count, batch_size):
-    batch_count = int(sample_count / batch_size)
-    indices = list(range(sample_count))
-    random.shuffle(indices)
-    for i in range(batch_count - 1):
-        yield indices[i * batch_size:(i+1)*batch_size]
-    yield indices[(batch_count - 1) * batch_size:]
 
 def train():
     history_fake = deque(maxlen=50)
@@ -57,8 +51,9 @@ def train():
     for epoch in count():
         batch_index = 0
         epoch_start_time = time.time()
-        for batch in create_batches(dataset.size, BATCH_SIZE):
+        for batch in data_loader:
             try:
+
                 # train generator
                 generator_optimizer.zero_grad()
                     
@@ -73,8 +68,7 @@ def train():
                     
                 
                 # train discriminator
-                indices = torch.tensor(batch, device = device)
-                current_batch_size = indices.shape[0] # equals BATCH_SIZE for all batches except the last one
+                current_batch_size = batch.shape[0] # equals BATCH_SIZE for all batches except the last one
                 fake_target = fake_target_default if current_batch_size == BATCH_SIZE else torch.zeros(current_batch_size, requires_grad=False).to(device)
                 valid_target = valid_target_default if current_batch_size == BATCH_SIZE else torch.ones(current_batch_size, requires_grad=False).to(device)
 
@@ -86,8 +80,7 @@ def train():
                 discriminator_optimizer.step()
 
                 discriminator_optimizer.zero_grad()
-                valid_sample = dataset.voxels[indices, :, :, :]
-                discriminator_output_valid = discriminator(valid_sample)
+                discriminator_output_valid = discriminator(batch.to(device))
                 valid_loss = discriminator_criterion(discriminator_output_valid, valid_target)
                 valid_loss.backward()
                 discriminator_optimizer.step()
