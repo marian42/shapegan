@@ -1,6 +1,5 @@
 from model.sdf_net import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 from util import device, standard_normal_distribution, ensure_directory
-from dataset import dataset
 import scipy
 import numpy as np
 from rendering import MeshRenderer
@@ -16,7 +15,6 @@ TRANSITION_FRAMES = 60
 
 ROTATE_MODEL = False
 USE_HYBRID_GAN = True
-CATEGORY = 2 # Limit category when using the DeepSDF autodecoder, set to None to use all categories
 
 SURFACE_LEVEL = 0.048 if USE_HYBRID_GAN else 0.011
 
@@ -30,12 +28,7 @@ if USE_HYBRID_GAN:
     codes = standard_normal_distribution.sample((SAMPLE_COUNT + 1, LATENT_CODE_SIZE)).numpy()
 else:
     latent_codes = torch.load(LATENT_CODES_FILENAME).detach().cpu().numpy()
-    if CATEGORY is not None:
-        dataset.load_labels()    
-        indices = (dataset.labels == CATEGORY).nonzero()
-        indices = random.sample(list(indices.cpu().numpy()), SAMPLE_COUNT + 1)
-    else:
-        indices = random.sample(list(range(latent_codes.shape[0])), SAMPLE_COUNT + 1)
+    indices = random.sample(list(range(latent_codes.shape[0])), SAMPLE_COUNT + 1)
     codes = latent_codes[indices, :]
 
 codes[0, :] = codes[-1, :] # Make animation periodic
@@ -45,8 +38,6 @@ def create_image_sequence():
     ensure_directory('images')
     frame_index = 0
     viewer = MeshRenderer(size=1080, start_thread=False)
-    if CATEGORY is not None:
-        viewer.model_color = dataset.get_color(CATEGORY)
     progress_bar = tqdm(total=SAMPLE_COUNT * TRANSITION_FRAMES)
 
     for sample_index in range(SAMPLE_COUNT):
@@ -66,9 +57,6 @@ def create_image_sequence():
 def show_models():
     TRANSITION_TIME = 2
     viewer = MeshRenderer()
-
-    if CATEGORY is not None:
-        viewer.model_color = dataset.get_color(CATEGORY)
 
     while True:
         for sample_index in range(SAMPLE_COUNT):

@@ -1,3 +1,9 @@
+'''
+This file contains code to create various plots and figures.
+It is currently not maintained and not all of the figures work.
+But it can serve as inspiration for further development.
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 import torch

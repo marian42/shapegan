@@ -1,9 +1,8 @@
 from model import *
 
 class Classifier(SavableModule):
-    def __init__(self):
+    def __init__(self, label_count):
         super(Classifier, self).__init__(filename="classifier.to")
-        from dataset import dataset as dataset
         
         self.layers = nn.Sequential(
             nn.Conv3d(in_channels = 1, out_channels = 12, kernel_size = 5),
@@ -19,7 +18,7 @@ class Classifier(SavableModule):
 
             Lambda(lambda x: x.view(x.shape[0], -1)),
 
-            nn.Linear(in_features = 32, out_features = dataset.label_count),
+            nn.Linear(in_features = 32, out_features = label_count),
             nn.Softmax(dim=1)
         )
 
