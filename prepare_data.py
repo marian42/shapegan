@@ -62,7 +62,7 @@ def process_model_file(filename):
     surface_point_cloud = get_surface_point_cloud(mesh)
     if CREATE_SDF_CLOUDS:
         try:
-            points, sdf = surface_point_cloud.sample_sdf_near_surface(number_of_points=SDF_CLOUD_SAMPLE_SIZE)
+            points, sdf = surface_point_cloud.sample_sdf_near_surface(number_of_points=SDF_CLOUD_SAMPLE_SIZE, sign_method='depth')
             combined = np.concatenate((points, sdf[:, np.newaxis]), axis=1)
             ensure_directory(os.path.dirname(sdf_cloud_filename))
             np.save(sdf_cloud_filename, combined)
@@ -73,7 +73,7 @@ def process_model_file(filename):
 
     if CREATE_VOXELS:
         try:
-            voxels = surface_point_cloud.get_voxels(voxel_resolution=VOXEL_RESOLUTION)
+            voxels = surface_point_cloud.get_voxels(voxel_resolution=VOXEL_RESOLUTION, use_depth_buffer=True)
             ensure_directory(os.path.dirname(voxels_filename))
             np.save(voxels_filename, voxels)
         except BadMeshException:
