@@ -1,5 +1,4 @@
 from util import device, ensure_directory
-from dataset import dataset
 import scipy
 import numpy as np
 from rendering import MeshRenderer
@@ -24,23 +23,25 @@ progress = np.arange(FRAMES, dtype=float) / TRANSITION_FRAMES
 
 
 if USE_VAE:
-    print("Loading voxels...")
-    dataset.load_voxels(device)
-
     from model.autoencoder import Autoencoder, LATENT_CODE_SIZE
     vae = Autoencoder()
     vae.load()
     vae.eval()
     print("Calculating latent codes...")
 
-    latent_codes = torch.zeros((dataset.size, LATENT_CODE_SIZE))
-    batch_size = 1000
+
+    from datasets import VoxelDataset
+    from torch.utils.data import DataLoader
+
+    dataset = VoxelDataset.glob('data/chairs/voxels_32/**.npy')
+    dataloader = DataLoader(dataset, batch_size=1000, num_workers=8)
+
+    latent_codes = torch.zeros((len(dataset), LATENT_CODE_SIZE))
+
     with torch.no_grad():
-        for i in tqdm(range(dataset.size // batch_size + 1)):
-            start = i * batch_size
-            end = min((i + 1) * batch_size, dataset.size)
-            latent_codes[start:end, :] = vae.encode(dataset.voxels[start:end, :, :, :]).detach().cpu()
-    del dataset.voxels
+        position = 0
+        for batch in tqdm(dataloader):
+            latent_codes[position:position + batch.shape[0], :] = vae.encode(batch.to(device)).detach().cpu()
     latent_codes = latent_codes.numpy()
 else:
     from model.sdf_net import SDFNet, LATENT_CODES_FILENAME
@@ -50,6 +51,7 @@ else:
     sdf_net.load()
     sdf_net.eval()
 
+from dataset import dataset
 labels = dataset.load_labels().detach().cpu().numpy()
 
 print("Calculating embedding...")
