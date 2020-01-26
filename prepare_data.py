@@ -121,29 +121,7 @@ def combine_pointcloud_files():
     torch.save(points, os.path.join('data', 'sdf_points.to'))
     torch.save(sdf, os.path.join('data', 'sdf_values.to'))
 
-def combine_voxel_files():
-    import torch
-    print("Combining voxels...")
-    npy_files = sorted([get_voxel_filename(f) for f in get_model_files()])
-    npy_files = [f for f in npy_files if os.path.exists(f)]
-
-    N = len(npy_files)
-    result = torch.zeros((N, VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION))
-    
-    position = 0
-    for npy_filename in tqdm(npy_files):
-        numpy_array = np.load(npy_filename)
-        result[position, :, :, :] = torch.tensor(numpy_array)
-        del numpy_array
-        position += 1
-
-    filename = os.path.join('data', 'voxels-{:d}.to'.format(VOXEL_RESOLUTION))
-    print("Saving voxel data to {:s}...".format(filename))
-    torch.save(result, filename)
-
 if __name__ == '__main__':
     process_model_files()
     if CREATE_SDF_CLOUDS:
         combine_pointcloud_files()
-    if CREATE_VOXELS:
-        combine_voxel_files()

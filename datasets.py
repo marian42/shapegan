@@ -3,21 +3,6 @@ from torch.utils.data import Dataset
 import os
 import numpy as np
 
-class VoxelsSingleTensor(Dataset):
-    def __init__(self, filename, clamp=0.1):
-        self.data = torch.load(filename)
-        if clamp is not None:
-            self.data.clamp_(-clamp, clamp)
-
-    def __getitem__(self, index):
-        return self.data[index, :, :, :]
-
-    def __len__(self):
-        return self.data.shape[0]
-    
-    def show(self):
-        show_dataset(self)
-
 class VoxelDataset(Dataset):
     def __init__(self, files, clamp=0.1, rescale_sdf=True):
         self.files = files
@@ -53,17 +38,14 @@ class VoxelDataset(Dataset):
         return VoxelDataset(files)
     
     def show(self):
-        show_dataset(self)
+        from rendering import MeshRenderer
+        import time
+        from tqdm import tqdm
 
-def show_dataset(dataset):
-    from rendering import MeshRenderer
-    import time
-    from tqdm import tqdm
-
-    viewer = MeshRenderer()
-    for item in tqdm(dataset):
-        viewer.set_voxels(item.numpy())
-        time.sleep(0.5)
+        viewer = MeshRenderer()
+        for item in tqdm(self):
+            viewer.set_voxels(item.numpy())
+            time.sleep(0.5)
 
 if __name__ == '__main__':
     #dataset = VoxelDataset.glob('data/chairs/voxels_64/')
