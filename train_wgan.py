@@ -14,7 +14,6 @@ from model.gan import Generator, Discriminator
 from util import device
 
 from dataset import dataset as dataset
-import inception_score
 from util import create_text_slice
 dataset.load_voxels(device)
 
@@ -42,10 +41,6 @@ CRITIC_WEIGHT_LIMIT = 0.01
 
 generator_optimizer = optim.RMSprop(generator.parameters(), lr=LEARN_RATE)
 critic_optimizer = optim.RMSprop(critic.parameters(), lr=LEARN_RATE)
-
-if inception_score.available:
-    print('Inception score of the dataset: {:.4f}'.format(inception_score.inception_score(dataset.voxels[:1400, :, :, :])))
-    print('Inception score at start: {:.4f}'.format(generator.get_inception_score()))
 
 log_file = open("plots/wgan_training.csv", "a" if "continue" in sys.argv else "w")
 
@@ -118,14 +113,13 @@ def train():
             voxels = generator.generate().squeeze()
             print(create_text_slice(voxels))
 
-        score = generator.get_inception_score(sample_size=800)
         epoch_duration = time.time() - epoch_start_time
         fake_prediction = np.mean(history_fake)
         valid_prediction = np.mean(history_real)
-        print('Epoch {:d} ({:.1f}s), inception score: {:.4f}, critic values: {:.2f}, {:.2f}'.format(
-            epoch, epoch_duration, score, fake_prediction, valid_prediction))
-        log_file.write("{:d} {:.1f} {:.4f} {:.2f} {:.2f}\n".format(
-            epoch, epoch_duration, score, fake_prediction, valid_prediction))
+        print('Epoch {:d} ({:.1f}s), critic values: {:.2f}, {:.2f}'.format(
+            epoch, epoch_duration, fake_prediction, valid_prediction))
+        log_file.write("{:d} {:.1f} {:.2f} {:.2f}\n".format(
+            epoch, epoch_duration, fake_prediction, valid_prediction))
         log_file.flush()
 
 

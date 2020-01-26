@@ -103,13 +103,3 @@ class Autoencoder(SavableModule):
         z, mean, log_variance = self.encode(x, return_mean_and_log_variance = True)
         x = self.decode(z)
         return x, mean, log_variance
-
-    def get_inception_score(self, sample_size = 1000):
-        import inception_score
-        if not inception_score.available:
-            return 0
-        with torch.no_grad():
-            shape = torch.Size([sample_size, LATENT_CODE_SIZE])
-            inception_score_latent_codes = standard_normal_distribution.sample(shape).to(self.device)
-            sample = self.decode(inception_score_latent_codes)
-            return inception_score.inception_score(sample)

@@ -531,28 +531,9 @@ def get_moving_average(data, window_size):
     
     return np.arange(window_size / 2, data.shape[0] - window_size / 2, dtype=int), moving_average
 
-if "gan_training" in sys.argv:
-    data = np.genfromtxt('plots/gan_training.csv', delimiter=' ')
-        
-    plt.plot(data[:, 2])
-    plt.plot(*get_moving_average(data[:, 2], 10))
-
-    plt.ylabel('Inception Score')
-    plt.xlabel('Epoch')
-    plt.title('GAN Training')
-    plt.savefig("plots/gan-training.pdf")
-
 if "wgan_training" in sys.argv:
     data = np.genfromtxt('plots/wgan_training.csv', delimiter=' ')
         
-    plt.plot(data[:, 2])
-    #plt.plot(*get_moving_average(data[:, 2], 10))
-
-    plt.ylabel('Inception Score')
-    plt.xlabel('Epoch')
-    plt.savefig("plots/wgan-training-score.pdf", bbox_inches='tight')
-
-    plt.clf()
     plt.ylim((-400, 1000))
     plt.plot(data[:, 4], label="Assessment of real objects")
     plt.plot(data[:, 3], label="Assessment of fake objects")
@@ -565,13 +546,6 @@ if "wgan_training" in sys.argv:
 if "sdf_training" in sys.argv:
     data = np.genfromtxt('plots/sdf_net_training.csv', delimiter=' ')
     
-    plt.plot(np.arange(1, data.shape[0] + 1), data[:, 3], linestyle='-', linewidth=0.5, color='grey')
-    plt.plot(np.arange(1, data.shape[0] + 1), data[:, 3], 'x')
-
-    plt.ylabel('Inception Score')
-    plt.xlabel('Epoch')
-    plt.savefig("plots/deepsdf-training-score.pdf", bbox_inches='tight')
-
     plt.clf()
     plt.plot(np.arange(1, data.shape[0] + 1), data[:, 2], linestyle='-', linewidth=0.5, color='grey')
     plt.plot(np.arange(1, data.shape[0] + 1), data[:, 2], 'x')
@@ -592,13 +566,11 @@ def create_autoencoder_training_plot(data_file, title, plot_file):
     reconstruction_loss = data[:, 2] / max_reconstruction_loss
     kld_loss = data[:, 3] / max_reconstruction_loss
     voxel_error = data[:, 4] / np.max(data[:, 4])
-    inception_score = data[:, 5] / np.max(data[:, 5])
     #plt.axhline(y=data[-1, 2], color='black', linewidth=1)
     plt.plot(reconstruction_loss, label='Reconstruction loss ({:.3f})'.format(data[-1, 2]))
     #plt.plot(kld_loss, label='KLD loss ({:.3f})'.format(data[-1, 3]))
     plt.plot(voxel_error, label='Voxel error ({:.3f})'.format(data[-1, 4]))
-    plt.plot(inception_score, label='Inception score ({:.3f})'.format(data[-1, 5]))
-
+    
     plt.xlabel('Epoch')
     plt.yticks([])
     plt.title(title)
@@ -621,12 +593,6 @@ def create_autoencoder_training_plot_latex():
     plt.xlabel('Epoch')
     plt.ylabel('Voxel error')
     plt.savefig('plots/vae-training-error.pdf', bbox_inches='tight')
-    
-    plt.clf()
-    plt.plot(data[:, 5] * 3.23444) # workaround for outdated reference inception score
-    plt.xlabel('Epoch')
-    plt.ylabel('Inception score')
-    plt.savefig('plots/vae-training-inception-score.pdf', bbox_inches='tight')
     
     plt.clf()
 

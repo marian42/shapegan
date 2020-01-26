@@ -13,7 +13,6 @@ from collections import deque
 from model.gan import Generator, Discriminator
 
 from dataset import dataset as dataset
-import inception_score
 from util import create_text_slice, device
 dataset.load_voxels(device)
 
@@ -25,10 +24,6 @@ if "continue" in sys.argv:
     discriminator.load()
 
 log_file = open("plots/gan_training.csv", "a" if "continue" in sys.argv else "w")
-
-if inception_score.available:
-    print('Inception score of the dataset: {:.4f}'.format(inception_score.inception_score(dataset.voxels[:1400, :, :, :])))
-    print('Inception score at start: {:.4f}'.format(generator.get_inception_score()))
 
 generator_optimizer = optim.Adam(generator.parameters(), lr=0.001)
 
@@ -121,11 +116,10 @@ def train():
             voxels = generator.generate().squeeze()
             print(create_text_slice(voxels))
 
-        score = generator.get_inception_score(sample_size=800)
         prediction_fake = np.mean(history_fake)
         prediction_real = np.mean(history_real)
-        print('Epoch {:d} ({:.1f}s), inception score: {:.4f}, prediction on fake: {:.4f}, prediction on real: {:.4f}'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
-        log_file.write('{:d} {:.1f} {:.4f} {:.4f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
+        print('Epoch {:d} ({:.1f}s), prediction on fake: {:.4f}, prediction on real: {:.4f}'.format(epoch, time.time() - epoch_start_time, prediction_fake, prediction_real))
+        log_file.write('{:d} {:.1f} {:.4f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, prediction_fake, prediction_real))
         log_file.flush()
 
 

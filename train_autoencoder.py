@@ -75,7 +75,6 @@ def test(epoch_index, epoch_time, test_set):
         reconstruction_loss = criterion(output, test_set)
         
         voxel_diff = voxel_difference(output, test_set)
-        inception_score = autoencoder.get_inception_score()
 
         if "show_slice" in sys.argv:
             print(create_text_slice(output[0, :, :, :]))
@@ -84,11 +83,10 @@ def test(epoch_index, epoch_time, test_set):
             "Reconstruction loss: {:.4f}, ".format(reconstruction_loss) +
             "Voxel diff: {:.4f}, ".format(voxel_diff) + 
             "KLD loss: {:4f}, ".format(kld) + 
-            "training loss: {:4f}, ".format(np.mean(reconstruction_error_history)) +
-            "inception score: {:4f}".format(inception_score)
+            "training loss: {:4f}, ".format(np.mean(reconstruction_error_history))
         )
 
-        log_file.write('{:d} {:.1f} {:.6f} {:.6f} {:.6f} {:.6f}\n'.format(epoch_index, epoch_time, reconstruction_loss, kld, voxel_diff, inception_score))
+        log_file.write('{:d} {:.1f} {:.6f} {:.6f} {:.6f}\n'.format(epoch_index, epoch_time, reconstruction_loss, kld, voxel_diff))
         log_file.flush()
 
 def train():

@@ -134,10 +134,8 @@ def train():
         
         prediction_fake = np.mean(history_fake)
         prediction_real = np.mean(history_real)
-        
-        score = generator.get_inception_score()
 
-        print('Epoch {:d} ({:.1f}s), inception score: {:.4f}, prediction on fake: {:.4f}, prediction on real: {:.4f}'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
+        print('Epoch {:d} ({:.1f}s), prediction on fake: {:.4f}, prediction on real: {:.4f}'.format(epoch, time.time() - epoch_start_time, prediction_fake, prediction_real))
         
         if abs(prediction_fake - prediction_real) > 0.1:
             print("Network diverged.")
@@ -155,7 +153,7 @@ def train():
             voxels = voxels.reshape(VOXEL_RESOLUTION, VOXEL_RESOLUTION, VOXEL_RESOLUTION)
             print(create_text_slice(voxels / SDF_CLIPPING))
         
-        log_file.write('{:d} {:.1f} {:.4f} {:.4f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, score, prediction_fake, prediction_real))
+        log_file.write('{:d} {:.1f} {:.4f} {:.4f}\n'.format(epoch, time.time() - epoch_start_time, prediction_fake, prediction_real))
         log_file.flush()
 
 

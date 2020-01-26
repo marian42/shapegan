@@ -21,8 +21,7 @@ class Generator(SavableModule):
             nn.ConvTranspose3d(in_channels = 64, out_channels = 1, kernel_size = 4, stride = 2, padding = 1),
             nn.Tanh()
         )
-
-        self.inception_score_latent_codes = dict()
+        
         self.cuda()
 
     def forward(self, x):
@@ -38,19 +37,7 @@ class Generator(SavableModule):
         def copy(source, destination):
             destination.load_state_dict(source.state_dict(), strict=False)
 
-        raise Exception("Not implemented.")        
-
-    def get_inception_score(self, sample_size = 1000):
-        import inception_score
-        if not inception_score.available:
-            return 0
-        with torch.no_grad():
-            if sample_size not in self.inception_score_latent_codes:
-                shape = torch.Size((sample_size, LATENT_CODE_SIZE))
-                self.inception_score_latent_codes[sample_size] = standard_normal_distribution.sample(shape).to(self.device)
-
-            sample = self(self.inception_score_latent_codes[sample_size])
-            return inception_score.inception_score(sample)
+        raise Exception("Not implemented.")
 
 
 class Discriminator(SavableModule):
