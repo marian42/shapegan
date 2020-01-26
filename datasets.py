@@ -19,9 +19,10 @@ class VoxelsSingleTensor(Dataset):
         show_dataset(self)
 
 class VoxelDataset(Dataset):
-    def __init__(self, files, clamp=0.1):
+    def __init__(self, files, clamp=0.1, rescale_sdf=True):
         self.files = files
         self.clamp = clamp
+        self.rescale_sdf = rescale_sdf
 
     def __len__(self):
         return len(self.files)
@@ -31,6 +32,8 @@ class VoxelDataset(Dataset):
         result = torch.from_numpy(array)
         if self.clamp is not None:
             result.clamp_(-self.clamp, self.clamp)
+            if self.rescale_sdf:
+                result /= self.clamp
         return result
 
     @staticmethod
