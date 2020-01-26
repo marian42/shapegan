@@ -51,8 +51,9 @@ else:
     sdf_net.load()
     sdf_net.eval()
 
-from dataset import dataset
-labels = dataset.load_labels().detach().cpu().numpy()
+from shapenet_metadata import shapenet
+raise NotImplementedError('A labels tensor needs to be supplied here.')
+labels = None
 
 print("Calculating embedding...")
 tsne = TSNE(n_components=2)
@@ -106,7 +107,7 @@ stop_latent_codes = latent_codes[indices, :]
 
 colors = np.zeros((labels.shape[0], 3))
 for i in range(labels.shape[0]):
-    colors[i, :] = dataset.get_color(labels[i])
+    colors[i, :] = shapenet.get_color(labels[i])
 
 spline = scipy.interpolate.CubicSpline(np.arange(SAMPLE_COUNT + 1), stop_latent_codes, axis=0, bc_type='periodic')
 frame_latent_codes = spline(progress)
