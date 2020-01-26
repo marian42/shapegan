@@ -16,7 +16,7 @@ from model.sdf_net import SDFNet
 from model.progressive_gan import Discriminator, LATENT_CODE_SIZE, RESOLUTIONS
 from util import create_text_slice, device, standard_normal_distribution, get_voxel_coordinates
 
-from dataset import dataset as dataset, SDF_CLIPPING
+SDF_CLIPPING = 0.1
 from util import create_text_slice
 from datasets import VoxelDataset
 from torch.utils.data import DataLoader
