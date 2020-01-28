@@ -25,6 +25,8 @@ sdf = torch.load('data/sdf_values.to').to(device)
 MODEL_COUNT = points.shape[0] // POINTCLOUD_SIZE
 BATCH_SIZE = 20000
 SDF_CUTOFF = 0.1
+sdf.clamp_(-SDF_CUTOFF, SDF_CUTOFF)
+signs = sdf.cpu().numpy() > 0
 
 SIGMA = 0.01
 
@@ -51,10 +53,17 @@ if 'continue' in sys.argv:
 log_file = open(LOG_FILE_NAME, "a" if "continue" in sys.argv else "w")
 
 def create_batches():
-    size = MODEL_COUNT * POINTCLOUD_SIZE
-    batch_count = int(size / BATCH_SIZE)
-    indices = np.arange(size)
+    indices_positive = np.nonzero(signs)[0]
+    indices_negative = np.nonzero(~signs)[0]
+    if indices_negative.shape[0] > indices_positive.shape[0]:
+        np.random.shuffle(indices_negative)
+        indices_negative = indices_negative[:indices_positive.shape[0]]
+    else:
+        np.random.shuffle(indices_positive)
+        indices_positive = indices_positive[:indices_negative.shape[0]]
+    indices = np.concatenate((indices_negative, indices_positive))
     np.random.shuffle(indices)
+    batch_count = int(indices.shape[0] / BATCH_SIZE)
     for i in range(batch_count - 1):
         yield indices[i * BATCH_SIZE:(i+1)*BATCH_SIZE]
     yield indices[(batch_count - 1) * BATCH_SIZE:]
