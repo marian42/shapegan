@@ -7,6 +7,7 @@ import skimage
 import numpy as np
 import math
 from matplotlib import pyplot as plt
+from util import show_sdf_point_cloud
 
 MODEL_PATH = 'examples/chair.obj'
 
@@ -70,12 +71,5 @@ mesh.show()
 
 points, sdf = surface_point_cloud.sample_sdf_near_surface(number_of_points=150000)
 
-colors = np.zeros(points.shape)
-colors[sdf < 0, 2] = 1
-colors[sdf > 0, 0] = 1
-cloud = pyrender.Mesh.from_points(points, colors=colors)
-
-scene = pyrender.Scene()
-scene.add(cloud)
 print("Now showing a point cloud of non-uniformly sampled SDF data. Negative distances are red, positive distances are blue.")
-viewer = pyrender.Viewer(scene, use_raymond_lighting=True, point_size=2)
+show_sdf_point_cloud(points, sdf)

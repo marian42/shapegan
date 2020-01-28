@@ -72,3 +72,14 @@ def get_voxel_coordinates(resolution = 32, size=1, center=0, return_torch_tensor
         return torch.tensor(points, dtype=torch.float32, device=device)
     else:
         return points.astype(np.float32)
+
+def show_sdf_point_cloud(points, sdf):
+    import pyrender
+    colors = np.zeros(points.shape)
+    colors[sdf < 0, 2] = 1
+    colors[sdf > 0, 0] = 1
+    cloud = pyrender.Mesh.from_points(points, colors=colors)
+
+    scene = pyrender.Scene()
+    scene.add(cloud)
+    viewer = pyrender.Viewer(scene, use_raymond_lighting=True, point_size=2)
