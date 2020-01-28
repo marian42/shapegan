@@ -62,7 +62,7 @@ def process_model_file(filename):
     surface_point_cloud = get_surface_point_cloud(mesh)
     if CREATE_SDF_CLOUDS:
         try:
-            points, sdf = surface_point_cloud.sample_sdf_near_surface(number_of_points=SDF_CLOUD_SAMPLE_SIZE, sign_method='depth')
+            points, sdf = surface_point_cloud.sample_sdf_near_surface(number_of_points=SDF_CLOUD_SAMPLE_SIZE, sign_method='depth', min_size=0.015)
             combined = np.concatenate((points, sdf[:, np.newaxis]), axis=1)
             ensure_directory(os.path.dirname(sdf_cloud_filename))
             np.save(sdf_cloud_filename, combined)
