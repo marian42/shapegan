@@ -107,18 +107,19 @@ class MeshRenderer():
         self.render_lock.release()
 
 
-    def set_voxels(self, voxels, use_marching_cubes=True, shade_smooth=False):
+    def set_voxels(self, voxels, use_marching_cubes=True, shade_smooth=False, pad=True, level=0):
         if use_marching_cubes:
             if type(voxels) is torch.Tensor:
                 if len(voxels.shape) > 3:
                     voxels = voxels.squeeze()
                 voxels = voxels.cpu().numpy()
-            voxels = np.pad(voxels, 1, mode='constant', constant_values=1)
             voxel_resolution = voxels.shape[1]
+            if pad:
+                voxels = np.pad(voxels, 1, mode='constant', constant_values=1)
             try:
-                vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=0, spacing=(1.0 / voxel_resolution, 1.0 / voxel_resolution, 1.0 / voxel_resolution))
-                vertices = vertices[faces, :].astype(np.float32) - 0.5
-                self.ground_level = np.min(vertices[:, 1]).item()         
+                vertices, faces, normals, _ = skimage.measure.marching_cubes_lewiner(voxels, level=level, spacing=(2.0 / voxel_resolution, 2.0 / voxel_resolution, 2.0 / voxel_resolution))
+                vertices = vertices[faces, :].astype(np.float32) - 1
+                self.ground_level = np.min(vertices[:, 1]).item()
 
                 if shade_smooth:
                     normals = normals[faces, :].astype(np.float32)
@@ -127,7 +128,7 @@ class MeshRenderer():
                     normals = np.repeat(normals, 3, axis=0)
 
                 self._update_buffers(vertices.reshape((-1)), normals.reshape((-1)))
-                self.model_size = 0.75
+                self.model_size = 1.4
             except ValueError:
                 pass # Voxel array contains no sign change
         else:
