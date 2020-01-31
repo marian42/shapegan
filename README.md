@@ -1,14 +1,18 @@
 # Generative Adversarial Networks and Autoencoders for 3D Shapes
 
-This is the repository for my master thesis about generative models for 3D shapes.
+This repository contains code for the paper "[Adversarial Generation of Continuous Implicit Shape
+Representations](TODO)" my master thesis about generative models for 3D shapes.
 It contains:
 
+- the networks proposed in the paper (GANs with a DeepSDF network as the generator and a 3D CNN or Pointnet as dicriminator)
 - an autoencoder, variational autoencoder and GANs for SDF voxel volumes using [3D CNNs](http://papers.nips.cc/paper/6096-learning-a-probabilistic-latent-space-of-object-shapes-via-3d-generative-adversarial-modeling.pdf)
-- an implementation of [the DeepSDF paper](https://arxiv.org/pdf/1901.05103.pdf) that learns implicit function representations of 3D shapes
-- a GAN that uses a DeepSDF network as the generator and a 3D CNN as the discriminator ("Hybrid GAN")
-- a data prepration pipeline that can calculate signed distance fields for non-watertight meshes at arbitrary sample points
+- an implementation of [the DeepSDF autodecoder](https://arxiv.org/pdf/1901.05103.pdf) that learns implicit function representations of 3D shapes
+- a GAN that uses a DeepSDF network as the generator and a 3D CNN as the discriminator ("Hybrid GAN", as proposed in the paper, but without progressive growing and without gradient penalty)
+- a data prepration pipeline that can prepare SDF datasets from triangle meshes, such as the [Shapenet dataset](https://www.shapenet.org/) (based on my [mesh_to_sdf](https://github.com/marian42/mesh_to_sdf) project)
 - a [ray marching](http://jamie-wong.com/2016/07/15/ray-marching-signed-distance-functions/) renderer to render signed distance fields represented by a neural network, as well as a classic rasterized renderer to render meshes reconstructed with Marching Cubes
 - tools to visualize the results
+
+Note that although the code provided here works, most of the scripts need some configuration to work for a specific task.
 
 This project uses two different ways to represent 3D shapes.
 These representations are voxel volumes and implicit functions.
@@ -22,24 +26,7 @@ All GANs come in a classic and a Wasserstein flavor.
 
 ## Data preparation
 
-This process requires ~270 GB of disk space and takes ~40 hours.
-If you're interested in using the data preparation pipeline for something else, have a look at the file `demo_data_preparation.py`, which demonstrates some data preparation tasks with an example mesh that is provided with this repository.
-
-1. Download and unpack the [ShapeNet Core v2](https://shapenet.org/) dataset
-2. Move the dataset into the `data/shapenet/` directory relative to the project root or create a symbolic link.
-For example, this path should exist:
-
-```data/shapenet/03001627/6ae8076b0f9c74199c2009e4fd70d135/models/model_normalized.obj```
-
-3. Run the `python3 prepare_sdf_data.py`.
-This is the part that takes long.
-You can stop the process at any time and resume by running the script again.
-This creates files with SDF data for each model inside the `data/shapenet` directory.
-4. Run
-
-```python3 dataset.py init prepare_voxels prepare_sdf```
-    
-You can omit `prepare_voxels` or `prepare_sdf` if you're only interested in voxels or implicit representations.
+TODO
 
 ## Training
 
