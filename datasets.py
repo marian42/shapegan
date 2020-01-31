@@ -53,7 +53,7 @@ class VoxelDataset(Dataset):
 class PointDataset(Dataset):
     def __init__(self, root, filenames, num_points=1024, transform=None):
         self.root = os.path.expanduser(os.path.join(os.path.normpath(root)))
-        self.filenames
+        self.filenames = filenames
         self.num_points = num_points
         assert 0 < self.num_points <= 64**3
         self.transform = transform

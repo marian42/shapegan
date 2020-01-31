@@ -47,10 +47,10 @@ class PointNet(torch.nn.Module):
         return x
 
 
-class SDFNet(torch.nn.Module):
+class SDFGenerator(torch.nn.Module):
     def __init__(self, latent_channels, hidden_channels, num_layers, norm=True,
                  dropout=0.0):
-        super(SDFNet, self).__init__()
+        super(SDFGenerator, self).__init__()
 
         self.layers1 = None
         self.layers2 = None
