@@ -6,7 +6,7 @@ This repository provides code for the paper "[Adversarial Generation of Continuo
 Representations](TODO)" and for my master thesis about generative machine learning models for 3D shapes.
 It contains:
 
-- the networks proposed in the paper (GANs with a DeepSDF network as the generator and a 3D CNN or Pointnet as dicriminator)
+- the networks proposed in the paper (GANs with a DeepSDF network as the generator and a 3D CNN or Pointnet as discriminator)
 - an autoencoder, variational autoencoder and GANs for SDF voxel volumes using [3D CNNs](http://papers.nips.cc/paper/6096-learning-a-probabilistic-latent-space-of-object-shapes-via-3d-generative-adversarial-modeling.pdf)
 - an implementation of [the DeepSDF autodecoder](https://arxiv.org/pdf/1901.05103.pdf) that learns implicit function representations of 3D shapes
 - a GAN that uses a DeepSDF network as the generator and a 3D CNN as the discriminator ("Hybrid GAN", as proposed in the paper, but without progressive growing and without gradient penalty)
@@ -43,7 +43,7 @@ To prepare the data yourself, follow these steps:
 1. install the `mesh_to_sdf` python module.
 2. Download the Shapenet to the `data/shapenet/` directory or create an equivalent symlink.
 3. Review the settings at the top of `prepare_shapenet_dataset.py`.
-The default settings are configured for this task, so you shouldn't need to change anything.
+The default settings are configured for reproducing the GAN paper, so you shouldn't need to change anything.
 You can change the dataset category that will be prepared, the default is the chairs category.
 You can disable preparation of either the voxel or point datasets if you only need one of them.
 4. Run `prepare_shapenet_dataset.py`.
@@ -83,19 +83,19 @@ TODO: Examples for the pointnet-based GANs will be added soon.
 
 ## Data preparation
 
-Two data preparation scripts are available, `prepare_shapenet_dataset.py` is configured to work specifically with the shapenet dataset.
+Two data preparation scripts are available, `prepare_shapenet_dataset.py` is configured to work specifically with the Shapenet dataset.
 `prepare_data.py` can be used with any folder of 3D meshes.
 Both need to be configured depending on what data you want to prepare.
 Most of the time, not all types of data need to be prepared.
 For the DeepSDF network, you need SDF clouds.
-For the remaining networks, you need voxels of resoltuion 32.
+For the remaining networks, you need voxels of resolution 32.
 The "uniform" and "surface" datasets, as well as the voxels of other resolutions are only needed for the GAN paper (see the section above).
 
 ## Training
 
 Run any of the scripts that start with `train_` to train the networks.
 The `train_autoencoder.py` trains the variational autoencoder, unless the `classic` argument is supplied.
-All training scripts take these command line arumgnets:
+All training scripts take these command line arguments:
 - `continue` to load existing parameters
 - `nogui`  to not show the model viewer, which is useful for VMs
 - `show_slice` to show a text representation of the learned shape
