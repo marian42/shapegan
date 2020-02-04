@@ -3,7 +3,7 @@
 ![Shapes generated with our propsed GAN architecture and reconstructed using Marching Cubes](https://raw.githubusercontent.com/marian42/shapegan/master/examples/gan_shapes.png)
 
 This repository provides code for the paper "[Adversarial Generation of Continuous Implicit Shape
-Representations](TODO)" and for my master thesis about generative machine learning models for 3D shapes.
+Representations](https://arxiv.org/abs/2002.00349)" and for my master thesis about generative machine learning models for 3D shapes.
 It contains:
 
 - the networks proposed in the paper (GANs with a DeepSDF network as the generator and a 3D CNN or Pointnet as discriminator)
