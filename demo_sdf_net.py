@@ -1,6 +1,6 @@
 from model.sdf_net import SDFNet, LATENT_CODE_SIZE, LATENT_CODES_FILENAME
 from util import device, standard_normal_distribution, ensure_directory
-import scipy
+import scipy.interpolate
 import numpy as np
 from rendering import MeshRenderer
 import time

@@ -4,7 +4,7 @@ from util import device, standard_normal_distribution
 from tqdm import tqdm
 import sys
 import torch
-import skimage
+import skimage.measure
 import trimesh
 
 LEVEL = 0

@@ -3,7 +3,7 @@ from mesh_to_sdf.pyrender_wrapper import render_normal_and_depth_buffers
 from mesh_to_sdf.scan import get_camera_transform
 import pyrender
 import trimesh
-import skimage
+import skimage.measure
 import numpy as np
 import math
 from matplotlib import pyplot as plt

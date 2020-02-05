@@ -1,6 +1,6 @@
 from model import *
 import trimesh
-import skimage
+import skimage.measure
 from util import get_points_in_unit_sphere, get_voxel_coordinates
 import numpy as np
 

@@ -14,7 +14,7 @@ from rendering.binary_voxels_to_mesh import create_binary_voxel_mesh
 from rendering.shader import Shader
 
 import cv2
-import skimage
+import skimage.measure
 
 from threading import Thread, Lock
 import torch

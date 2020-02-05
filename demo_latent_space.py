@@ -1,5 +1,5 @@
 from util import device, ensure_directory
-import scipy
+import scipy.interpolate
 import numpy as np
 from rendering import MeshRenderer
 import torch
