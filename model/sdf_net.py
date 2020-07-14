@@ -18,7 +18,7 @@ class SDFVoxelizationHelperData():
 
 sdf_voxelization_helper = dict()
 
-SDF_NET_BREADTH = 256
+SDF_NET_BREADTH = 512
 
 class SDFNet(SavableModule):
     def __init__(self, latent_code_size=LATENT_CODE_SIZE, device='cuda'):
@@ -31,17 +31,11 @@ class SDFNet(SavableModule):
             nn.ReLU(inplace=True),
 
             nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
-            nn.ReLU(inplace=True),
-
-            nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
             nn.ReLU(inplace=True)
         )
 
         self.layers2 = nn.Sequential(
             nn.Linear(in_features = SDF_NET_BREADTH + latent_code_size + 3, out_features = SDF_NET_BREADTH),
-            nn.ReLU(inplace=True),
-
-            nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),
             nn.ReLU(inplace=True),
 
             nn.Linear(in_features = SDF_NET_BREADTH, out_features = SDF_NET_BREADTH),

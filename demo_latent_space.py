@@ -52,8 +52,7 @@ else:
     sdf_net.eval()
 
 from shapenet_metadata import shapenet
-raise NotImplementedError('A labels tensor needs to be supplied here.')
-labels = None
+labels = torch.load('data/labels.to')
 
 print("Calculating embedding...")
 tsne = TSNE(n_components=2)

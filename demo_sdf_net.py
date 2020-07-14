@@ -14,7 +14,7 @@ SAMPLE_COUNT = 30 # Number of distinct objects to generate and interpolate betwe
 TRANSITION_FRAMES = 60
 
 ROTATE_MODEL = False
-USE_HYBRID_GAN = True
+USE_HYBRID_GAN = False
 
 SURFACE_LEVEL = 0.04 if USE_HYBRID_GAN else 0.011
 
