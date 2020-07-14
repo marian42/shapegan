@@ -113,7 +113,7 @@ To visualize the results, run any of the scripts starting with `demo_`.
 They might need to be configured depending on the model that was trained and the visualizations needed.
 The `create_plot.py` contains code to generate figures for my thesis.
 
-## Pretrained DeepSDF model and recreating the latent space traversal animation
+## Using the pretrained DeepSDF model and recreating the latent space traversal animation
 
 This section explains how get a DeepSDF network model that was pre-trained on the Shapenet dataset and how to use it to recreate [this latent space traversal animation](https://twitter.com/marian42_/status/1188969971898048512).
 
@@ -132,6 +132,6 @@ The scripts will look for the .to files in `/models` and `/data` relative to the
 This takes about 40 minutes on my machine.
 To make it faster, you can lower the values of `SAMPLE_COUNT` and `TRANSITION_FRAMES` in `demo_latent_space.py`.
 
-4. To create a video file from the frames, run `ffmpeg -framerate 30 -i images/frame-%05d.png -c:v libx264 -profile:v high -crf 19 -pix_fmt yuv420p video.mp4`.
+4. To render a video file from the frames, run `ffmpeg -framerate 30 -i images/frame-%05d.png -c:v libx264 -profile:v high -crf 19 -pix_fmt yuv420p video.mp4`.
 
-Not that after completing steps 1 and 2, you can run `python3 demo_sdf_net.py` to show a realtime latent space interpolation.
+Note that after completing steps 1 and 2, you can run `python3 demo_sdf_net.py` to show a realtime latent space interpolation.
