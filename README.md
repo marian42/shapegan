@@ -112,3 +112,26 @@ The classifiers take the least time to train and the GANs take the most time.
 To visualize the results, run any of the scripts starting with `demo_`.
 They might need to be configured depending on the model that was trained and the visualizations needed.
 The `create_plot.py` contains code to generate figures for my thesis.
+
+## Pretrained DeepSDF model and recreating the latent space traversal animation
+
+This section explains how get a DeepSDF network model that was pre-trained on the Shapenet dataset and how to use it to recreate [this latent space traversal animation](https://twitter.com/marian42_/status/1188969971898048512).
+
+Since the model was trained, some network parameters have changed.
+If you're training a new model, you can use the parameters on the master branch and it will work as well.
+To be compatible with the pretrained model, you'll need the changes in the [`pretrained-deepsdf-shapenet`](https://github.com/marian42/shapegan/tree/pretrained-deepsdf-shapenet) branch.
+
+To generate the latent space animation, follow these steps:
+
+1. Switch to the the [`pretrained-deepsdf-shapenet`](https://github.com/marian42/shapegan/tree/pretrained-deepsdf-shapenet) branch.
+
+2. Move the contents of the `examples/deepsdf-shapenet-pretrained` directory to the project root directory.
+The scripts will look for the .to files in `/models` and `/data` relative to the project root.
+
+3. Run `python3 demo_latent_space.py`.
+This takes about 40 minutes on my machine.
+To make it faster, you can lower the values of `SAMPLE_COUNT` and `TRANSITION_FRAMES` in `demo_latent_space.py`.
+
+4. To create a video file from the frames, run `ffmpeg -framerate 30 -i images/frame-%05d.png -c:v libx264 -profile:v high -crf 19 -pix_fmt yuv420p video.mp4`.
+
+Not that after completing steps 1 and 2, you can run `python3 demo_sdf_net.py` to show a realtime latent space interpolation.
