@@ -107,7 +107,10 @@ def train():
                         print(create_text_slice(fake_sample[0, :, :, :] / SDF_CLIPPING))
                     
                     critic_output_fake = critic(fake_sample)
-                    fake_loss = torch.mean(-torch.log(critic_output_fake))
+                    # TODO an incorrect loss function was used here as pointed out in issue #2
+                    # This hasn't been tested yet after fixing the loss function
+                    # The incorrect loss function was: fake_loss = torch.mean(-torch.log(critic_output_fake))
+                    fake_loss = torch.mean(-critic_output_fake)
                     fake_loss.backward()
                     generator_optimizer.step()
                     
